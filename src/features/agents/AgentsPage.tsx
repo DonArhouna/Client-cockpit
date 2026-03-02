@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -127,7 +128,14 @@ export function AgentsPage() {
                 <TableBody>
                   {agents?.map((agent) => (
                     <TableRow key={agent.id}>
-                      <TableCell className="font-medium">{agent.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link 
+                          to={`/agents/${agent.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {agent.name}
+                        </Link>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Circle className={`h-2 w-2 ${getStatusColor(agent)}`} />
@@ -168,6 +176,12 @@ export function AgentsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
+                              <Link to={`/agents/${agent.id}`}>
+                                <Cpu className="mr-2 h-4 w-4" />
+                                {t('common.viewDetails')}
+                              </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setRegenerateAgent(agent)}>
                               <RefreshCw className="mr-2 h-4 w-4" />
                               {t('agents.regenerateToken')}
