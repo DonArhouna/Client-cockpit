@@ -5,7 +5,8 @@ import {
     rolesApi,
     agentsApi,
     auditLogsApi,
-    adminApi
+    adminApi,
+    subscriptionPlansApi,
 } from '@/api';
 import { Agent } from '@/types';
 
@@ -99,5 +100,29 @@ export function useAuditLogEventTypes() {
             return resp.data;
         },
         staleTime: 5 * 60 * 1000,
+    });
+}
+
+// Subscription Plans (admin — tous les plans)
+export function useSubscriptionPlans() {
+    return useQuery({
+        queryKey: ['subscription-plans'],
+        queryFn: async () => {
+            const resp = await subscriptionPlansApi.getAll();
+            return resp.data;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+// Plans actifs (public — pour les modals)
+export function useActivePlans() {
+    return useQuery({
+        queryKey: ['subscription-plans', 'active'],
+        queryFn: async () => {
+            const resp = await subscriptionPlansApi.getActive();
+            return resp.data;
+        },
+        staleTime: 10 * 60 * 1000,
     });
 }

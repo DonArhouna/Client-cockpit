@@ -10,6 +10,7 @@ import { AgentsPage } from './features/agents/AgentsPage';
 import { AuditLogsPage } from './features/audit-logs/AuditLogsPage';
 import { HealthPage } from './features/health/HealthPage';
 import { ProfilePage } from './features/profile/ProfilePage';
+import { SubscriptionPlansPage } from './features/subscriptions/SubscriptionPlansPage';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -45,6 +46,7 @@ export default function App() {
                 <Route path="/audit-logs" element={<AuditLogsPage />} />
                 <Route path="/health" element={<HealthPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
               </Routes>
             </MainLayout>
           </ProtectedRoute>

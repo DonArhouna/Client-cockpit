@@ -20,13 +20,39 @@ export interface UserRole {
   role: Role;
 }
 
+// Subscription Plan types
+export interface SubscriptionPlan {
+  id: string;
+  name: string;                  // 'startup' | 'pme' | 'business' | 'enterprise'
+  label: string;                 // 'Startup' | 'PME' | ...
+  description?: string;
+  priceMonthly?: number | null;  // null = sur devis
+  maxUsers?: number | null;      // null = illimité
+  maxKpis?: number | null;
+  maxWidgets?: number | null;
+  maxAgentSyncPerDay?: number | null;
+  allowedKpiPacks?: string[];
+  hasNlq?: boolean;
+  hasAdvancedReports?: boolean;
+  stripeProductId?: string;
+  stripePriceId?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+  _count?: { organizations: number };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // Organization types
 export interface Organization {
   id: string;
   name: string;
   sector?: string;
   size: string;
-  plan?: string;
+  planId?: string;
+  subscriptionPlan?: { id: string; name: string; label: string };
+  country?: string;
+  sageMode?: string;
   sageType?: string;
   sageHost?: string;
   sagePort?: number;
@@ -79,6 +105,10 @@ export interface Agent {
   lastError?: string;
   organizationId: string;
   organization?: Organization;
+  tokenExpiresAt?: string | null;
+  isRevoked?: boolean;
+  daysUntilExpiry?: number | null;
+  isExpiringSoon?: boolean;
   createdAt: string;
 }
 

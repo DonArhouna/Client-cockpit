@@ -8,7 +8,8 @@ import type {
   AuditLog,
   LoginCredentials,
   AuthResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  SubscriptionPlan,
 } from '@/types';
 
 // Auth
@@ -106,6 +107,29 @@ export const agentsApi = {
 
   regenerateToken: (id: string) =>
     api.post(`/agents/${id}/regenerate-token`),
+
+  revokeToken: (id: string) =>
+    api.post(`/agents/${id}/revoke`),
+};
+
+// Subscription Plans
+export const subscriptionPlansApi = {
+  // Admin endpoint (requires auth + superadmin permissions)
+  getAll: () =>
+    api.get<SubscriptionPlan[]>('/admin/subscription-plans'),
+
+  // Public endpoint (no auth required)
+  getActive: () =>
+    api.get<SubscriptionPlan[]>('/subscriptions/plans'),
+
+  create: (data: Partial<SubscriptionPlan>) =>
+    api.post<SubscriptionPlan>('/admin/subscription-plans', data),
+
+  update: (id: string, data: Partial<SubscriptionPlan>) =>
+    api.patch<SubscriptionPlan>(`/admin/subscription-plans/${id}`, data),
+
+  deactivate: (id: string) =>
+    api.delete(`/admin/subscription-plans/${id}`),
 };
 
 // Audit Logs
