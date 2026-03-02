@@ -5,6 +5,7 @@ import type { User, AuthState, LoginCredentials } from '@/types';
 interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: { firstName?: string; lastName?: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -21,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('accessToken');
-      
+
       if (!token) {
         setState(prev => ({ ...prev, isLoading: false }));
         return;
@@ -84,8 +85,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const updateProfile = async (data: { firstName?: string; lastName?: string }) => {
+    const response = await authApi.updateMe(data);
+    setState(prev => ({
+      ...prev,
+      user: response.data,
+    }));
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout }}>
+    <AuthContext.Provider value={{ ...state, login, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

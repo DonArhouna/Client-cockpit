@@ -24,6 +24,9 @@ export const authApi = {
 
   me: () =>
     api.get<User>('/users/me'),
+
+  updateMe: (data: { firstName?: string; lastName?: string }) =>
+    api.patch<User>('/users/me', data),
 };
 
 // Admin - Organizations
@@ -36,6 +39,9 @@ export const organizationsApi = {
 
   update: (id: string, data: Partial<Organization>) =>
     api.patch<Organization>(`/admin/organizations/${id}`, data),
+
+  delete: (id: string) =>
+    api.delete(`/admin/organizations/${id}`),
 
   createClient: (data: {
     organizationName: string;

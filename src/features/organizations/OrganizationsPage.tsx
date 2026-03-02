@@ -4,10 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Plus, Building2, Loader2, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CreateOrganizationModal } from './CreateOrganizationModal';
 import { EditOrganizationModal } from './EditOrganizationModal';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { useOrganizations } from '@/hooks/use-api';
+import { organizationsApi } from '@/api';
+import { useToast } from '@/hooks/use-toast';
 import { ColumnDef } from '@tanstack/react-table';
 import { Organization } from '@/types';
 import {
@@ -30,10 +34,32 @@ type StatusFilter = 'all' | 'active' | 'inactive';
 
 export function OrganizationsPage() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editOrg, setEditOrg] = useState<Organization | null>(null);
+  const [deleteOrg, setDeleteOrg] = useState<Organization | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const { data: organizations, isLoading, error } = useOrganizations();
+
+  const deleteMutation = useMutation({
+    mutationFn: (orgId: string) => organizationsApi.delete(orgId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      toast({
+        title: t('common.success'),
+        description: t('organizations.deleteSuccess'),
+      });
+      setDeleteOrg(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('common.error'),
+        description: error.response?.data?.message || t('organizations.deleteError'),
+        variant: 'destructive',
+      });
+    },
+  });
 
   const filteredOrganizations = (organizations || []).filter((org) => {
     if (statusFilter === 'all') return true;
@@ -99,6 +125,13 @@ export function OrganizationsPage() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setEditOrg(org)}>
                   {t('common.edit')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setDeleteOrg(org)}
+                >
+                  {t('common.delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -173,6 +206,19 @@ export function OrganizationsPage() {
           if (!open) setEditOrg(null);
         }}
         organization={editOrg}
+      />
+
+      <ConfirmDialog
+        open={deleteOrg !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteOrg(null);
+        }}
+        title={t('organizations.confirmDeleteTitle')}
+        description={t('organizations.confirmDeleteDesc', { name: deleteOrg?.name ?? '' })}
+        onConfirm={() => deleteOrg && deleteMutation.mutate(deleteOrg.id)}
+        isPending={deleteMutation.isPending}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
       />
     </div>
   );

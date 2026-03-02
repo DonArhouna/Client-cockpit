@@ -1,5 +1,44 @@
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
+
+// Human-readable labels and colors for each audit event type
+const EVENT_META: Record<string, { label: string; classes: string }> = {
+  user_login:               { label: 'Connexion',             classes: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  user_logout:              { label: 'Déconnexion',           classes: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+  user_created:             { label: 'Utilisateur créé',      classes: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+  user_updated:             { label: 'Utilisateur modifié',   classes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  user_deleted:             { label: 'Utilisateur supprimé',  classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  user_invited:             { label: 'Invitation envoyée',    classes: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
+  role_created:             { label: 'Rôle créé',             classes: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+  role_updated:             { label: 'Rôle modifié',          classes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  role_deleted:             { label: 'Rôle supprimé',         classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  organization_created:     { label: 'Organisation créée',    classes: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+  organization_updated:     { label: 'Organisation modifiée', classes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  agent_registered:         { label: 'Agent connecté',        classes: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  agent_token_generated:    { label: 'Token généré',          classes: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400' },
+  agent_token_regenerated:  { label: 'Token régénéré',        classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' },
+  agent_error:              { label: 'Erreur agent',          classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  password_reset_requested: { label: 'Reset MDP demandé',     classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' },
+  password_reset_completed: { label: 'MDP réinitialisé',      classes: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+};
+
+function EventBadge({ event }: { event: string }) {
+  const meta = EVENT_META[event];
+  if (!meta) {
+    // Fallback: format raw key (user_login → User Login)
+    const fallbackLabel = event.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    return (
+      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+        {fallbackLabel}
+      </span>
+    );
+  }
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.classes}`}>
+      {meta.label}
+    </span>
+  );
+}
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -122,7 +161,7 @@ export function AuditLogsPage() {
                           {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm')}
                         </TableCell>
                         <TableCell>
-                          <span className="font-medium text-sm">{log.event}</span>
+                          <EventBadge event={log.event} />
                         </TableCell>
                         <TableCell className="text-sm">
                           {log.user
@@ -155,15 +194,14 @@ export function AuditLogsPage() {
                     {t('auditLogs.page')} {currentPage + 1} {t('auditLogs.of')}{' '}
                     {totalPages}
                     {logsResponse?.meta?.total ? (
-                      <span className="ml-2">
-                        ({logsResponse.meta.total} entrées)
-                      </span>
+                      <span className="ml-2">({logsResponse.meta.total} entrées)</span>
                     ) : null}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
+                      className="h-8 w-8"
                       disabled={currentPage === 0}
                       onClick={() => goToPage(currentPage - 1)}
                     >
@@ -171,7 +209,8 @@ export function AuditLogsPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
+                      className="h-8 w-8"
                       disabled={!logsResponse?.meta?.hasMore}
                       onClick={() => goToPage(currentPage + 1)}
                     >

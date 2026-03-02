@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Shield, Plus, Loader2, MoreHorizontal } from 'lucide-react';
+import { Shield, Plus, Loader2, MoreHorizontal, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useRoles } from '@/hooks/use-api';
 import { rolesApi } from '@/api';
@@ -114,7 +114,15 @@ export function RolesPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {!role.isSystem && (
+                        {role.isSystem ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                            title="Les rôles système sont gérés par InsightSage et ne peuvent pas être modifiés"
+                          >
+                            <Lock className="h-3.5 w-3.5" />
+                            Protégé
+                          </span>
+                        ) : (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">

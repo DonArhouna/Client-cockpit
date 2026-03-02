@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useTheme } from '@/components/shared/ThemeProvider';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle }: HeaderProps) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
@@ -113,7 +115,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" data-testid="profile-menu-item">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => navigate('/profile')}
+                data-testid="profile-menu-item"
+              >
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profil</span>
               </DropdownMenuItem>

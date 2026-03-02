@@ -11,6 +11,26 @@ import {
 import { Download, X } from 'lucide-react';
 import type { AuditLogFilters as Filters } from '@/hooks/use-api';
 
+const EVENT_LABELS: Record<string, string> = {
+  user_login: 'Connexion',
+  user_logout: 'Déconnexion',
+  user_created: 'Utilisateur créé',
+  user_updated: 'Utilisateur modifié',
+  user_deleted: 'Utilisateur supprimé',
+  user_invited: 'Invitation envoyée',
+  role_created: 'Rôle créé',
+  role_updated: 'Rôle modifié',
+  role_deleted: 'Rôle supprimé',
+  organization_created: 'Organisation créée',
+  organization_updated: 'Organisation modifiée',
+  agent_registered: 'Agent connecté',
+  agent_token_generated: 'Token généré',
+  agent_token_regenerated: 'Token régénéré',
+  agent_error: 'Erreur agent',
+  password_reset_requested: 'Reset MDP demandé',
+  password_reset_completed: 'MDP réinitialisé',
+};
+
 interface AuditLogFiltersProps {
     filters: Filters;
     onFiltersChange: (filters: Filters) => void;
@@ -52,7 +72,7 @@ export function AuditLogFilters({
                     <SelectItem value="_all">{t('auditLogs.allEvents')}</SelectItem>
                     {eventTypes.map((et) => (
                         <SelectItem key={et.event} value={et.event}>
-                            {et.event}
+                            {EVENT_LABELS[et.event] ?? et.event}
                             <span className="ml-2 text-xs text-muted-foreground">
                                 ({et.count})
                             </span>

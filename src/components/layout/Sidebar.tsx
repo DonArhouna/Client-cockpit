@@ -1,16 +1,17 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  Building2, 
-  Users, 
-  Shield, 
-  Cpu, 
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  Shield,
+  Cpu,
   ScrollText,
   ChevronLeft,
   ChevronRight,
-  BarChart3
+  BarChart3,
+  HeartPulse,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/roles', icon: Shield, labelKey: 'nav.roles' },
   { path: '/agents', icon: Cpu, labelKey: 'nav.agents' },
   { path: '/audit-logs', icon: ScrollText, labelKey: 'nav.auditLogs' },
+  { path: '/health', icon: HeartPulse, labelKey: 'nav.health' },
 ];
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {

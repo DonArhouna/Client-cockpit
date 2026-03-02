@@ -8,6 +8,8 @@ import { UsersPage } from './features/users/UsersPage';
 import { RolesPage } from './features/roles/RolesPage';
 import { AgentsPage } from './features/agents/AgentsPage';
 import { AuditLogsPage } from './features/audit-logs/AuditLogsPage';
+import { HealthPage } from './features/health/HealthPage';
+import { ProfilePage } from './features/profile/ProfilePage';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -41,6 +43,8 @@ export default function App() {
                 <Route path="/roles" element={<RolesPage />} />
                 <Route path="/agents" element={<AgentsPage />} />
                 <Route path="/audit-logs" element={<AuditLogsPage />} />
+                <Route path="/health" element={<HealthPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
               </Routes>
             </MainLayout>
           </ProtectedRoute>
