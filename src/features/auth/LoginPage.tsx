@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
 import { Button } from '@/components/ui/button';
@@ -152,9 +152,9 @@ export function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between ml-1">
                   <Label htmlFor="password">{t('auth.password')}</Label>
-                  <Button variant="link" size="sm" className="px-0 h-auto text-xs font-medium text-primary hover:text-primary/80">
+                  <Link to="/forgot-password" title="Réinitialiser" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
                     Mot de passe oublié ?
-                  </Button>
+                  </Link>
                 </div>
                 <Input
                   id="password"

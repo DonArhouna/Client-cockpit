@@ -28,6 +28,12 @@ export const authApi = {
 
   updateMe: (data: { firstName?: string; lastName?: string }) =>
     api.patch<User>('/users/me', data),
+
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }),
+
+  resetPassword: (data: any) =>
+    api.post('/auth/reset-password', data),
 };
 
 // Admin - Organizations
