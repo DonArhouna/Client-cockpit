@@ -27,15 +27,25 @@ class SageDatabase:
     
     def _build_connection_string(self) -> str:
         """Build ODBC connection string"""
-        return (
-            f"DRIVER={{{self.config.driver}}};"
-            f"SERVER={self.config.host},{self.config.port};"
+        conn_str_parts = [
+            f"DRIVER={{{self.config.driver}}};",
+            f"SERVER={self.config.host},{self.config.port};",
             f"DATABASE={self.config.database};"
-            f"UID={self.config.username};"
-            f"PWD={self.config.password};"
-            f"TrustServerCertificate=yes;"
+        ]
+
+        if self.config.trusted_connection:
+            conn_str_parts.append("Trusted_Connection=yes;")
+        else:
+            conn_str_parts.append(f"UID={self.config.username};")
+            conn_str_parts.append(f"PWD={self.config.password};")
+        
+        conn_str_parts.extend([
+            f"TrustServerCertificate=yes;",
+            f"Encrypt=no;",
             f"Connection Timeout={self.timeout};"
-        )
+        ])
+        
+        return "".join(conn_str_parts)
     
     @contextmanager
     def get_connection(self):

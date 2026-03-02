@@ -14,8 +14,9 @@ class SageConfig(BaseModel):
     host: str = "localhost"
     port: int = 1433
     database: str
-    username: str
-    password: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    trusted_connection: bool = False
     driver: str = "ODBC Driver 17 for SQL Server"
     type: str = "100"  # "X3" or "100"
     version: str = "v12"
