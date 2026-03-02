@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -98,7 +99,14 @@ export function AgentsPage() {
                 <TableBody>
                   {agents?.map((agent) => (
                     <TableRow key={agent.id}>
-                      <TableCell className="font-medium">{agent.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link 
+                          to={`/agents/${agent.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {agent.name}
+                        </Link>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Circle className={`h-2 w-2 ${getStatusColor(agent.status)}`} />

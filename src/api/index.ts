@@ -64,7 +64,7 @@ export const usersApi = {
     api.get<User[]>('/admin/users'),
 
   getById: (id: string) =>
-    api.get<User>(`/users/${id}`),
+    api.get<User>(`/admin/users/${id}`),
 
   update: (id: string, data: Partial<User> & { isActive?: boolean }) =>
     api.patch<User>(`/admin/users/${id}`, data),
@@ -80,6 +80,9 @@ export const usersApi = {
 export const rolesApi = {
   getAll: () =>
     api.get<Role[]>('/roles'),
+
+  getById: (id: string) =>
+    api.get<Role>(`/roles/${id}`),
 
   getPermissions: () =>
     api.get<Permission[]>('/roles/permissions'),
@@ -127,6 +130,9 @@ export const subscriptionPlansApi = {
 
   update: (id: string, data: Partial<SubscriptionPlan>) =>
     api.patch<SubscriptionPlan>(`/admin/subscription-plans/${id}`, data),
+
+  getById: (id: string) =>
+    api.get<SubscriptionPlan>(`/admin/subscription-plans/${id}`),
 
   deactivate: (id: string) =>
     api.delete(`/admin/subscription-plans/${id}`),

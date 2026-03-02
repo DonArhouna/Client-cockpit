@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, CreditCard, Loader2, MoreHorizontal } from 'lucide-react';
@@ -78,7 +79,12 @@ export function SubscriptionPlansPage() {
         const plan = row.original;
         return (
           <div className="flex items-center gap-2">
-            <span className="font-medium">{plan.label}</span>
+            <Link 
+              to={`/subscription-plans/${plan.id}`}
+              className="font-medium text-primary hover:underline"
+            >
+              {plan.label}
+            </Link>
             {!plan.isActive && (
               <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                 {t('subscriptionPlans.inactive')}

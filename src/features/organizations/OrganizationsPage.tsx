@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Building2, Loader2, MoreHorizontal } from 'lucide-react';
@@ -71,7 +72,14 @@ export function OrganizationsPage() {
     {
       accessorKey: 'name',
       header: 'Nom',
-      cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
+      cell: ({ row }) => (
+        <Link 
+          to={`/organizations/${row.original.id}`}
+          className="font-medium text-primary hover:underline"
+        >
+          {row.getValue('name')}
+        </Link>
+      ),
     },
     {
       accessorKey: 'id',

@@ -20,6 +20,17 @@ export function useOrganizations() {
     });
 }
 
+export function useOrganization(id: string) {
+    return useQuery({
+        queryKey: ['organizations', id],
+        queryFn: async () => {
+            const resp = await organizationsApi.getById(id);
+            return resp.data;
+        },
+        enabled: !!id,
+    });
+}
+
 export function useAdminUsers() {
     return useQuery({
         queryKey: ['admin-users'],
@@ -30,6 +41,17 @@ export function useAdminUsers() {
     });
 }
 
+export function useAdminUser(id: string) {
+    return useQuery({
+        queryKey: ['admin-users', id],
+        queryFn: async () => {
+            const resp = await usersApi.getById(id);
+            return resp.data;
+        },
+        enabled: !!id,
+    });
+}
+
 export function useRoles() {
     return useQuery({
         queryKey: ['roles'],
@@ -37,6 +59,17 @@ export function useRoles() {
             const resp = await rolesApi.getAll();
             return resp.data;
         },
+    });
+}
+
+export function useRole(id: string) {
+    return useQuery({
+        queryKey: ['roles', id],
+        queryFn: async () => {
+            const resp = await rolesApi.getById(id);
+            return resp.data;
+        },
+        enabled: !!id,
     });
 }
 
@@ -60,6 +93,17 @@ export function useAgents() {
         },
         refetchInterval: 30 * 1000,
         refetchIntervalInBackground: false,
+    });
+}
+
+export function useAgent(id: string) {
+    return useQuery({
+        queryKey: ['agents', id],
+        queryFn: async () => {
+            const resp = await agentsApi.getById(id);
+            return resp.data;
+        },
+        enabled: !!id,
     });
 }
 
@@ -112,6 +156,17 @@ export function useSubscriptionPlans() {
             return resp.data;
         },
         staleTime: 5 * 60 * 1000,
+    });
+}
+
+export function useSubscriptionPlan(id: string) {
+    return useQuery({
+        queryKey: ['subscription-plans', id],
+        queryFn: async () => {
+            const resp = await subscriptionPlansApi.getById(id);
+            return resp.data;
+        },
+        enabled: !!id,
     });
 }
 

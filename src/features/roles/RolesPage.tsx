@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -97,7 +98,12 @@ export function RolesPage() {
                   {roles?.map((role) => (
                     <TableRow key={role.id}>
                       <TableCell className="font-medium uppercase">
-                        {role.name}
+                        <Link 
+                          to={`/roles/${role.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {role.name}
+                        </Link>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {role.description || t('roles.noDescription')}

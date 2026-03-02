@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,12 @@ export function UsersPage() {
       header: 'Utilisateur',
       cell: ({ row }) => (
         <div className="font-medium">
-          {row.original.firstName} {row.original.lastName}
+          <Link 
+            to={`/users/${row.original.id}`}
+            className="text-primary hover:underline"
+          >
+            {row.original.firstName} {row.original.lastName}
+          </Link>
         </div>
       ),
     },
