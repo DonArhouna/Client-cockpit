@@ -73,14 +73,15 @@ class HeartbeatService:
                 self.error_count += 1
                 return
         
-        url = f"{self.backend_url}/api/agent/heartbeat"
+        url = f"{self.backend_url}/api/agents/heartbeat"
         
         payload = {
             "organizationId": self.organization_id,
             "agentToken": self.agent_token,
             "agentVersion": "1.0.0",
             "status": "online",
-            "errorCount": self.error_count
+            "errorCount": self.error_count,
+            "lastError": None
         }
         
         try:
