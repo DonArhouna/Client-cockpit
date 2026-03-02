@@ -12,6 +12,7 @@ import { useAdminUsers } from '@/hooks/use-api';
 import { DataTable } from '@/components/shared/DataTable';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { InviteUserModal } from './InviteUserModal';
+import { CreateUserModal } from './CreateUserModal';
 import { EditUserModal } from './EditUserModal';
 import { ColumnDef } from '@tanstack/react-table';
 import { User } from '@/types';
@@ -31,6 +32,7 @@ export function UsersPage() {
   const { toast } = useToast();
 
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
 
@@ -135,10 +137,16 @@ export function UsersPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t('users.title')}</h1>
           <p className="text-muted-foreground">{t('users.subtitle')}</p>
         </div>
-        <Button onClick={() => setInviteOpen(true)} data-testid="invite-user-btn">
-          <UserPlus className="h-4 w-4 mr-2" />
-          {t('users.invite')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setInviteOpen(true)} data-testid="invite-user-btn">
+            <UserPlus className="h-4 w-4 mr-2" />
+            {t('users.invite')}
+          </Button>
+          <Button onClick={() => setCreateOpen(true)} data-testid="create-user-btn">
+            <UserPlus className="h-4 w-4 mr-2" />
+            {t('users.create')}
+          </Button>
+        </div>
       </div>
 
       {/* Users list */}
@@ -166,6 +174,7 @@ export function UsersPage() {
       </Card>
 
       <InviteUserModal open={inviteOpen} onOpenChange={setInviteOpen} />
+      <CreateUserModal open={createOpen} onOpenChange={setCreateOpen} />
 
       <EditUserModal
         open={editUser !== null}

@@ -63,6 +63,9 @@ export const usersApi = {
   getAll: () =>
     api.get<User[]>('/admin/users'),
 
+  create: (data: any) =>
+    api.post<User>('/admin/users', data),
+
   getById: (id: string) =>
     api.get<User>(`/admin/users/${id}`),
 
