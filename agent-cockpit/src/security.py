@@ -2,6 +2,9 @@
 
 import re
 from typing import Tuple, List, Set
+import sqlparse
+from sqlparse.sql import IdentifierList, Identifier, Where
+from sqlparse.tokens import Keyword, DML, Punctuation
 from loguru import logger
 
 
@@ -11,26 +14,20 @@ class SQLSecurityError(Exception):
 
 
 class SQLValidator:
-    """Validates and sanitizes SQL queries for security"""
+    """Validates and sanitizes SQL queries for security using sqlparse"""
     
     # Forbidden SQL keywords (write operations)
     FORBIDDEN_KEYWORDS = {
         "INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE",
         "TRUNCATE", "EXEC", "EXECUTE", "GRANT", "REVOKE",
         "MERGE", "CALL", "BULK", "OPENROWSET", "OPENDATASOURCE",
-        "XP_", "SP_", "--", ";", "/*"
+        "XP_", "SP_"
     }
-    
-    # Pattern to extract table names from SQL
-    TABLE_PATTERN = re.compile(
-        r"\bFROM\s+([\w\.\[\]]+)|\bJOIN\s+([\w\.\[\]]+)",
-        re.IGNORECASE
-    )
     
     def __init__(self, allowed_tables: List[str], max_rows: int = 1000):
         self.allowed_tables = {t.upper() for t in allowed_tables}
         self.max_rows = max_rows
-        logger.info(f"SQLValidator initialized with {len(allowed_tables)} allowed tables")
+        logger.info(f"SQLValidator initialized with {len(allowed_tables)} allowed tables (sqlparse version)")
     
     def validate(self, sql: str) -> Tuple[bool, str]:
         """
@@ -42,56 +39,105 @@ class SQLValidator:
         if not sql or not sql.strip():
             return False, "Empty SQL query"
         
-        sql_upper = sql.upper().strip()
-        
-        # 1. Must start with SELECT
-        if not sql_upper.startswith("SELECT"):
-            logger.warning(f"Blocked non-SELECT query: {sql[:50]}...")
-            return False, "Only SELECT queries are allowed"
-        
-        # 2. Check for forbidden keywords
-        for keyword in self.FORBIDDEN_KEYWORDS:
-            if keyword in sql_upper:
-                logger.warning(f"Blocked query with forbidden keyword '{keyword}'")
-                return False, f"Forbidden keyword detected: {keyword}"
-        
-        # 3. Check for multiple statements (;)
-        if ";" in sql and not sql.strip().endswith(";"):
-            logger.warning("Blocked query with multiple statements")
-            return False, "Multiple SQL statements are not allowed"
-        
-        # 4. Extract and validate table names
-        tables = self._extract_tables(sql)
-        invalid_tables = tables - self.allowed_tables
-        if invalid_tables:
-            logger.warning(f"Blocked query with unauthorized tables: {invalid_tables}")
-            return False, f"Unauthorized tables: {', '.join(invalid_tables)}"
-        
-        # 5. Add TOP clause if not present
-        sanitized_sql = self._ensure_top_clause(sql)
-        
-        logger.debug(f"Query validated successfully")
-        return True, sanitized_sql
+        try:
+            # Parse the SQL
+            parsed = sqlparse.parse(sql)
+            if not parsed:
+                return False, "Failed to parse SQL"
+            
+            # We only allow one statement
+            if len(parsed) > 1:
+                logger.warning("Blocked query with multiple statements")
+                return False, "Multiple SQL statements are not allowed"
+            
+            stmt = parsed[0]
+            
+            # 1. Must be a DML query and start with SELECT
+            if stmt.get_type() != 'SELECT':
+                logger.warning(f"Blocked non-SELECT query: {stmt.get_type()}")
+                return False, "Only SELECT queries are allowed"
+            
+            # 2. Check for forbidden keywords in tokens
+            for token in stmt.flatten():
+                if token.ttype in Keyword or token.ttype is DML:
+                    value = token.value.upper()
+                    if value in self.FORBIDDEN_KEYWORDS:
+                        logger.warning(f"Blocked query with forbidden keyword '{value}'")
+                        return False, f"Forbidden keyword detected: {value}"
+                
+                # Check for comments
+                if token.ttype in sqlparse.tokens.Comment:
+                    logger.warning("Blocked query with comments")
+                    return False, "SQL comments are not allowed"
+            
+            # 3. Extract and validate table names
+            tables = self._extract_tables(stmt)
+            invalid_tables = tables - self.allowed_tables
+            if invalid_tables:
+                logger.warning(f"Blocked query with unauthorized tables: {invalid_tables}")
+                return False, f"Unauthorized tables: {', '.join(invalid_tables)}"
+            
+            # 4. Add TOP clause if not present (Enforce max rows)
+            sanitized_sql = self._ensure_top_clause(sql)
+            
+            logger.debug(f"Query validated successfully using AST")
+            return True, sanitized_sql
+            
+        except Exception as e:
+            logger.error(f"SQL Validation error: {e}")
+            return False, f"SQL Validation error: {str(e)}"
     
-    def _extract_tables(self, sql: str) -> Set[str]:
-        """Extract table names from SQL query"""
+    def _extract_tables(self, stmt) -> Set[str]:
+        """Extract table names from sqlparse statement"""
         tables = set()
-        matches = self.TABLE_PATTERN.findall(sql)
+        from_seen = False
         
-        for match in matches:
-            for table in match:
-                if table:
-                    # Clean table name (remove brackets, schema prefix)
-                    clean_name = table.replace("[", "").replace("]", "")
-                    # Remove schema prefix if present (e.g., dbo.F_COMPTET -> F_COMPTET)
-                    if "." in clean_name:
-                        clean_name = clean_name.split(".")[-1]
-                    tables.add(clean_name.upper())
-        
-        return tables
+        for token in stmt.tokens:
+            if from_seen:
+                if isinstance(token, IdentifierList):
+                    for identifier in token.get_identifiers():
+                        tables.add(self._clean_table_name(identifier))
+                elif isinstance(token, Identifier):
+                    tables.add(self._clean_table_name(token))
+                elif token.ttype is Keyword and token.value.upper() in ["JOIN", "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN"]:
+                    # Keep looking for next identifier
+                    continue
+                elif token.ttype is Keyword:
+                    # End of FROM clause tables
+                    from_seen = False
+            
+            if token.ttype is Keyword and token.value.upper() == "FROM":
+                from_seen = True
+            
+            # Also catch JOINs specifically if they are not part of IdentifierList
+            if token.ttype is Keyword and "JOIN" in token.value.upper():
+                # The next identifier should be the table
+                pass # Handled by Identifier check in main loop
+                
+        # Fallback for complex JOINs
+        if not tables:
+            # Simple regex fallback if AST extraction is too shallow for nested joins
+            # But let's try to be thorough with AST first.
+            # Identifier extraction also works for JOINs if we iterate
+            for token in stmt.flatten():
+                if isinstance(token.parent, Identifier):
+                    # Check if grandparent is a FROM or JOIN sibling
+                    p = token.parent
+                    tables.add(self._clean_table_name(p))
+                    
+        return {t for t in tables if t}
     
+    def _clean_table_name(self, identifier: Identifier) -> str:
+        """Clean table name from identifier"""
+        name = identifier.get_real_name()
+        if name:
+            # Remove brackets and quotes
+            name = name.replace("[", "").replace("]", "").replace('"', '').replace("'", "")
+            return name.upper()
+        return ""
+
     def _ensure_top_clause(self, sql: str) -> str:
-        """Add TOP clause if not present to limit results"""
+        """Add/Modify TOP clause to limit results (using regex for final injection)"""
         sql_upper = sql.upper()
         
         # Check if TOP already exists

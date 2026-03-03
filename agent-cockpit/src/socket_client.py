@@ -19,9 +19,9 @@ class SocketClient:
         self.database = database
         self.sio = socketio.AsyncClient(
             reconnection=True,
-            reconnection_attempts=0,
-            reconnection_delay=1,
-            reconnection_delay_max=5
+            reconnection_attempts=0, # Infinite attempts
+            reconnection_delay=2,    # Start with 2s
+            reconnection_delay_max=30 # Max 30s backoff
         )
         self.is_connected = False
         self.org_id = None
