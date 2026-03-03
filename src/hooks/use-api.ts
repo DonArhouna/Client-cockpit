@@ -7,6 +7,9 @@ import {
     auditLogsApi,
     adminApi,
     subscriptionPlansApi,
+    kpiDefinitionsApi,
+    widgetTemplatesApi,
+    kpiPacksApi,
 } from '@/api';
 import { Agent } from '@/types';
 
@@ -167,6 +170,51 @@ export function useSubscriptionPlan(id: string) {
             return resp.data;
         },
         enabled: !!id,
+    });
+}
+
+// KPI Store hooks
+export function useKpiDefinitions() {
+    return useQuery({
+        queryKey: ['kpi-definitions'],
+        queryFn: async () => {
+            const resp = await kpiDefinitionsApi.getAll();
+            return resp.data;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+export function useWidgetTemplates() {
+    return useQuery({
+        queryKey: ['widget-templates'],
+        queryFn: async () => {
+            const resp = await widgetTemplatesApi.getAll();
+            return resp.data;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+export function useWidgetTemplate(id: string) {
+    return useQuery({
+        queryKey: ['widget-templates', id],
+        queryFn: async () => {
+            const resp = await widgetTemplatesApi.getById(id);
+            return resp.data;
+        },
+        enabled: !!id,
+    });
+}
+
+export function useKpiPacks() {
+    return useQuery({
+        queryKey: ['kpi-packs'],
+        queryFn: async () => {
+            const resp = await kpiPacksApi.getAll();
+            return resp.data;
+        },
+        staleTime: 5 * 60 * 1000,
     });
 }
 

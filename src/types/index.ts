@@ -126,6 +126,40 @@ export interface AuditLog {
   createdAt: string;
 }
 
+// KPI Store types
+export interface KpiDefinition {
+  id: string;
+  key: string;
+  name: string;
+  description?: string;
+  unit?: string;
+  category: string;
+  defaultVizType: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface WidgetTemplate {
+  id: string;
+  name: string;
+  vizType: string;
+  description?: string;
+  defaultConfig: Record<string, unknown>;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface KpiPack {
+  id: string;
+  name: string;
+  label: string;
+  profile: string;
+  kpiKeys: string[];
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 // API Response types
 export interface PaginatedResponse<T> {
   data: T[];

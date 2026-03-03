@@ -12,6 +12,7 @@ import {
   ChevronRight,
   HeartPulse,
   CreditCard,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/users', icon: Users, labelKey: 'nav.users' },
   { path: '/roles', icon: Shield, labelKey: 'nav.roles' },
   { path: '/subscription-plans', icon: CreditCard, labelKey: 'nav.subscriptionPlans' },
+  { path: '/kpi-store', icon: BarChart3, labelKey: 'nav.kpiStore' },
   { path: '/agents', icon: Cpu, labelKey: 'nav.agents' },
   { path: '/audit-logs', icon: ScrollText, labelKey: 'nav.auditLogs' },
   { path: '/health', icon: HeartPulse, labelKey: 'nav.health' },

@@ -10,6 +10,9 @@ import type {
   AuthResponse,
   PaginatedResponse,
   SubscriptionPlan,
+  KpiDefinition,
+  WidgetTemplate,
+  KpiPack,
 } from '@/types';
 
 // Auth
@@ -145,6 +148,54 @@ export const subscriptionPlansApi = {
 
   deactivate: (id: string) =>
     api.delete(`/admin/subscription-plans/${id}`),
+};
+
+// KPI Store - KPI Definitions
+export const kpiDefinitionsApi = {
+  getAll: () =>
+    api.get<KpiDefinition[]>('/admin/kpi-definitions'),
+
+  create: (data: Omit<KpiDefinition, 'id' | 'isActive' | 'createdAt'>) =>
+    api.post<KpiDefinition>('/admin/kpi-definitions', data),
+
+  update: (id: string, data: Partial<Omit<KpiDefinition, 'id' | 'createdAt'>>) =>
+    api.patch<KpiDefinition>(`/admin/kpi-definitions/${id}`, data),
+
+  toggle: (id: string) =>
+    api.delete<KpiDefinition>(`/admin/kpi-definitions/${id}`),
+};
+
+// KPI Store - Widget Templates
+export const widgetTemplatesApi = {
+  getAll: () =>
+    api.get<WidgetTemplate[]>('/admin/widget-templates'),
+
+  getById: (id: string) =>
+    api.get<WidgetTemplate>(`/admin/widget-templates/${id}`),
+
+  create: (data: Omit<WidgetTemplate, 'id' | 'isActive' | 'createdAt'>) =>
+    api.post<WidgetTemplate>('/admin/widget-templates', data),
+
+  update: (id: string, data: Partial<Omit<WidgetTemplate, 'id' | 'createdAt'>>) =>
+    api.patch<WidgetTemplate>(`/admin/widget-templates/${id}`, data),
+
+  toggle: (id: string) =>
+    api.delete<WidgetTemplate>(`/admin/widget-templates/${id}`),
+};
+
+// KPI Store - KPI Packs
+export const kpiPacksApi = {
+  getAll: () =>
+    api.get<KpiPack[]>('/admin/kpi-packs'),
+
+  create: (data: Omit<KpiPack, 'id' | 'isActive' | 'createdAt'>) =>
+    api.post<KpiPack>('/admin/kpi-packs', data),
+
+  update: (id: string, data: Partial<Omit<KpiPack, 'id' | 'createdAt'>>) =>
+    api.patch<KpiPack>(`/admin/kpi-packs/${id}`, data),
+
+  toggle: (id: string) =>
+    api.delete<KpiPack>(`/admin/kpi-packs/${id}`),
 };
 
 // Audit Logs

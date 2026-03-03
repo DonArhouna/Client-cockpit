@@ -18,6 +18,8 @@ import { HealthPage } from './features/health/HealthPage';
 import { ProfilePage } from './features/profile/ProfilePage';
 import { SubscriptionPlansPage } from './features/subscriptions/SubscriptionPlansPage';
 import { SubscriptionPlanDetailPage } from './features/subscriptions/SubscriptionPlanDetailPage';
+import { KpiStorePage } from './features/kpi-store/KpiStorePage';
+import { WidgetTemplateDetailPage } from './features/kpi-store/WidgetTemplateDetailPage';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -61,6 +63,8 @@ export default function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
                 <Route path="/subscription-plans/:id" element={<SubscriptionPlanDetailPage />} />
+                <Route path="/kpi-store" element={<KpiStorePage />} />
+                <Route path="/kpi-store/widget-templates/:id" element={<WidgetTemplateDetailPage />} />
               </Routes>
             </MainLayout>
           </ProtectedRoute>

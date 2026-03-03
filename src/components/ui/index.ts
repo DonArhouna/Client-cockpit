@@ -16,3 +16,4 @@ export * from './select';
 export * from './checkbox';
 export * from './alert-dialog';
 export * from './switch';
+export * from './tabs';
