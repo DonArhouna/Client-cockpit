@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -33,21 +34,30 @@ import { useTranslation } from 'react-i18next';
 import { Loader2, UserPlus } from 'lucide-react';
 import { useOrganizations, useRoles } from '@/hooks/use-api';
 
-const formSchema = z.object({
-    email: z.string().email('Email invalide'),
-    role: z.string().min(1, 'Le rôle est requis'),
-    organizationId: z.string().min(1, "L'organisation est requise"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+interface FormValues {
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    organizationId: string;
+}
 
 interface InviteUserModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    defaultOrganizationId?: string;
 }
 
-export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
+export function InviteUserModal({ open, onOpenChange, defaultOrganizationId }: InviteUserModalProps) {
     const { t } = useTranslation();
+
+    const formSchema = z.object({
+        email: z.string().email(t('users.valEmail')),
+        firstName: z.string().min(1, t('users.valFirstName')),
+        lastName: z.string().min(1, t('users.valLastName')),
+        role: z.string().min(1, t('users.valRole')),
+        organizationId: z.string().min(1, t('users.valOrg')),
+    });
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const { data: organizations } = useOrganizations();
@@ -55,13 +65,27 @@ export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues: { email: '', role: '', organizationId: '' },
+        defaultValues: {
+            email: '',
+            firstName: '',
+            lastName: '',
+            role: '',
+            organizationId: defaultOrganizationId || ''
+        },
     });
+
+    // Update form when defaultOrganizationId changes
+    useEffect(() => {
+        if (open && defaultOrganizationId) {
+            form.setValue('organizationId', defaultOrganizationId);
+        }
+    }, [open, defaultOrganizationId, form]);
 
     const mutation = useMutation({
         mutationFn: (values: FormValues) => usersApi.invite(values),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+            queryClient.invalidateQueries({ queryKey: ['organizations'] }); // Invalidate org details too
             toast({
                 title: t('common.success'),
                 description: t('users.inviteSuccess'),
@@ -95,6 +119,35 @@ export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
                         onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
                         className="space-y-4"
                     >
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="firstName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Prénom</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Jean" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="lastName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Nom</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Dupont" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
                         <FormField
                             control={form.control}
                             name="email"
@@ -113,30 +166,32 @@ export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name="organizationId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t('users.inviteOrg')}</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Sélectionner une organisation" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {organizations?.map((org) => (
-                                                <SelectItem key={org.id} value={org.id}>
-                                                    {org.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        {!defaultOrganizationId && (
+                            <FormField
+                                control={form.control}
+                                name="organizationId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>{t('users.inviteOrg')}</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Sélectionner une organisation" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {organizations?.map((org) => (
+                                                    <SelectItem key={org.id} value={org.id}>
+                                                        {org.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         <FormField
                             control={form.control}

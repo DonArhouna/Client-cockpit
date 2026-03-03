@@ -32,16 +32,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Loader2, UserPlus } from 'lucide-react';
 import { useOrganizations, useRoles } from '@/hooks/use-api';
-const formSchema = z.object({
-    firstName: z.string().min(2, 'Le prénom est requis'),
-    lastName: z.string().min(2, 'Le nom est requis'),
-    email: z.string().email('Email invalide'),
-    password: z.string().min(8, 'Le mot de passe doit faire au moins 8 caractères'),
-    organizationId: z.string().min(1, "L'organisation est requise"),
-    roleId: z.string().min(1, 'Le rôle est requis'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+interface FormValues {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    organizationId: string;
+    roleId: string;
+}
 
 interface CreateUserModalProps {
     open: boolean;
@@ -50,6 +48,16 @@ interface CreateUserModalProps {
 
 export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
     const { t } = useTranslation();
+
+    const formSchema = z.object({
+        firstName: z.string().min(2, t('users.valFirstName')),
+        lastName: z.string().min(2, t('users.valLastName')),
+        email: z.string().email(t('users.valEmail')),
+        password: z.string().min(8, t('users.valPassword')),
+        organizationId: z.string().min(1, t('users.valOrg')),
+        roleId: z.string().min(1, t('users.valRole')),
+    });
+
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const { data: organizations } = useOrganizations();
@@ -76,7 +84,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
             queryClient.invalidateQueries({ queryKey: ['admin-users'] });
             toast({
                 title: t('common.success'),
-                description: t('users.createSuccess') || 'Utilisateur créé avec succès',
+                description: t('users.createSuccess'),
             });
             form.reset();
             onOpenChange(false);
@@ -84,7 +92,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
         onError: (error: any) => {
             toast({
                 title: t('common.error'),
-                description: error.response?.data?.message || t('users.createError') || 'Erreur lors de la création',
+                description: error.response?.data?.message || t('users.createError'),
                 variant: 'destructive',
             });
         },
@@ -99,7 +107,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                         {t('users.create')}
                     </DialogTitle>
                     <DialogDescription>
-                        Créez un utilisateur directement sans passer par une invitation.
+                        {t('users.createSubtitle')}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -113,7 +121,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                                 name="firstName"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Prénom</FormLabel>
+                                        <FormLabel>{t('users.firstName')}</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Jean" {...field} />
                                         </FormControl>
@@ -126,7 +134,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                                 name="lastName"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Nom</FormLabel>
+                                        <FormLabel>{t('users.lastName')}</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Dupont" {...field} />
                                         </FormControl>
@@ -159,7 +167,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                             name="password"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Mot de passe temporaire</FormLabel>
+                                    <FormLabel>{t('users.tempPassword')}</FormLabel>
                                     <FormControl>
                                         <Input
                                             type="password"
@@ -181,7 +189,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Sélectionner une organisation" />
+                                                <SelectValue placeholder={t('users.selectOrg')} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -202,11 +210,11 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                             name="roleId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Rôle</FormLabel>
+                                    <FormLabel>{t('users.role')}</FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Sélectionner un rôle" />
+                                                <SelectValue placeholder={t('users.selectRole')} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -234,7 +242,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                                 {mutation.isPending && (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 )}
-                                Créer l'utilisateur
+                                {t('users.createUserBtn')}
                             </Button>
                         </DialogFooter>
                     </form>

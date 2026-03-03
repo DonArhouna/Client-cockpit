@@ -28,14 +28,12 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import type { User } from '@/types';
 
-const formSchema = z.object({
-    firstName: z.string().min(1, 'Le prénom est requis'),
-    lastName: z.string().min(1, 'Le nom est requis'),
-    email: z.string().email('Email invalide'),
-    isActive: z.boolean(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+interface FormValues {
+    firstName: string;
+    lastName: string;
+    email: string;
+    isActive: boolean;
+}
 
 interface EditUserModalProps {
     open: boolean;
@@ -45,6 +43,13 @@ interface EditUserModalProps {
 
 export function EditUserModal({ open, onOpenChange, user }: EditUserModalProps) {
     const { t } = useTranslation();
+
+    const formSchema = z.object({
+        firstName: z.string().min(1, t('users.valFirstName')),
+        lastName: z.string().min(1, t('users.valLastName')),
+        email: z.string().email(t('users.valEmail')),
+        isActive: z.boolean(),
+    });
     const queryClient = useQueryClient();
     const { toast } = useToast();
 

@@ -4,11 +4,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, UserPlus, MoreHorizontal } from 'lucide-react';
+import { Users, UserPlus, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { usersApi } from '@/api';
-import { useAdminUsers } from '@/hooks/use-api';
+import { useAdminUsers, useOrganizations, useRoles } from '@/hooks/use-api';
 import { DataTable } from '@/components/shared/DataTable';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { InviteUserModal } from './InviteUserModal';
@@ -16,6 +16,13 @@ import { CreateUserModal } from './CreateUserModal';
 import { EditUserModal } from './EditUserModal';
 import { ColumnDef } from '@tanstack/react-table';
 import { User } from '@/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,8 +42,25 @@ export function UsersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [orgFilter, setOrgFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
 
   const { data: users, isLoading, error } = useAdminUsers();
+  const { data: organizations } = useOrganizations();
+  const { data: roles } = useRoles();
+
+  const filteredUsers = (users || []).filter((user) => {
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' ? user.isActive : !user.isActive);
+    const matchesOrg = orgFilter === 'all' || user.organizationId === orgFilter;
+    const matchesRole =
+      roleFilter === 'all' ||
+      user.userRoles?.some((ur) => ur.role?.name === roleFilter);
+
+    return matchesStatus && matchesOrg && matchesRole;
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (userId: string) => usersApi.delete(userId),
@@ -60,10 +84,10 @@ export function UsersPage() {
   const columns: ColumnDef<User>[] = [
     {
       accessorKey: 'firstName',
-      header: 'Utilisateur',
+      header: t('users.columnUser'),
       cell: ({ row }) => (
         <div className="font-medium">
-          <Link 
+          <Link
             to={`/users/${row.original.id}`}
             className="text-primary hover:underline"
           >
@@ -80,6 +104,26 @@ export function UsersPage() {
       accessorKey: 'organization',
       header: t('users.organization'),
       cell: ({ row }) => row.original.organization?.name || 'N/A',
+    },
+    {
+      id: 'roles',
+      header: t('users.role'),
+      cell: ({ row }) => {
+        const roles = row.original.userRoles?.map(ur => ur.role?.name).filter(Boolean) || [];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {roles.length > 0 ? (
+              roles.map(role => (
+                <Badge key={role} variant="outline" className="capitalize">
+                  {role}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-muted-foreground text-xs italic">{t('users.noRole')}</span>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'isActive',
@@ -105,7 +149,7 @@ export function UsersPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Ouvrir menu</span>
+                  <span className="sr-only">{t('common.actions')}</span>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -157,21 +201,83 @@ export function UsersPage() {
             {t('users.listTitle')}
           </CardTitle>
           <CardDescription>{t('users.listSubtitle')}</CardDescription>
+
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <div className="w-[180px]">
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+                <SelectTrigger className="text-left">
+                  <SelectValue placeholder={t('common.status')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('users.filterStatus')}</SelectItem>
+                  <SelectItem value="active">{t('users.filterActive')}</SelectItem>
+                  <SelectItem value="inactive">{t('users.filterInactive')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-[220px]">
+              <Select value={orgFilter} onValueChange={setOrgFilter}>
+                <SelectTrigger className="text-left">
+                  <SelectValue placeholder={t('users.organization')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('users.filterOrg')}</SelectItem>
+                  {organizations?.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-[180px]">
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="text-left">
+                  <SelectValue placeholder={t('users.role')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('users.filterRole')}</SelectItem>
+                  {roles?.map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      <span className="capitalize">{role.name}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(statusFilter !== 'all' || orgFilter !== 'all' || roleFilter !== 'all') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setStatusFilter('all');
+                  setOrgFilter('all');
+                  setRoleFilter('all');
+                }}
+              >
+                {t('users.resetFilters')}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="h-[400px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <DataTable
+            columns={columns}
+            data={filteredUsers}
+            searchKey="firstName"
+            searchPlaceholder={t('users.searchPlaceholder')}
+            isLoading={isLoading}
+          />
+          {error && (
+            <div className="mt-4 p-4 text-center text-destructive bg-destructive/10 rounded-md">
+              {t('common.error')}
             </div>
-          ) : error ? (
-            <div className="h-[400px] flex items-center justify-center text-destructive">
-              Erreur lors du chargement des utilisateurs
-            </div>
-          ) : (
-            <DataTable columns={columns} data={users || []} searchKey="firstName" />
           )}
         </CardContent>
-      </Card>
+      </Card >
 
       <InviteUserModal open={inviteOpen} onOpenChange={setInviteOpen} />
       <CreateUserModal open={createOpen} onOpenChange={setCreateOpen} />
@@ -196,6 +302,6 @@ export function UsersPage() {
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
       />
-    </div>
+    </div >
   );
 }

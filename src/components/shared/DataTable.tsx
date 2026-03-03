@@ -29,18 +29,24 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react"
+import { useTranslation } from 'react-i18next'
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
     searchKey?: string
+    searchPlaceholder?: string
+    isLoading?: boolean
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
     searchKey,
+    searchPlaceholder,
+    isLoading,
 }: DataTableProps<TData, TValue>) {
+    const { t } = useTranslation()
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
         []
@@ -74,7 +80,7 @@ export function DataTable<TData, TValue>({
                 <div className="flex flex-1 items-center space-x-2">
                     {searchKey && (
                         <Input
-                            placeholder={`Filtrer par ${searchKey}...`}
+                            placeholder={searchPlaceholder || t('dataTable.filterBy', { key: searchKey })}
                             value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
                             onChange={(event) =>
                                 table.getColumn(searchKey)?.setFilterValue(event.target.value)
@@ -91,7 +97,7 @@ export function DataTable<TData, TValue>({
                             className="ml-auto h-8 lg:flex"
                         >
                             <Settings2 className="mr-2 h-4 w-4" />
-                            Colonnes
+                            {t('dataTable.columns')}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[150px]">
@@ -137,7 +143,13 @@ export function DataTable<TData, TValue>({
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                    {t('common.loading')}
+                                </TableCell>
+                            </TableRow>
+                        ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
@@ -159,7 +171,7 @@ export function DataTable<TData, TValue>({
                                     colSpan={columns.length}
                                     className="h-24 text-center"
                                 >
-                                    Aucun résultat trouvé.
+                                    {t('dataTable.noResults')}
                                 </TableCell>
                             </TableRow>
                         )}
@@ -168,8 +180,10 @@ export function DataTable<TData, TValue>({
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredSelectedRowModel().rows.length} sur{" "}
-                    {table.getFilteredRowModel().rows.length} ligne(s) sélectionnée(s).
+                    {t('dataTable.rowsSelected', {
+                        count: table.getFilteredSelectedRowModel().rows.length,
+                        total: table.getFilteredRowModel().rows.length
+                    })}
                 </div>
                 <div className="space-x-2">
                     <Button
@@ -179,7 +193,7 @@ export function DataTable<TData, TValue>({
                         disabled={!table.getCanPreviousPage()}
                     >
                         <ChevronLeft className="h-4 w-4" />
-                        Précédent
+                        {t('dataTable.previous')}
                     </Button>
                     <Button
                         variant="outline"
@@ -187,11 +201,11 @@ export function DataTable<TData, TValue>({
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                     >
-                        Suivant
+                        {t('dataTable.next')}
                         <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
         </div>
-    )
+    );
 }

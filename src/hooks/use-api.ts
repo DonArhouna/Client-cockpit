@@ -110,6 +110,16 @@ export function useAgent(id: string) {
     });
 }
 
+export function useAllInvitations() {
+    return useQuery({
+        queryKey: ['admin-invitations'],
+        queryFn: async () => {
+            const resp = await adminApi.getAllInvitations();
+            return resp.data;
+        },
+    });
+}
+
 export function useDashboardStats() {
     return useQuery({
         queryKey: ['dashboard-stats'],

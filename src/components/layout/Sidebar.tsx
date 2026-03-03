@@ -13,6 +13,7 @@ import {
   HeartPulse,
   CreditCard,
   BarChart3,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -26,8 +27,10 @@ const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
   { path: '/organizations', icon: Building2, labelKey: 'nav.organizations' },
   { path: '/users', icon: Users, labelKey: 'nav.users' },
+  { path: '/invitations', icon: Calendar, labelKey: 'nav.invitations' },
   { path: '/roles', icon: Shield, labelKey: 'nav.roles' },
   { path: '/subscription-plans', icon: CreditCard, labelKey: 'nav.subscriptionPlans' },
+  { path: '/client-plans', icon: CreditCard, labelKey: 'nav.clientPlans' },
   { path: '/kpi-store', icon: BarChart3, labelKey: 'nav.kpiStore' },
   { path: '/agents', icon: Cpu, labelKey: 'nav.agents' },
   { path: '/audit-logs', icon: ScrollText, labelKey: 'nav.auditLogs' },
@@ -41,16 +44,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <>
       {/* Mobile overlay */}
-      <div 
+      <div
         className={cn(
           'fixed inset-0 z-40 bg-black/50 lg:hidden transition-opacity',
           collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
         )}
         onClick={onToggle}
       />
-      
+
       {/* Sidebar */}
-      <aside 
+      <aside
         className={cn(
           'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300',
           collapsed ? 'w-[70px]' : 'w-[260px]',
@@ -61,9 +64,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center h-20 px-4 border-b border-sidebar-border">
           <div className="flex items-center gap-3 overflow-hidden w-full">
-            <img 
-              src="/Logo-cockpit.jpeg" 
-              alt="Cockpit Logo" 
+            <img
+              src="/Logo-cockpit.jpeg"
+              alt="Cockpit Logo"
               className={cn(
                 "object-contain rounded transition-all duration-300",
                 collapsed ? "h-8 w-8" : "h-10 w-auto"
@@ -84,7 +87,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
-              
+
               return (
                 <li key={item.path}>
                   <NavLink
@@ -92,8 +95,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     className={cn(
                       'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                       'hover:bg-sidebar-accent hover:text-sidebar-foreground',
-                      isActive 
-                        ? 'bg-primary/10 text-primary' 
+                      isActive
+                        ? 'bg-primary/10 text-primary'
                         : 'text-muted-foreground'
                     )}
                     data-testid={`nav-${item.path.slice(1)}`}

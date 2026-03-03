@@ -14,10 +14,12 @@ import { RoleDetailPage } from './features/roles/RoleDetailPage';
 import { AgentsPage } from './features/agents/AgentsPage';
 import { AgentDetailPage } from './features/agents/AgentDetailPage';
 import { AuditLogsPage } from './features/audit-logs/AuditLogsPage';
+import { InvitationsPage } from './features/invitations/InvitationsPage';
 import { HealthPage } from './features/health/HealthPage';
 import { ProfilePage } from './features/profile/ProfilePage';
 import { SubscriptionPlansPage } from './features/subscriptions/SubscriptionPlansPage';
 import { SubscriptionPlanDetailPage } from './features/subscriptions/SubscriptionPlanDetailPage';
+import { ClientPlansPage } from '@/features/subscriptions/ClientPlansPage';
 import { KpiStorePage } from './features/kpi-store/KpiStorePage';
 import { WidgetTemplateDetailPage } from './features/kpi-store/WidgetTemplateDetailPage';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
@@ -54,6 +56,7 @@ export default function App() {
                 <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/users/:id" element={<UserDetailPage />} />
+                <Route path="/invitations" element={<InvitationsPage />} />
                 <Route path="/roles" element={<RolesPage />} />
                 <Route path="/roles/:id" element={<RoleDetailPage />} />
                 <Route path="/agents" element={<AgentsPage />} />
@@ -63,6 +66,7 @@ export default function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
                 <Route path="/subscription-plans/:id" element={<SubscriptionPlanDetailPage />} />
+                <Route path="/client-plans" element={<ClientPlansPage />} />
                 <Route path="/kpi-store" element={<KpiStorePage />} />
                 <Route path="/kpi-store/widget-templates/:id" element={<WidgetTemplateDetailPage />} />
               </Routes>

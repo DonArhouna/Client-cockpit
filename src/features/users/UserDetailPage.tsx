@@ -48,9 +48,9 @@ export function UserDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
-              Profil Utilisateur
+              {t('users.profileTitle')}
             </CardTitle>
-            <CardDescription>Informations personnelles et professionnelles</CardDescription>
+            <CardDescription>{t('users.profileSubtitle')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -66,11 +66,11 @@ export function UserDetailPage() {
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Nom complet</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('users.fullName')}</p>
                 <p className="font-medium mt-1">{user.firstName} {user.lastName}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Statut</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('common.status')}</p>
                 <div className="mt-1">
                   <Badge variant={user.isActive ? 'default' : 'secondary'}>
                     {user.isActive ? t('users.active') : t('users.inactive')}
@@ -78,23 +78,23 @@ export function UserDetailPage() {
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Email vérifié</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('users.emailVerified')}</p>
                 <div className="flex items-center gap-1.5 mt-1">
                   {user.emailVerified ? (
                     <>
                       <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-600 font-medium">Vérifié</span>
+                      <span className="text-sm text-green-600 font-medium">{t('users.verified')}</span>
                     </>
                   ) : (
                     <>
                       <XCircle className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground font-medium">Non vérifié</span>
+                      <span className="text-sm text-muted-foreground font-medium">{t('users.notVerified')}</span>
                     </>
                   )}
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Membre depuis</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('users.memberSince')}</p>
                 <div className="flex items-center gap-1.5 mt-1">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">
@@ -111,27 +111,27 @@ export function UserDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary" />
-              Organisation
+              {t('users.organization')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {user.organization ? (
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Nom</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('common.name')}</p>
                   <p className="font-bold text-lg mt-1">{user.organization.name}</p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="w-full"
                   onClick={() => navigate(`/organizations/${user.organizationId}`)}
                 >
-                  Voir l'organisation
+                  {t('users.viewOrganization')}
                 </Button>
               </div>
             ) : (
-              <p className="text-muted-foreground italic">Aucune organisation (SuperAdmin potentiel)</p>
+              <p className="text-muted-foreground italic">{t('users.noOrganization')}</p>
             )}
           </CardContent>
         </Card>
@@ -141,9 +141,9 @@ export function UserDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              Rôles et Permissions
+              {t('users.rolesAndPermissions')}
             </CardTitle>
-            <CardDescription>Droits d'accès assignés à cet utilisateur</CardDescription>
+            <CardDescription>{t('users.rolesDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
@@ -157,7 +157,7 @@ export function UserDetailPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground italic">Aucun rôle spécifique assigné</p>
+                <p className="text-muted-foreground italic">{t('users.noRolesAssigned')}</p>
               )}
             </div>
           </CardContent>

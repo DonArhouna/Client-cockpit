@@ -50,7 +50,7 @@ export interface Organization {
   sector?: string;
   size: string;
   planId?: string;
-  subscriptionPlan?: { id: string; name: string; label: string };
+  subscriptionPlan?: SubscriptionPlan;
   country?: string;
   sageMode?: string;
   sageType?: string;
@@ -61,9 +61,26 @@ export interface Organization {
   _count?: {
     users: number;
     dashboards: number;
+    invitations: number;
   };
+  invitations?: Invitation[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Invitation {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  roleId: string;
+  role: { name: string };
+  expiresAt: string;
+  isAccepted: boolean;
+  createdAt: string;
+  organizationId: string;
+  organization?: { id: string; name: string };
+  invitedBy?: { id: string; email: string; firstName?: string; lastName?: string };
 }
 
 // Role & Permission types

@@ -20,15 +20,24 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { organizationsApi } from '@/api';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { organizationsApi, subscriptionPlansApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 const formSchema = z.object({
     organizationName: z.string().min(2, 'Le nom de l\'organisation est requis'),
     adminEmail: z.string().email('Email invalide'),
     adminFirstName: z.string().min(2, 'Le prénom est requis'),
     adminLastName: z.string().min(2, 'Le nom est requis'),
+    planId: z.string().min(1, 'Veuillez sélectionner un plan'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,7 +61,13 @@ export function CreateOrganizationModal({
             adminEmail: '',
             adminFirstName: '',
             adminLastName: '',
+            planId: '',
         },
+    });
+
+    const { data: plans, isLoading: isLoadingPlans } = useQuery({
+        queryKey: ['subscription-plans'],
+        queryFn: () => subscriptionPlansApi.getAll().then(res => res.data),
     });
 
     const mutation = useMutation({
@@ -140,6 +155,34 @@ export function CreateOrganizationModal({
                                     <FormControl>
                                         <Input placeholder="jean.dupont@client.com" {...field} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="planId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Plan d'abonnement</FormLabel>
+                                    <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        disabled={isLoadingPlans}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={isLoadingPlans ? "Chargement..." : "Sélectionner un plan"} />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {plans?.map((plan) => (
+                                                <SelectItem key={plan.id} value={plan.id}>
+                                                    {plan.label} - {plan.priceMonthly ? `${plan.priceMonthly}€ / mois` : 'Sur devis'} ({plan.maxUsers} utilisateurs)
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}

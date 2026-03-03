@@ -12,6 +12,7 @@ import type {
   SubscriptionPlan,
   KpiDefinition,
   WidgetTemplate,
+  Invitation,
   KpiPack,
 } from '@/types';
 
@@ -58,6 +59,7 @@ export const organizationsApi = {
     adminEmail: string;
     adminFirstName: string;
     adminLastName: string;
+    planId?: string;
   }) => api.post('/admin/clients', data),
 };
 
@@ -65,6 +67,8 @@ export const organizationsApi = {
 export const adminApi = {
   getStats: () =>
     api.get('/admin/dashboard-stats'),
+  getAllInvitations: () =>
+    api.get<Invitation[]>('/admin/invitations'),
 };
 
 // Admin - Users
