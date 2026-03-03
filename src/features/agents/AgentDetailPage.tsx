@@ -11,7 +11,8 @@ import {
   AlertCircle, 
   CheckCircle2, 
   Server,
-  Key
+  Key,
+  Zap
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format } from 'date-fns';
@@ -71,6 +72,12 @@ export function AgentDetailPage() {
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(agent.status)}`}>
             {getStatusLabel(agent.status)}
           </span>
+          {agent.isSocketConnected && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-primary bg-primary/10 border border-primary/20 animate-pulse">
+              <Zap className="h-3 w-3 fill-current" />
+              Connexion Temps Réel Active
+            </span>
+          )}
         </div>
         <Button variant="outline" onClick={() => setIsRegenerateOpen(true)}>
           <Key className="h-4 w-4 mr-2" />
@@ -111,6 +118,24 @@ export function AgentDetailPage() {
                   <Globe className="h-4 w-4 text-muted-foreground" />
                   {agent.organization?.name || 'Inconnu'}
                 </div>
+              </div>
+              <div className="sm:col-span-2 p-3 bg-muted/30 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-full ${agent.isSocketConnected ? 'bg-primary/20 text-primary' : 'bg-gray-200 text-gray-500'}`}>
+                    <Zap className={`h-5 w-5 ${agent.isSocketConnected ? 'fill-current' : ''}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">Tunnel Command & Control</p>
+                    <p className="text-xs text-muted-foreground">
+                      {agent.isSocketConnected 
+                        ? 'Le canal WebSockets est actif. Les requêtes NLQ seront traitées instantanément.' 
+                        : 'L\'agent utilise le mode polling (30s). Le temps réel est indisponible.'}
+                    </p>
+                  </div>
+                </div>
+                {agent.isSocketConnected && (
+                   <span className="text-[10px] font-black text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded uppercase">Optimisé</span>
+                )}
               </div>
             </div>
 

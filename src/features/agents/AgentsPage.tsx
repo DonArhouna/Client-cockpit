@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Cpu, Key, Loader2, Circle, MoreHorizontal, RefreshCw, ShieldOff } from 'lucide-react';
+import { Cpu, Key, Loader2, Circle, MoreHorizontal, RefreshCw, ShieldOff, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAgents } from '@/hooks/use-api';
@@ -140,6 +140,12 @@ export function AgentsPage() {
                         <div className="flex items-center gap-2">
                           <Circle className={`h-2 w-2 ${getStatusColor(agent)}`} />
                           <span className="text-sm">{getStatusLabel(agent)}</span>
+                          {agent.isSocketConnected && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse">
+                              <Zap className="h-2.5 w-2.5 fill-current" />
+                              Temps Réel
+                            </span>
+                          )}
                           {agent.isExpiringSoon && !agent.isRevoked && (
                             <span className="text-xs text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 px-1.5 py-0.5 rounded">
                               {t('agents.expiringSoon')}

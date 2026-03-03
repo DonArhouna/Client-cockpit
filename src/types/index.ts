@@ -109,6 +109,7 @@ export interface Agent {
   isRevoked?: boolean;
   daysUntilExpiry?: number | null;
   isExpiringSoon?: boolean;
+  isSocketConnected?: boolean;
   createdAt: string;
 }
 

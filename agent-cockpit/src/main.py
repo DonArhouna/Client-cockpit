@@ -16,6 +16,7 @@ from .config import init_config, Config
 from .security import SQLValidator
 from .database import SageDatabase
 from .heartbeat import HeartbeatService
+from .socket_client import SocketClient
 from .api.routes import router, set_dependencies, limiter
 
 
@@ -76,6 +77,9 @@ def create_app(config_path: str = None) -> FastAPI:
         agent_config=config.agent,
         sage_config=config.sage
     )
+
+    # Create socket client
+    socket_client = SocketClient(config=config, database=database)
     
     # Set dependencies for routes
     set_dependencies(database, heartbeat, config)
@@ -98,6 +102,9 @@ def create_app(config_path: str = None) -> FastAPI:
         
         # Initial registration attempt
         asyncio.create_task(heartbeat.register())
+
+        # Start WebSocket client
+        asyncio.create_task(socket_client.connect())
         
         logger.info(f"🚀 Agent ready on port {config.agent.port}")
         
@@ -106,6 +113,7 @@ def create_app(config_path: str = None) -> FastAPI:
         # Shutdown
         logger.info("Shutting down agent services...")
         heartbeat.stop()
+        await socket_client.disconnect()
         logger.info("Agent stopped.")
     
     # Create FastAPI app

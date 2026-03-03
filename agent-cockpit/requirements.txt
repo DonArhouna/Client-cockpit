@@ -11,6 +11,7 @@ cryptography==44.0.0
 python-dotenv==1.0.1
 loguru==0.7.3
 slowapi==0.1.9
+python-socketio[asyncio_client]==5.11.0
 
 # Pour générer l'exécutable Windows
 pyinstaller==6.19.0
