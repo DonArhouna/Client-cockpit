@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAgent, useAgentLogs } from '@/hooks/use-api';
-import { useMutation } from '@tanstack/react-query';
+import { useSocket } from '@/hooks/use-socket';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { agentsApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -29,10 +30,42 @@ export function AgentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { data: agent, isLoading: isAgentLoading, error } = useAgent(id!);
   const { data: logData, isLoading: isLogsLoading } = useAgentLogs(id!);
   const { toast } = useToast();
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
+
+  // Real-time logs via WebSocket
+  const { socket } = useSocket('cockpit');
+
+  useEffect(() => {
+    if (!socket || !id) return;
+
+    const handleNewLog = (newLog: any) => {
+      // Only add log if it belongs to this agent
+      if (newLog.agentId === id) {
+        queryClient.setQueryData(['agent-logs', id, 1, 50], (oldData: any) => {
+          if (!oldData) return { logs: [newLog], pagination: { total: 1, pages: 1, page: 1, limit: 50 } };
+          
+          return {
+            ...oldData,
+            logs: [newLog, ...oldData.logs].slice(0, 50), // Keep latest 50
+            pagination: {
+              ...oldData.pagination,
+              total: oldData.pagination.total + 1
+            }
+          };
+        });
+      }
+    };
+
+    socket.on('agent_log_received', handleNewLog);
+
+    return () => {
+      socket.off('agent_log_received', handleNewLog);
+    };
+  }, [socket, id, queryClient]);
 
   const isLoading = isAgentLoading; // Keep isLoading for the initial full-screen loading
 
