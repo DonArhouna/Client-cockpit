@@ -125,6 +125,9 @@ export const agentsApi = {
 
   revokeToken: (id: string) =>
     api.post(`/agents/${id}/revoke`),
+
+  testConnection: (id: string) =>
+    api.post(`/agents/${id}/test-connection`),
 };
 
 // Subscription Plans

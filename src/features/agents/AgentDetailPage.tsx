@@ -1,6 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAgent } from '@/hooks/use-api';
+import { useMutation } from '@tanstack/react-query';
+import { agentsApi } from '@/api';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -12,7 +15,8 @@ import {
   CheckCircle2, 
   Server,
   Key,
-  Zap
+  Zap,
+  Loader2
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format } from 'date-fns';
@@ -24,7 +28,25 @@ export function AgentDetailPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { data: agent, isLoading, error } = useAgent(id!);
+  const { toast } = useToast();
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
+
+  const testMutation = useMutation({
+    mutationFn: () => agentsApi.testConnection(id!),
+    onSuccess: () => {
+      toast({
+        title: t('common.success'),
+        description: "Test de connexion réussi ! L'agent a répondu en temps réel.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('common.error'),
+        description: error.response?.data?.message || "L'agent n'a pas répondu au test temps réel.",
+        variant: 'destructive',
+      });
+    },
+  });
 
   if (isLoading) {
     return <LoadingSpinner fullScreen />;
@@ -79,10 +101,24 @@ export function AgentDetailPage() {
             </span>
           )}
         </div>
-        <Button variant="outline" onClick={() => setIsRegenerateOpen(true)}>
-          <Key className="h-4 w-4 mr-2" />
-          {t('agents.regenerateToken')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => testMutation.mutate()} 
+            disabled={testMutation.isPending || !agent.isSocketConnected}
+          >
+            {testMutation.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Zap className="h-4 w-4 mr-2" />
+            )}
+            Tester le Temps Réel
+          </Button>
+          <Button variant="outline" onClick={() => setIsRegenerateOpen(true)}>
+            <Key className="h-4 w-4 mr-2" />
+            {t('agents.regenerateToken')}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
