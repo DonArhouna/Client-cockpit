@@ -17,6 +17,7 @@ import { ReceivablesVisual } from './visuals/ReceivablesVisual';
 import { TopClientsVisual } from './visuals/TopClientsVisual';
 import { VarianceVisual } from './visuals/VarianceVisual';
 import { TableVisual } from './visuals/TableVisual';
+import { PieVisual } from './visuals/PieVisual';
 
 interface WidgetCardProps {
     widget: Widget;
@@ -69,7 +70,12 @@ export function WidgetCard({ widget, isEditing, onRemove, h, className, style }:
             return <TableVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
         }
 
-        // 6. Autres graphiques (Barres, etc.)
+        // 6. Camembert
+        if (widget.vizType === 'pie' || widget.vizType === 'donut') {
+            return <PieVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
+        }
+
+        // 7. Autres graphiques (Barres, etc.)
         if (widget.vizType === 'bar') {
             return <RevenueEvolutionVisual isCompact={isCompact} />;
         }

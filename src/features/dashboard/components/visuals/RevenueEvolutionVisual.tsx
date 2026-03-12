@@ -11,7 +11,7 @@ interface RevenueEvolutionVisualProps {
 
 export function RevenueEvolutionVisual({ isCompact }: RevenueEvolutionVisualProps) {
     const { currency } = useFilters();
-    const { data: rawData, isLoading } = useKpiData('revenue_monthly'); // Assumed monthly data KPI
+    const { data: rawData, isLoading } = useKpiData('f01_ca_ht');
     const currencySymbol = currency === 'XOF' ? 'F' : currency === 'EUR' ? '€' : '$';
 
     // Process data to match chart format

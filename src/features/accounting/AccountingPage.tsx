@@ -22,69 +22,28 @@ export default function AccountingPage() {
         if (!isLoading && kpiDefinitions && widgets.length === 0) {
             const now = new Date().toISOString();
 
-            const defaultWidgets = [
-                // KPIs de comptabilité
-                {
-                    id: `accounting-${Date.now()}-kpi-1`,
-                    dashboardId: 'local-personalization',
-                    name: 'Résultat Net',
-                    type: 'kpi',
-                    kpiKey: 'resultat_net',
-                    vizType: 'card',
-                    position: { x: 0, y: 0, w: 3, h: 3 },
-                    config: { color: 'blue' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `accounting-${Date.now()}-kpi-2`,
-                    dashboardId: 'local-personalization',
-                    name: 'EBITDA',
-                    type: 'kpi',
-                    kpiKey: 'ebitda',
-                    vizType: 'card',
-                    position: { x: 3, y: 0, w: 3, h: 3 },
-                    config: { color: 'green' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `accounting-${Date.now()}-kpi-3`,
-                    dashboardId: 'local-personalization',
-                    name: 'Charges Exploitation',
-                    type: 'kpi',
-                    kpiKey: 'charges_exploitation',
-                    vizType: 'card',
-                    position: { x: 6, y: 0, w: 3, h: 3 },
-                    config: { color: 'red' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `accounting-${Date.now()}-kpi-4`,
-                    dashboardId: 'local-personalization',
-                    name: 'Produits Exploitation',
-                    type: 'kpi',
-                    kpiKey: 'produits_exploitation',
-                    vizType: 'card',
-                    position: { x: 9, y: 0, w: 3, h: 3 },
-                    config: { color: 'purple' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                // Graphiques
+            const accountingKpis = kpiDefinitions
+                .filter(kpi => kpi.isActive && kpi.category === 'comptabilite' && kpi.defaultVizType === 'card')
+                .slice(0, 4);
+
+            const defaultWidgets: any[] = accountingKpis.map((kpi, index) => ({
+                id: `accounting-${Date.now()}-kpi-${index}`,
+                dashboardId: 'local-personalization',
+                name: kpi.name,
+                type: 'kpi',
+                kpiKey: kpi.key,
+                vizType: kpi.defaultVizType,
+                position: { x: index * 3, y: 0, w: 3, h: 3 },
+                config: { unit: kpi.unit, description: kpi.description },
+                isActive: true,
+                userId: 'local-user',
+                organizationId: 'local-org',
+                createdAt: now,
+                updatedAt: now,
+            }));
+
+            // Graphiques fixes (composants visuels dédiés)
+            defaultWidgets.push(
                 {
                     id: `accounting-${Date.now()}-chart-1`,
                     dashboardId: 'local-personalization',
@@ -98,7 +57,7 @@ export default function AccountingPage() {
                     userId: 'local-user',
                     organizationId: 'local-org',
                     createdAt: now,
-                    updatedAt: now
+                    updatedAt: now,
                 },
                 {
                     id: `accounting-${Date.now()}-chart-2`,
@@ -113,11 +72,10 @@ export default function AccountingPage() {
                     userId: 'local-user',
                     organizationId: 'local-org',
                     createdAt: now,
-                    updatedAt: now
+                    updatedAt: now,
                 }
-            ];
+            );
 
-            // On peuple la page
             // @ts-ignore
             setPageLayout(PAGE_ID, defaultWidgets);
         }

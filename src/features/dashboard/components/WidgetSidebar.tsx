@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { X as XIcon, Plus as PlusIcon, Search as SearchIcon, Brain } from 'lucide-react';
+import { X as XIcon, Plus as PlusIcon, Search as SearchIcon, Brain, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useKpiDefinitions, useWidgetTemplates, useKpiPacks } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useMemo } from 'react';
+import type { WidgetTemplate } from '@/types';
 
 interface WidgetSidebarProps {
     onClose: () => void;
@@ -65,6 +66,9 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
     const { data: kpiPacks, isLoading: isLoadingPacks } = useKpiPacks();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('widgets');
+    // Étape 2 : sélection KPI pour un template
+    const [pendingTemplate, setPendingTemplate] = useState<WidgetTemplate | null>(null);
+    const [kpiSearchQuery, setKpiSearchQuery] = useState('');
 
     const categories = useMemo(() => {
         if (!kpis) return [];
@@ -97,6 +101,100 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
             )
         })).filter(cat => cat.items.length > 0);
     }, [categories, searchQuery]);
+
+    // Panneau de sélection de KPI pour un template
+    if (pendingTemplate) {
+        // Groupes de vizTypes compatibles entre eux
+        const VIZ_COMPAT: Record<string, string[]> = {
+            card: ['card'],
+            pie: ['pie', 'donut'],
+            donut: ['pie', 'donut'],
+            area: ['area', 'line', 'bar'],
+            line: ['area', 'line', 'bar'],
+            bar: ['area', 'line', 'bar'],
+            table: ['table'],
+        };
+        const compatibleVizTypes = VIZ_COMPAT[pendingTemplate.vizType] ?? [pendingTemplate.vizType];
+
+        const compatibleKpis = (kpis ?? []).filter(kpi =>
+            kpi.isActive && compatibleVizTypes.includes(kpi.defaultVizType)
+        );
+        // Fallback : si aucun KPI compatible, on affiche tous les KPI actifs
+        const baseKpis = compatibleKpis.length > 0 ? compatibleKpis : (kpis ?? []).filter(k => k.isActive);
+
+        const filteredKpis = baseKpis.filter(kpi =>
+            kpiSearchQuery === '' ||
+            kpi.name.toLowerCase().includes(kpiSearchQuery.toLowerCase()) ||
+            kpi.key.toLowerCase().includes(kpiSearchQuery.toLowerCase())
+        );
+
+        return (
+            <div className="w-80 border-l bg-background h-full flex flex-col shadow-sm">
+                <div className="flex items-center gap-2 p-4 border-b">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => { setPendingTemplate(null); setKpiSearchQuery(''); }}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Template sélectionné</p>
+                        <p className="font-semibold text-sm truncate">{pendingTemplate.name}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={onClose}>
+                        <XIcon className="h-4 w-4" />
+                    </Button>
+                </div>
+
+                <div className="p-4 border-b">
+                    <p className="text-sm text-muted-foreground mb-3">
+                        Quel KPI voulez-vous afficher dans ce <span className="font-medium text-slate-700">{pendingTemplate.vizType}</span> ?
+                        {compatibleKpis.length > 0 && (
+                            <span className="ml-1 text-xs text-primary font-medium">({compatibleKpis.length} compatibles)</span>
+                        )}
+                    </p>
+                    <div className="relative">
+                        <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Rechercher un KPI..."
+                            className="pl-8 bg-muted/50"
+                            value={kpiSearchQuery}
+                            onChange={(e) => setKpiSearchQuery(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {filteredKpis.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">Aucun KPI trouvé</p>
+                    ) : (
+                        filteredKpis.map((kpi) => (
+                            <div
+                                key={kpi.id}
+                                className="flex items-center justify-between p-3 border rounded-lg bg-card hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer group"
+                                onClick={() => {
+                                    onAddWidget({
+                                        name: kpi.name,
+                                        type: 'kpi',
+                                        vizType: pendingTemplate.vizType,
+                                        kpiKey: kpi.key,
+                                        config: { description: kpi.description, unit: kpi.unit },
+                                    });
+                                    setPendingTemplate(null);
+                                    setKpiSearchQuery('');
+                                }}
+                            >
+                                <div className="flex-1 min-w-0 pr-2">
+                                    <div className="font-medium text-sm truncate">{kpi.name}</div>
+                                    <div className="text-xs text-muted-foreground truncate">{kpi.key}</div>
+                                </div>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-80 border-l bg-background h-full flex flex-col shadow-sm">
@@ -143,12 +241,7 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
                                         <div
                                             key={tpl.id}
                                             className="flex items-center justify-between p-3 border rounded-lg bg-blue-50/30 border-blue-100 hover:border-blue-300 hover:bg-blue-50 transition-all cursor-pointer group"
-                                            onClick={() => onAddWidget({
-                                                name: tpl.name,
-                                                type: 'widget',
-                                                vizType: tpl.vizType,
-                                                config: tpl.defaultConfig
-                                            })}
+                                            onClick={() => setPendingTemplate(tpl)}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="p-1.5 bg-white rounded-md shadow-sm border border-blue-100 group-hover:border-blue-200 transition-colors">

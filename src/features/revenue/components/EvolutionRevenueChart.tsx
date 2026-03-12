@@ -5,7 +5,7 @@ import { useKpiData } from '@/hooks/use-kpi-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function EvolutionRevenueChart() {
-    const { data: rawData, isLoading } = useKpiData('ca_par_axe_analytique');
+    const { data: rawData, isLoading } = useKpiData('k03_ca_par_axe_analytique');
 
     const chartData = Array.isArray(rawData) ? rawData.map((item: any) => ({
         name: item.Axe_Analytique || item.Section_Analytique || "Inconnu",

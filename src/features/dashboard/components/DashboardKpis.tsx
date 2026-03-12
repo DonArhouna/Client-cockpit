@@ -3,8 +3,6 @@ import { Widget } from '@/types';
 import { WidgetCard } from './WidgetCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const MAIN_KPI_KEYS = ['revenue_mom', 'cash_flow', 'accounts_payable', 'accounts_receivable'];
-
 export function DashboardKpis() {
   const { data: kpiDefinitions, isLoading } = useKpiDefinitions();
 
@@ -18,9 +16,9 @@ export function DashboardKpis() {
     );
   }
 
-  const mainKpis = kpiDefinitions?.filter(kpi => 
-    MAIN_KPI_KEYS.includes(kpi.key) && kpi.isActive
-  ) || [];
+  const mainKpis = (kpiDefinitions ?? [])
+    .filter(kpi => kpi.isActive && kpi.defaultVizType === 'card' && kpi.profiles?.some((p: string) => ['DAF', 'CFO', 'DG'].includes(p)))
+    .slice(0, 4);
 
   const widgets: Widget[] = mainKpis.map((kpi, index) => ({
     id: `main-kpi-${kpi.id}`,

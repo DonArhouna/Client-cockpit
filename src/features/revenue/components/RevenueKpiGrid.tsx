@@ -5,10 +5,10 @@ import { useKpiData } from '@/hooks/use-kpi-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function RevenueKpiGrid() {
-    const { data: caHt, isLoading: isLoadingCa } = useKpiData('ca_ht');
-    const { data: growth, isLoading: isLoadingGrowth } = useKpiData('variation_ca_n_1');
-    const { data: avgDeal, isLoading: isLoadingAvg } = useKpiData('ca_moyen_client');
-    const { data: activeClients, isLoading: isLoadingClients } = useKpiData('nb_clients_actifs');
+    const { data: caHt, isLoading: isLoadingCa } = useKpiData('f01_ca_ht');
+    const { data: growth, isLoading: isLoadingGrowth } = useKpiData('f10_variation_ca');
+    const { data: avgDeal, isLoading: isLoadingAvg } = useKpiData('c02_ca_moyen_par_client');
+    const { data: activeClients, isLoading: isLoadingClients } = useKpiData('c01_nb_clients_actifs');
 
     const formatCurrency = (val: any) => {
         const num = Number(val?.value || val);

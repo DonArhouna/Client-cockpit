@@ -18,7 +18,7 @@ interface TopClientsVisualProps {
 
 export function TopClientsVisual({ isCompact }: TopClientsVisualProps) {
     const { currency } = useFilters();
-    const { data: rawData, isLoading } = useKpiData('top10_clients_ca');
+    const { data: rawData, isLoading } = useKpiData('c03_top10_clients_ca');
     const currencySymbol = currency === 'XOF' ? 'F' : currency === 'EUR' ? '€' : '$';
 
     const clients = Array.isArray(rawData) ? rawData.map((item: any) => ({

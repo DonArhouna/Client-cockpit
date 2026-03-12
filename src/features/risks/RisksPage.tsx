@@ -22,69 +22,28 @@ export default function RisksPage() {
         if (!isLoading && kpiDefinitions && widgets.length === 0) {
             const now = new Date().toISOString();
 
-            const defaultWidgets = [
-                // KPIs de risques
-                {
-                    id: `risks-${Date.now()}-kpi-1`,
-                    dashboardId: 'local-personalization',
-                    name: 'Encours Client Total',
-                    type: 'kpi',
-                    kpiKey: 'encours_client_total',
-                    vizType: 'card',
-                    position: { x: 0, y: 0, w: 3, h: 3 },
-                    config: { color: 'blue' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `risks-${Date.now()}-kpi-2`,
-                    dashboardId: 'local-personalization',
-                    name: 'Nb Factures en Retard',
-                    type: 'kpi',
-                    kpiKey: 'nb_factures_retard',
-                    vizType: 'card',
-                    position: { x: 3, y: 0, w: 3, h: 3 },
-                    config: { color: 'orange' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `risks-${Date.now()}-kpi-3`,
-                    dashboardId: 'local-personalization',
-                    name: 'DSO (Délai Moyen)',
-                    type: 'kpi',
-                    kpiKey: 'dso',
-                    vizType: 'card',
-                    position: { x: 6, y: 0, w: 3, h: 3 },
-                    config: { color: 'purple' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `risks-${Date.now()}-kpi-4`,
-                    dashboardId: 'local-personalization',
-                    name: 'Litiges Ouverts',
-                    type: 'kpi',
-                    kpiKey: 'litiges_ouverts',
-                    vizType: 'card',
-                    position: { x: 9, y: 0, w: 3, h: 3 },
-                    config: { color: 'red' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                // Graphiques
+            const risksKpis = kpiDefinitions
+                .filter(kpi => kpi.isActive && kpi.category === 'clients' && kpi.defaultVizType === 'card')
+                .slice(0, 4);
+
+            const defaultWidgets: any[] = risksKpis.map((kpi, index) => ({
+                id: `risks-${Date.now()}-kpi-${index}`,
+                dashboardId: 'local-personalization',
+                name: kpi.name,
+                type: 'kpi',
+                kpiKey: kpi.key,
+                vizType: kpi.defaultVizType,
+                position: { x: index * 3, y: 0, w: 3, h: 3 },
+                config: { unit: kpi.unit, description: kpi.description },
+                isActive: true,
+                userId: 'local-user',
+                organizationId: 'local-org',
+                createdAt: now,
+                updatedAt: now,
+            }));
+
+            // Graphiques fixes (composants visuels dédiés)
+            defaultWidgets.push(
                 {
                     id: `risks-${Date.now()}-chart-1`,
                     dashboardId: 'local-personalization',
@@ -98,7 +57,7 @@ export default function RisksPage() {
                     userId: 'local-user',
                     organizationId: 'local-org',
                     createdAt: now,
-                    updatedAt: now
+                    updatedAt: now,
                 },
                 {
                     id: `risks-${Date.now()}-chart-2`,
@@ -113,11 +72,10 @@ export default function RisksPage() {
                     userId: 'local-user',
                     organizationId: 'local-org',
                     createdAt: now,
-                    updatedAt: now
+                    updatedAt: now,
                 }
-            ];
+            );
 
-            // On peuple la page
             // @ts-ignore
             setPageLayout(PAGE_ID, defaultWidgets);
         }

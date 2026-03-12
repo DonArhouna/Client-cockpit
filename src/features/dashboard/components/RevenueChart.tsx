@@ -11,7 +11,7 @@ interface RevenueChartProps {
 
 export function RevenueChart({ className }: RevenueChartProps) {
   const { currency } = useFilters();
-  const { data, isLoading, error } = useKpiData('revenue_evolution', { enabled: true });
+  const { data, isLoading, error } = useKpiData('f01_ca_ht', { enabled: true });
 
   // Données mockées pour le développement si pas de données backend
   const mockData = [

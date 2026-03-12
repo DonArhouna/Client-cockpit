@@ -3,26 +3,7 @@ import { Widget } from '@/types';
 import { WidgetCard } from '@/features/dashboard/components/WidgetCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Catégories de KPIs liés à la Finance & Trésorerie
-const TREASURY_CATEGORIES = [
-    'tresorerie',
-    'finance',
-    'finance_performance',
-    'rentabilite',
-    'controle_gestion',
-];
-
-// Fallback: keys spécifiques si les catégories ne correspondent pas
-const TREASURY_KPI_KEYS = [
-    'position_tresorerie',
-    'flux_tresorerie_projete',
-    'dso',
-    'creances_retard',
-    'cash_flow',
-    'revenue_mom',
-    'accounts_receivable',
-    'accounts_payable',
-];
+const TREASURY_CATEGORIES = ['tresorerie', 'finance'];
 
 export function TreasuryKpiGrid() {
     const { data: kpiDefinitions, isLoading } = useKpiDefinitions();
@@ -37,20 +18,9 @@ export function TreasuryKpiGrid() {
         );
     }
 
-    // Filtrer les KPIs par catégorie finance/trésorerie, puis par keys spécifiques comme fallback
-    let treasuryKpis = kpiDefinitions?.filter(
-        (kpi) => kpi.isActive && TREASURY_CATEGORIES.includes(kpi.category)
-    ) || [];
-
-    // Si aucun KPI par catégorie, utiliser les keys spécifiques comme fallback
-    if (treasuryKpis.length === 0) {
-        treasuryKpis = kpiDefinitions?.filter(
-            (kpi) => kpi.isActive && TREASURY_KPI_KEYS.includes(kpi.key)
-        ) || [];
-    }
-
-    // Limiter à 4 KPIs pour la grille principale
-    const mainKpis = treasuryKpis.slice(0, 4);
+    const mainKpis = (kpiDefinitions ?? [])
+        .filter(kpi => kpi.isActive && TREASURY_CATEGORIES.includes(kpi.category) && kpi.defaultVizType === 'card')
+        .slice(0, 4);
 
     // Construire les objets Widget (même pattern que DashboardKpis)
     const widgets: Widget[] = mainKpis.map((kpi, index) => ({

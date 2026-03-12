@@ -7,8 +7,6 @@ import { usePersonalization } from '@/features/personalization/PersonalizationCo
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 
-const OPERATIONAL_KPI_KEYS = ['total_achats_ht', 'dpo', 'dettes_fournisseurs_echues', 'nb_fournisseurs_actifs'];
-
 export function OperationalPerformancePage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
     const { layouts, addWidgetToPage, setPageLayout, removeWidgetFromPage, updateLayoutForPage } = usePersonalization();
@@ -21,56 +19,25 @@ export function OperationalPerformancePage() {
         if (!isKpisLoading && kpiDefinitions && widgets.length === 0 && !isInitialized) {
             setIsInitialized(true);
 
-            const operationalKpis = kpiDefinitions.filter(kpi => kpi.isActive && OPERATIONAL_KPI_KEYS.includes(kpi.key));
-            const initialWidgets: any[] = [];
-            const addedKeys = new Set();
+            const operationalKpis = kpiDefinitions
+                .filter(kpi => kpi.isActive && kpi.category === 'fournisseurs' && kpi.defaultVizType === 'card')
+                .slice(0, 4);
 
-            // 1. Add KPIs
-            operationalKpis.forEach((kpi, index) => {
-                if (index < 4) {
-                    addedKeys.add(kpi.key);
-                    initialWidgets.push({
-                        id: `operational-${Date.now()}-kpi-${index}`,
-                        dashboardId: 'local-personalization',
-                        name: kpi.name,
-                        type: 'kpi',
-                        vizType: kpi.defaultVizType || 'card',
-                        kpiKey: kpi.key,
-                        config: { unit: kpi.unit, description: kpi.description },
-                        position: { x: index * 3, y: 0, w: 3, h: 3 },
-                        exposure: kpi.key,
-                        isActive: true,
-                        userId: 'local-user',
-                        organizationId: 'local-org',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                    });
-                }
-            });
-
-            // Fallback mock KPIs if backend doesn't have them all
-            if (addedKeys.size < 4) {
-                OPERATIONAL_KPI_KEYS.filter(key => !addedKeys.has(key)).forEach((key, index) => {
-                    const offset = addedKeys.size + index;
-                    if (offset < 4) {
-                        initialWidgets.push({
-                            id: `operational-${Date.now()}-kpi-mock-${index}`,
-                            dashboardId: 'local-personalization',
-                            name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                            type: 'kpi',
-                            vizType: 'card',
-                            kpiKey: key,
-                            config: {},
-                            position: { x: offset * 3, y: 0, w: 3, h: 3 },
-                            isActive: true,
-                            userId: 'local-user',
-                            organizationId: 'local-org',
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString(),
-                        });
-                    }
-                });
-            }
+            const initialWidgets: any[] = operationalKpis.map((kpi, index) => ({
+                id: `operational-${Date.now()}-kpi-${index}`,
+                dashboardId: 'local-personalization',
+                name: kpi.name,
+                type: 'kpi',
+                vizType: kpi.defaultVizType,
+                kpiKey: kpi.key,
+                config: { unit: kpi.unit, description: kpi.description },
+                position: { x: index * 3, y: 0, w: 3, h: 3 },
+                isActive: true,
+                userId: 'local-user',
+                organizationId: 'local-org',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            }));
 
             // 2. Add Charts / Tables
             initialWidgets.push({

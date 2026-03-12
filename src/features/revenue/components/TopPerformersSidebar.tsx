@@ -5,7 +5,7 @@ import { useKpiData } from '@/hooks/use-kpi-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function TopPerformersSidebar() {
-    const { data: rawClients, isLoading } = useKpiData('top10_clients_ca');
+    const { data: rawClients, isLoading } = useKpiData('c03_top10_clients_ca');
 
     // Transform raw data to performers format
     const performers = Array.isArray(rawClients) ? rawClients.map((item: any, idx: number) => ({

@@ -5,7 +5,7 @@ import { useKpiData } from '@/hooks/use-kpi-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function WaterfallRevenueChart() {
-    const { data: rawData, isLoading } = useKpiData('balance_agee_clients');
+    const { data: rawData, isLoading } = useKpiData('c04_balance_agee_clients');
 
     // Ensure tranches are in correct order
     const order = ['0-30j', '30-60j', '60-90j', '>90j'];

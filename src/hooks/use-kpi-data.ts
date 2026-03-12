@@ -74,13 +74,20 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
                     // Normaliser les données reçues en préservant target et details
                     const result = job.result;
 
+                    // L'agent renvoie { result: [{ col: value, ... }], metadata: {...} }
+                    // On extrait la première valeur numérique de la première ligne si besoin
+                    const agentRow = result?.result?.[0];
+                    const agentScalar = agentRow
+                        ? parseFloat(Object.values(agentRow).find((v) => v !== null && !isNaN(parseFloat(v as string))) as string)
+                        : NaN;
+
                     const normalized: KpiDataResult = {
-                        current: result?.current || result?.value || 0,
+                        current: result?.current || result?.value || (!isNaN(agentScalar) ? agentScalar : 0),
                         previous: result?.previous || 0,
                         target: result?.target || null,
                         trend: result?.trend || 0,
                         period: period,
-                        details: result?.details || undefined
+                        details: result?.details || agentRow || undefined
                     };
 
                     // Calculer le trend si non fourni

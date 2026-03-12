@@ -7,7 +7,7 @@ import { usePersonalization } from '@/features/personalization/PersonalizationCo
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 
-const REVENUE_KPI_KEYS = ['ca_ht', 'variation_ca_n_1', 'ca_moyen_client', 'nb_clients_actifs'];
+const REVENUE_CATEGORIES = ['finance', 'clients'];
 
 export function RevenueAnalysisPage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
@@ -21,56 +21,25 @@ export function RevenueAnalysisPage() {
         if (!isKpisLoading && kpiDefinitions && widgets.length === 0 && !isInitialized) {
             setIsInitialized(true);
 
-            const revenueKpis = kpiDefinitions.filter(kpi => kpi.isActive && REVENUE_KPI_KEYS.includes(kpi.key));
-            const initialWidgets: any[] = [];
-            const addedKeys = new Set();
+            const revenueKpis = kpiDefinitions
+                .filter(kpi => kpi.isActive && REVENUE_CATEGORIES.includes(kpi.category) && kpi.defaultVizType === 'card')
+                .slice(0, 4);
 
-            // 1. Add KPIs (maintaining standard 4 items row layout)
-            revenueKpis.forEach((kpi, index) => {
-                if (index < 4) {
-                    addedKeys.add(kpi.key);
-                    initialWidgets.push({
-                        id: `revenue-${Date.now()}-kpi-${index}`,
-                        dashboardId: 'local-personalization',
-                        name: kpi.name,
-                        type: 'kpi',
-                        vizType: kpi.defaultVizType || 'card',
-                        kpiKey: kpi.key,
-                        config: { unit: kpi.unit, description: kpi.description },
-                        position: { x: index * 3, y: 0, w: 3, h: 3 },
-                        exposure: kpi.key,
-                        isActive: true,
-                        userId: 'local-user',
-                        organizationId: 'local-org',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                    });
-                }
-            });
-
-            // If some KPIs were missing, add fallback mock KPIs for layout testing visually
-            if (addedKeys.size < 4) {
-                REVENUE_KPI_KEYS.filter(key => !addedKeys.has(key)).forEach((key, index) => {
-                    const offset = addedKeys.size + index;
-                    if (offset < 4) {
-                        initialWidgets.push({
-                            id: `revenue-${Date.now()}-kpi-mock-${index}`,
-                            dashboardId: 'local-personalization',
-                            name: key.replace(/_/g, ' '),
-                            type: 'kpi',
-                            vizType: 'card',
-                            kpiKey: key,
-                            config: {},
-                            position: { x: offset * 3, y: 0, w: 3, h: 3 },
-                            isActive: true,
-                            userId: 'local-user',
-                            organizationId: 'local-org',
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString(),
-                        });
-                    }
-                });
-            }
+            const initialWidgets: any[] = revenueKpis.map((kpi, index) => ({
+                id: `revenue-${Date.now()}-kpi-${index}`,
+                dashboardId: 'local-personalization',
+                name: kpi.name,
+                type: 'kpi',
+                vizType: kpi.defaultVizType,
+                kpiKey: kpi.key,
+                config: { unit: kpi.unit, description: kpi.description },
+                position: { x: index * 3, y: 0, w: 3, h: 3 },
+                isActive: true,
+                userId: 'local-user',
+                organizationId: 'local-org',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            }));
 
             // 2. Add Charts (matching previous static UI layout)
             initialWidgets.push({

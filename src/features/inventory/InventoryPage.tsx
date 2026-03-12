@@ -22,69 +22,28 @@ export default function InventoryPage() {
         if (!isLoading && kpiDefinitions && widgets.length === 0) {
             const now = new Date().toISOString();
 
-            const defaultWidgets = [
-                // KPIs de stock
-                {
-                    id: `inventory-${Date.now()}-kpi-1`,
-                    dashboardId: 'local-personalization',
-                    name: 'Valeur Stock Totale',
-                    type: 'kpi',
-                    kpiKey: 'valeur_stock_totale',
-                    vizType: 'card',
-                    position: { x: 0, y: 0, w: 3, h: 3 },
-                    config: { color: 'blue' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `inventory-${Date.now()}-kpi-2`,
-                    dashboardId: 'local-personalization',
-                    name: 'Rotation Stock',
-                    type: 'kpi',
-                    kpiKey: 'rotation_stock',
-                    vizType: 'card',
-                    position: { x: 3, y: 0, w: 3, h: 3 },
-                    config: { color: 'green' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `inventory-${Date.now()}-kpi-3`,
-                    dashboardId: 'local-personalization',
-                    name: 'Nb Articles Hors Stock',
-                    type: 'kpi',
-                    kpiKey: 'nb_articles_hors_stock',
-                    vizType: 'card',
-                    position: { x: 6, y: 0, w: 3, h: 3 },
-                    config: { color: 'red' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                {
-                    id: `inventory-${Date.now()}-kpi-4`,
-                    dashboardId: 'local-personalization',
-                    name: 'Taux Disponibilité',
-                    type: 'kpi',
-                    kpiKey: 'taux_disponibilite',
-                    vizType: 'card',
-                    position: { x: 9, y: 0, w: 3, h: 3 },
-                    config: { color: 'purple' },
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now
-                },
-                // Graphiques
+            const stockKpis = kpiDefinitions
+                .filter(kpi => kpi.isActive && kpi.category === 'stocks' && kpi.defaultVizType === 'card')
+                .slice(0, 4);
+
+            const defaultWidgets: any[] = stockKpis.map((kpi, index) => ({
+                id: `inventory-${Date.now()}-kpi-${index}`,
+                dashboardId: 'local-personalization',
+                name: kpi.name,
+                type: 'kpi',
+                kpiKey: kpi.key,
+                vizType: kpi.defaultVizType,
+                position: { x: index * 3, y: 0, w: 3, h: 3 },
+                config: { unit: kpi.unit, description: kpi.description },
+                isActive: true,
+                userId: 'local-user',
+                organizationId: 'local-org',
+                createdAt: now,
+                updatedAt: now,
+            }));
+
+            // Graphiques fixes (composants visuels dédiés)
+            defaultWidgets.push(
                 {
                     id: `inventory-${Date.now()}-chart-1`,
                     dashboardId: 'local-personalization',
@@ -98,7 +57,7 @@ export default function InventoryPage() {
                     userId: 'local-user',
                     organizationId: 'local-org',
                     createdAt: now,
-                    updatedAt: now
+                    updatedAt: now,
                 },
                 {
                     id: `inventory-${Date.now()}-chart-2`,
@@ -113,11 +72,10 @@ export default function InventoryPage() {
                     userId: 'local-user',
                     organizationId: 'local-org',
                     createdAt: now,
-                    updatedAt: now
+                    updatedAt: now,
                 }
-            ];
+            );
 
-            // On peuple la page avec setPageLayout
             // @ts-ignore
             setPageLayout(PAGE_ID, defaultWidgets);
         }

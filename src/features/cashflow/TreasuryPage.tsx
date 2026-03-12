@@ -18,24 +18,7 @@ import {
 
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 
-const TREASURY_CATEGORIES = [
-    'tresorerie',
-    'finance',
-    'finance_performance',
-    'rentabilite',
-    'controle_gestion',
-];
-
-const TREASURY_KPI_KEYS = [
-    'position_tresorerie',
-    'flux_tresorerie_projete',
-    'dso',
-    'creances_retard',
-    'cash_flow',
-    'revenue_mom',
-    'accounts_receivable',
-    'accounts_payable',
-];
+const TREASURY_CATEGORIES = ['tresorerie', 'finance'];
 
 export function TreasuryPage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
@@ -54,17 +37,9 @@ export function TreasuryPage() {
             setIsInitialized(true);
 
             // 1. Trouver les KPIs de trésorerie
-            let treasuryKpis = kpiDefinitions.filter(
-                (kpi) => kpi.isActive && TREASURY_CATEGORIES.includes(kpi.category)
-            );
-
-            if (treasuryKpis.length === 0) {
-                treasuryKpis = kpiDefinitions.filter(
-                    (kpi) => kpi.isActive && TREASURY_KPI_KEYS.includes(kpi.key)
-                );
-            }
-
-            const mainKpis = treasuryKpis.slice(0, 4);
+            const mainKpis = kpiDefinitions
+                .filter(kpi => kpi.isActive && TREASURY_CATEGORIES.includes(kpi.category) && kpi.defaultVizType === 'card')
+                .slice(0, 4);
             const initialWidgets: any[] = [];
 
             // 2. Ajouter automatiquement les 4 KPIs en tant que widgets draggables
