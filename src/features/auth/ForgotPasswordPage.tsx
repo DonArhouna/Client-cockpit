@@ -45,7 +45,7 @@ export function ForgotPasswordPage() {
           />
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground">Cockpit</h2>
-            <p className="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">Administration</p>
+            <p className="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">Paramètre</p>
           </div>
         </div>
 

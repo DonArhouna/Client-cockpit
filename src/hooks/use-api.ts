@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import {
     organizationsApi,
     usersApi,
@@ -10,6 +10,10 @@ import {
     kpiDefinitionsApi,
     widgetTemplatesApi,
     kpiPacksApi,
+    kpiPacksClientApi,
+    nlqApi,
+    jobsApi,
+    targetsApi,
 } from '@/api';
 import { Agent } from '@/types';
 
@@ -118,7 +122,7 @@ export function useAgentLogs(id: string, page = 1, limit = 50) {
             return resp.data;
         },
         enabled: !!id,
-        refetchInterval: 10 * 1000, // Rafraîchir toutes les 10s pour le "live" feeling
+        refetchInterval: 10 * 1000,
     });
 }
 
@@ -240,6 +244,18 @@ export function useKpiPacks() {
     });
 }
 
+// Client-facing KPI Packs (non-admin, authenticated)
+export function useClientKpiPacks(profile?: string) {
+    return useQuery({
+        queryKey: ['client-kpi-packs', profile],
+        queryFn: async () => {
+            const resp = await kpiPacksClientApi.getAll(profile);
+            return resp.data;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
 // Plans actifs (public — pour les modals)
 export function useActivePlans() {
     return useQuery({
@@ -249,5 +265,50 @@ export function useActivePlans() {
             return resp.data;
         },
         staleTime: 10 * 60 * 1000,
+    });
+}
+
+// NLQ Hooks
+export function useNLQQuery() {
+    return useMutation({
+        mutationFn: async (query: string) => {
+            const resp = await nlqApi.query(query);
+            return resp.data;
+        },
+    });
+}
+
+export function useJobStatus(jobId: string | null, options?: { enabled?: boolean; refetchInterval?: number }) {
+    return useQuery({
+        queryKey: ['jobs', jobId],
+        queryFn: async () => {
+            const resp = await jobsApi.getById(jobId!);
+            return resp.data;
+        },
+        enabled: !!jobId && options?.enabled !== false,
+        refetchInterval: options?.refetchInterval || 2000,
+    });
+}
+
+// Targets (Objectifs)
+export function useTargets(params?: { kpiKey?: string; year?: number; scenario?: string }) {
+    return useQuery({
+        queryKey: ['targets', params],
+        queryFn: async () => {
+            const resp = await targetsApi.getAll(params);
+            return resp.data;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+export function useTarget(id: string) {
+    return useQuery({
+        queryKey: ['targets', id],
+        queryFn: async () => {
+            const resp = await targetsApi.getById(id);
+            return resp.data;
+        },
+        enabled: !!id,
     });
 }

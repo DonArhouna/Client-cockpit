@@ -1,14 +1,90 @@
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Users, Cpu, AlertTriangle, Loader2 } from 'lucide-react';
-import { useDashboardStats } from '@/hooks/use-api';
-import { ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Loader2, RefreshCw, LayoutDashboard } from 'lucide-react';
+import { useMyDashboard, useUpdateWidget, useRemoveWidget, useCreateDashboard } from '@/hooks/use-dashboards';
+import { DashboardGrid } from './components/DashboardGrid';
+import { WidgetSidebar } from './components/WidgetSidebar';
+import { DashboardKpis } from './components/DashboardKpis';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { useDashboardEdit } from '@/context/DashboardEditContext';
+import { usePersonalization } from '@/features/personalization/PersonalizationContext';
+import { useFilters } from '@/context/FilterContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
+import { Calendar, ChevronDown } from 'lucide-react';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { data: statsData, isLoading, error } = useDashboardStats();
+  const { toast } = useToast();
+  const { data: dashboard, isLoading: isBackendLoading, error, refetch } = useMyDashboard();
+  const { layouts, addWidgetToPage, removeWidgetFromPage, updateLayoutForPage } = usePersonalization();
 
-  if (isLoading) {
+  const updateWidget = useUpdateWidget();
+  const removeWidget = useRemoveWidget();
+  const createDashboard = useCreateDashboard();
+
+  const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
+
+  // Widgets unifiés
+  const personalizedWidgets = layouts['dashboard'] || [];
+  const widgets = personalizedWidgets.length > 0 ? personalizedWidgets : (dashboard?.widgets || []);
+
+  const handleCreateDashboard = () => {
+    createDashboard.mutate({
+      name: 'Mon Cockpit',
+      isDefault: true
+    }, {
+      onError: (err: any) => {
+        toast({
+          title: "Erreur",
+          description: err?.response?.data?.message || "Impossible de créer le cockpit",
+          variant: "destructive"
+        });
+      }
+    });
+  };
+
+  const { period, setPeriod, currency, setCurrency } = useFilters();
+
+  const handleRefresh = () => {
+    refetch();
+    toast({
+      title: "Actualisation",
+      description: "Les données de votre cockpit ont été mises à jour.",
+    });
+  };
+
+  const handleLayoutChange = (layoutUpdates: Record<string, { x: number, y: number, w: number, h: number }>) => {
+    updateLayoutForPage('dashboard', layoutUpdates);
+    if (dashboard) {
+      Object.entries(layoutUpdates).forEach(([widgetId, position]) => {
+        if (!widgetId.startsWith('local-')) {
+          updateWidget.mutate({
+            dashboardId: dashboard.id,
+            widgetId,
+            data: { position }
+          });
+        }
+      });
+    }
+  };
+
+  const handleAddWidget = (widgetData: any) => {
+    addWidgetToPage('dashboard', widgetData);
+  };
+
+  const handleRemoveWidget = (widgetId: string) => {
+    removeWidgetFromPage('dashboard', widgetId);
+  };
+
+  if (isBackendLoading && widgets.length === 0) {
     return (
       <div className="h-[400px] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -16,183 +92,108 @@ export function DashboardPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="h-[400px] flex items-center justify-center text-destructive">
-        {t('dashboard.errorLoadingStats') || 'Erreur lors du chargement des statistiques'}
-      </div>
-    );
-  }
-
-  const stats = [
-    {
-      label: t('dashboard.totalOrganizations'),
-      value: statsData?.organizations?.value?.toString() || '0',
-      icon: Building2,
-      trend: statsData?.organizations?.trend || '+0',
-      color: 'text-blue-500'
-    },
-    {
-      label: t('dashboard.totalUsers'),
-      value: statsData?.users?.value?.toString() || '0',
-      icon: Users,
-      trend: statsData?.users?.trend || '+0',
-      color: 'text-green-500'
-    },
-    {
-      label: t('dashboard.activeAgents'),
-      value: statsData?.activeAgents?.value?.toString() || '0',
-      icon: Cpu,
-      trend: statsData?.activeAgents?.trend || '+0',
-      color: 'text-emerald-500'
-    },
-    {
-      label: t('dashboard.errorAgents'),
-      value: statsData?.errorAgents?.value?.toString() || '0',
-      icon: AlertTriangle,
-      trend: statsData?.errorAgents?.trend || '0',
-      color: 'text-red-500'
-    },
-  ];
-
-  // Fake data pour les graphiques si l'API ne renvoie rien pour ça
-  const activityData = statsData?.recentActivity || [
-    { date: '01/03', users: 12, agents: 5 },
-    { date: '02/03', users: 19, agents: 8 },
-    { date: '03/03', users: 15, agents: 7 },
-    { date: '04/03', users: 22, agents: 10 },
-    { date: '05/03', users: 28, agents: 12 },
-    { date: '06/03', users: 24, agents: 9 },
-    { date: '07/03', users: 32, agents: 14 },
-  ];
-
-  const agentsStatusData = statsData?.agentsDistribution || [
-    { name: 'Online', value: statsData?.activeAgents?.value || 45, color: '#22c55e' }, // emerald-500
-    { name: 'Offline', value: 12, color: '#94a3b8' }, // slate-400
-    { name: 'Error', value: statsData?.errorAgents?.value || 3, color: '#ef4444' }, // red-500
-  ];
-
   return (
-    <div className="space-y-6" data-testid="dashboard-page">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h1>
-        <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
+    <div className="flex w-full overflow-x-hidden relative bg-slate-50/20 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'pr-80' : ''}`}>
+
+        {/* Breadcrumbs & Title */}
+        <div className="px-6 pt-6 flex flex-col gap-6 flex-shrink-0">
+          <Breadcrumbs currentPage="Tableau de bord" PageIcon={LayoutDashboard} />
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Tableau de bord Exécutif</h1>
+        </div>
+
+        {/* Barre d'outils unifiée */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4 px-6 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center justify-between gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm min-w-[160px]">
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span>{period === 'current_quarter' ? 'Ce trimestre' : period === 'current_month' ? 'Ce mois' : 'Cette année'}</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[160px]">
+                <DropdownMenuItem onClick={() => setPeriod('current_month')}>Ce mois</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPeriod('current_quarter')}>Ce trimestre</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPeriod('current_year')}>Cette année</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center justify-between gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm w-[110px]">
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                    <span className="text-primary text-xs font-bold">
+                      {currency === 'EUR' ? '€' : currency === 'USD' ? '$' : 'FCFA'}
+                    </span>
+                    <span className="text-xs">{currency}</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[110px]">
+                <DropdownMenuItem onClick={() => setCurrency('XOF')}>XOF</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCurrency('EUR')}>EUR</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCurrency('USD')}>USD</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="flex-1 flex justify-center">
+            <KpiSearchBar placeholder="Posez votre question sur le tableau de bord Exécutif" />
+          </div>
+
+          <div className="flex items-center gap-3">
+            {isEditing && (
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-2 bg-[#3b66ac] hover:bg-[#2d5089] text-white"
+                onClick={() => setIsEditing(false)}
+              >
+                Terminer
+              </Button>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2"
+                onClick={handleRefresh}
+              >
+                <RefreshCw className={cn("h-4 w-4", isBackendLoading && "animate-spin")} />
+              </Button>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Mis à jour: 09:36
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Contenu principal */}
+        <div className="flex-1 overflow-y-auto px-6 space-y-6 pb-6">
+          <DashboardKpis />
+          <DashboardGrid
+            widgets={widgets}
+            isEditing={isEditing}
+            onLayoutChangeAction={handleLayoutChange}
+            onRemoveWidget={handleRemoveWidget}
+          />
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index} data-testid={`stat-card-${index}`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.label}
-                </CardTitle>
-                <Icon className={`h-5 w-5 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  <span className={stat.trend.startsWith('+') ? 'text-green-500' : stat.trend === '0' || stat.trend === '+0' ? 'text-muted-foreground' : 'text-red-500'}>
-                    {stat.trend}
-                  </span>
-                  {' '}{t('dashboard.last30Days')}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Charts row */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card data-testid="recent-activity-card">
-          <CardHeader>
-            <CardTitle>{t('dashboard.recentActivity')}</CardTitle>
-            <CardDescription>{t('dashboard.last30Days')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={activityData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorAgents" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
-                  <XAxis dataKey="date" className="text-xs" tickLine={false} axisLine={false} />
-                  <YAxis className="text-xs" tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--background))' }}
-                  />
-                  <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }}/>
-                  <Area
-                    type="monotone"
-                    name="Nouveaux utilisateurs"
-                    dataKey="users"
-                    stroke="#3b82f6"
-                    fillOpacity={1}
-                    fill="url(#colorUsers)"
-                    strokeWidth={2}
-                  />
-                  <Area
-                    type="monotone"
-                    name="Agents déployés"
-                    dataKey="agents"
-                    stroke="#10b981"
-                    fillOpacity={1}
-                    fill="url(#colorAgents)"
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="agents-status-card">
-          <CardHeader>
-            <CardTitle>{t('dashboard.agentsStatus')}</CardTitle>
-            <CardDescription>Répartition des statuts actuels</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full flex items-center justify-center mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={agentsStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={110}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {agentsStatusData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--background))' }}
-                    itemStyle={{ color: 'hsl(var(--foreground))' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '13px' }}/>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Sidebar de widgets */}
+      <div
+        className={`absolute top-0 right-0 bottom-0 h-full z-20 transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <WidgetSidebar
+          onClose={() => setIsSidebarOpen(false)}
+          onAddWidget={handleAddWidget}
+        />
       </div>
     </div>
   );

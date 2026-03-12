@@ -3,20 +3,21 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  Building2,
+  Wallet,
   Users,
-  Shield,
-  Cpu,
-  ScrollText,
+  Truck,
+  Package,
+  FileText,
+  BrainCircuit,
   ChevronLeft,
   ChevronRight,
-  HeartPulse,
-  CreditCard,
-  BarChart3,
-  Calendar,
+  Settings2,
+  ShieldAlert,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useDashboardEdit } from '@/context/DashboardEditContext';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -24,22 +25,21 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { path: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-  { path: '/organizations', icon: Building2, labelKey: 'nav.organizations' },
-  { path: '/users', icon: Users, labelKey: 'nav.users' },
-  { path: '/invitations', icon: Calendar, labelKey: 'nav.invitations' },
-  { path: '/roles', icon: Shield, labelKey: 'nav.roles' },
-  { path: '/subscription-plans', icon: CreditCard, labelKey: 'nav.subscriptionPlans' },
-  { path: '/client-plans', icon: CreditCard, labelKey: 'nav.clientPlans' },
-  { path: '/kpi-store', icon: BarChart3, labelKey: 'nav.kpiStore' },
-  { path: '/agents', icon: Cpu, labelKey: 'nav.agents' },
-  { path: '/audit-logs', icon: ScrollText, labelKey: 'nav.auditLogs' },
-  { path: '/health', icon: HeartPulse, labelKey: 'nav.health' },
+  { path: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.exclusiveDashboard' },
+  { path: '/finance', icon: Wallet, labelKey: 'nav.cashFlowTracking' },
+  { path: '/sales', icon: Users, labelKey: 'nav.revenueAnalysis' },
+  { path: '/purchases', icon: Truck, labelKey: 'nav.operationalPerformance' },
+  { path: '/stocks', icon: Package, labelKey: 'nav.stockAndArticles' },
+  { path: '/accounting', icon: FileText, labelKey: 'nav.accountingAnalytic' },
+  { path: '/risks', icon: ShieldAlert, labelKey: 'nav.risksAndRecovery' },
+  { path: '/smart-queries', icon: BrainCircuit, labelKey: 'nav.smartQueries' },
+  { path: '/admin', icon: Settings, labelKey: 'nav.administration' },
 ];
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { t } = useTranslation();
   const location = useLocation();
+  const { isEditing, toggleEditMode } = useDashboardEdit();
 
   return (
     <>
@@ -75,7 +75,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {!collapsed && (
               <div className="overflow-hidden">
                 <h1 className="font-bold text-lg text-sidebar-foreground truncate tracking-tight">Cockpit</h1>
-                <p className="text-[10px] font-bold text-primary uppercase tracking-wider truncate opacity-80">Administration</p>
+                <p className="text-[10px] font-bold text-primary uppercase tracking-wider truncate opacity-80">Client</p>
               </div>
             )}
           </div>
@@ -111,6 +111,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             })}
           </ul>
         </nav>
+        {/* Personnaliser button - Global Toggle */}
+        <div className="p-3">
+          <div
+            onClick={(e) => {
+              e.preventDefault();
+              toggleEditMode();
+            }}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 border border-primary/20 hover:border-primary/50 group cursor-pointer',
+              isEditing ? 'bg-blue-600 text-white border-none shadow-md' : 'text-sidebar-foreground bg-transparent hover:bg-sidebar-accent'
+            )}
+          >
+            <Settings2 className={cn("h-5 w-5 shrink-0 group-hover:rotate-45 transition-transform")} />
+            {!collapsed && (
+              <span className="truncate">Personnaliser</span>
+            )}
+          </div>
+        </div>
 
         <Separator className="bg-sidebar-border" />
 

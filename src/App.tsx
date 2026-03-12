@@ -23,6 +23,17 @@ import { ClientPlansPage } from '@/features/subscriptions/ClientPlansPage';
 import { KpiStorePage } from './features/kpi-store/KpiStorePage';
 import { WidgetTemplateDetailPage } from './features/kpi-store/WidgetTemplateDetailPage';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
+import { DashboardEditProvider } from './context/DashboardEditContext';
+import { PersonalizationPage } from './features/personalization/PersonalizationPage';
+import { PersonalizationProvider } from './features/personalization/PersonalizationContext';
+import { FilterProvider } from './context/FilterContext';
+import { IntelligentQueriesPage } from './features/queries/IntelligentQueriesPage';
+import { TreasuryPage } from './features/cashflow/TreasuryPage';
+import { RevenueAnalysisPage } from './features/revenue/RevenueAnalysisPage';
+import { OperationalPerformancePage } from './features/operational/OperationalPerformancePage';
+import InventoryPage from './features/inventory/InventoryPage';
+import AccountingPage from './features/accounting/AccountingPage';
+import RisksPage from './features/risks/RisksPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -48,29 +59,44 @@ export default function App() {
         path="/*"
         element={
           <ProtectedRoute>
-            <MainLayout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/organizations" element={<OrganizationsPage />} />
-                <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
-                <Route path="/users" element={<UsersPage />} />
-                <Route path="/users/:id" element={<UserDetailPage />} />
-                <Route path="/invitations" element={<InvitationsPage />} />
-                <Route path="/roles" element={<RolesPage />} />
-                <Route path="/roles/:id" element={<RoleDetailPage />} />
-                <Route path="/agents" element={<AgentsPage />} />
-                <Route path="/agents/:id" element={<AgentDetailPage />} />
-                <Route path="/audit-logs" element={<AuditLogsPage />} />
-                <Route path="/health" element={<HealthPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
-                <Route path="/subscription-plans/:id" element={<SubscriptionPlanDetailPage />} />
-                <Route path="/client-plans" element={<ClientPlansPage />} />
-                <Route path="/kpi-store" element={<KpiStorePage />} />
-                <Route path="/kpi-store/widget-templates/:id" element={<WidgetTemplateDetailPage />} />
-              </Routes>
-            </MainLayout>
+            <DashboardEditProvider>
+              <PersonalizationProvider>
+                <FilterProvider>
+                  <MainLayout>
+                    <Routes>
+                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/dashboard" element={<DashboardPage />} />
+                      <Route path="/finance" element={<TreasuryPage />} />
+                      <Route path="/revenue-analysis" element={<Navigate to="/sales" replace />} />
+                      <Route path="/sales" element={<RevenueAnalysisPage />} />
+                      <Route path="/purchases" element={<OperationalPerformancePage />} />
+                      <Route path="/stocks" element={<InventoryPage />} />
+                      <Route path="/accounting" element={<AccountingPage />} />
+                      <Route path="/risks" element={<RisksPage />} />
+                      <Route path="/smart-queries" element={<IntelligentQueriesPage />} />
+                      <Route path="/personalization" element={<PersonalizationPage />} />
+                      <Route path="/organizations" element={<OrganizationsPage />} />
+                      <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
+                      <Route path="/users" element={<UsersPage />} />
+                      <Route path="/users/:id" element={<UserDetailPage />} />
+                      <Route path="/invitations" element={<InvitationsPage />} />
+                      <Route path="/roles" element={<RolesPage />} />
+                      <Route path="/roles/:id" element={<RoleDetailPage />} />
+                      <Route path="/agents" element={<AgentsPage />} />
+                      <Route path="/agents/:id" element={<AgentDetailPage />} />
+                      <Route path="/audit-logs" element={<AuditLogsPage />} />
+                      <Route path="/health" element={<HealthPage />} />
+                      <Route path="/profile" element={<ProfilePage />} />
+                      <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
+                      <Route path="/subscription-plans/:id" element={<SubscriptionPlanDetailPage />} />
+                      <Route path="/client-plans" element={<ClientPlansPage />} />
+                      <Route path="/kpi-store" element={<KpiStorePage />} />
+                      <Route path="/kpi-store/widget-templates/:id" element={<WidgetTemplateDetailPage />} />
+                    </Routes>
+                  </MainLayout>
+                </FilterProvider>
+              </PersonalizationProvider>
+            </DashboardEditProvider>
           </ProtectedRoute>
         }
       />

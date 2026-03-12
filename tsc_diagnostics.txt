@@ -1,0 +1,16 @@
+src/features/auth/AuthContext.tsx(3,15): error TS6196: 'User' is declared but never used.
+src/features/auth/LoginPage.tsx(8,1): error TS6192: All imports in import declaration are unused.
+src/features/cashflow/CashFlowChart.tsx(7,12): error TS6133: 'view' is declared but its value is never read.
+src/features/cashflow/CashFlowChart.tsx(7,18): error TS6133: 'setView' is declared but its value is never read.
+src/features/cashflow/TreasuryHeader.tsx(8,32): error TS6198: All destructured elements are unused.
+src/features/dashboard/components/RevenueChart.tsx(2,10): error TS6133: 'LineChart' is declared but its value is never read.
+src/features/dashboard/components/RevenueChart.tsx(2,21): error TS6133: 'Line' is declared but its value is never read.
+src/features/dashboard/components/RevenueChart.tsx(2,103): error TS6133: 'Legend' is declared but its value is never read.
+src/features/dashboard/components/RevenueChart.tsx(26,27): error TS2339: Property 'series' does not exist on type 'KpiDataResult'.
+src/features/health/HealthPage.tsx(3,29): error TS6133: 'CardDescription' is declared but its value is never read.
+src/features/kpi-store/CreateWidgetTemplateModal.tsx(1,1): error TS6133: 'useState' is declared but its value is never read.
+src/features/queries/IntelligentQueriesPage.tsx(6,5): error TS6133: 'RefreshCw' is declared but its value is never read.
+src/features/queries/IntelligentQueriesPage.tsx(8,5): error TS6133: 'Lightbulb' is declared but its value is never read.
+src/features/queries/IntelligentQueriesPage.tsx(12,5): error TS6133: 'ArrowRight' is declared but its value is never read.
+src/features/queries/IntelligentQueriesPage.tsx(40,11): error TS6133: 'suggestQueries' is declared but its value is never read.
+src/features/subscriptions/ClientPlansPage.tsx(4,47): error TS6133: 'Users' is declared but its value is never read.

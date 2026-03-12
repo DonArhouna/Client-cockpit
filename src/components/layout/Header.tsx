@@ -12,15 +12,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Menu, 
-  Sun, 
-  Moon, 
-  Languages, 
+import {
+  Menu,
+  Sun,
+  Moon,
+  Languages,
   LogOut,
   User as UserIcon
 } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
+import { AlertsPopover } from '@/components/shared/AlertsPopover';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -33,7 +34,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
 
   const currentLang = i18n.language;
-  
+
   const toggleLanguage = () => {
     const newLang = currentLang === 'fr' ? 'en' : 'fr';
     i18n.changeLanguage(newLang);
@@ -88,11 +89,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
             )}
           </Button>
 
+          {/* Alerts */}
+          <AlertsPopover />
+
           {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="relative h-10 w-10 rounded-full"
                 data-testid="user-menu-btn"
               >
@@ -124,7 +128,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 <span>Profil</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="cursor-pointer text-destructive focus:text-destructive"
                 onClick={handleLogout}
                 data-testid="logout-menu-item"

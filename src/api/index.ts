@@ -15,6 +15,10 @@ import type {
   Invitation,
   KpiPack,
   AgentLogsResponse,
+  Dashboard,
+  Widget,
+  WidgetPosition,
+  Target
 } from '@/types';
 
 // Auth
@@ -140,11 +144,9 @@ export const agentsApi = {
 
 // Subscription Plans
 export const subscriptionPlansApi = {
-  // Admin endpoint (requires auth + superadmin permissions)
   getAll: () =>
     api.get<SubscriptionPlan[]>('/admin/subscription-plans'),
 
-  // Public endpoint (no auth required)
   getActive: () =>
     api.get<SubscriptionPlan[]>('/subscriptions/plans'),
 
@@ -194,7 +196,7 @@ export const widgetTemplatesApi = {
     api.delete<WidgetTemplate>(`/admin/widget-templates/${id}`),
 };
 
-// KPI Store - KPI Packs
+// KPI Store - KPI Packs (admin)
 export const kpiPacksApi = {
   getAll: () =>
     api.get<KpiPack[]>('/admin/kpi-packs'),
@@ -207,6 +209,15 @@ export const kpiPacksApi = {
 
   toggle: (id: string) =>
     api.delete<KpiPack>(`/admin/kpi-packs/${id}`),
+};
+
+// KPI Packs - Client-facing (authenticated, non-admin)
+export const kpiPacksClientApi = {
+  getAll: (profile?: string) =>
+    api.get<(KpiPack & { kpiDefinitions?: KpiDefinition[] })[]>(
+      '/dashboards/kpi-packs',
+      { params: profile ? { profile } : undefined }
+    ),
 };
 
 // Audit Logs
@@ -231,4 +242,95 @@ export const healthApi = {
 
   checkDb: () =>
     api.get('/health/db'),
+};
+
+// Dashboards
+export const dashboardsApi = {
+  getMine: () =>
+    api.get<Dashboard>('/dashboards/me'),
+
+  getAll: () =>
+    api.get<Dashboard[]>('/dashboards'),
+
+  getById: (id: string) =>
+    api.get<Dashboard>(`/dashboards/${id}`),
+
+  create: (data: { name: string; isDefault?: boolean }) =>
+    api.post<Dashboard>('/dashboards', data),
+
+  update: (id: string, data: { name?: string; isDefault?: boolean; layout?: unknown[] }) =>
+    api.patch<Dashboard>(`/dashboards/${id}`, data),
+
+  delete: (id: string) =>
+    api.delete(`/dashboards/${id}`),
+
+  addWidget: (dashboardId: string, data: {
+    name: string;
+    type: string;
+    kpiKey?: string;
+    vizType?: string;
+    config?: Record<string, unknown>;
+    exposure?: string;
+    position: WidgetPosition;
+  }) => api.post<Widget>(`/dashboards/${dashboardId}/widgets`, data),
+
+  updateWidget: (dashboardId: string, widgetId: string, data: Partial<{
+    name: string;
+    config: Record<string, unknown>;
+    vizType: string;
+    position: WidgetPosition;
+    isActive: boolean;
+  }>) => api.patch<Widget>(`/dashboards/${dashboardId}/widgets/${widgetId}`, data),
+
+  removeWidget: (dashboardId: string, widgetId: string) =>
+    api.delete(`/dashboards/${dashboardId}/widgets/${widgetId}`),
+};
+
+// NLQ & Real-time Data
+export const nlqApi = {
+  query: (query: string) =>
+    api.post<{
+      sessionId: string;
+      intent: string;
+      vizType: string;
+      jobId: string;
+      status: string;
+      message?: string;
+    }>('/nlq/query', { query }),
+
+  addToDashboard: (data: {
+    sessionId: string;
+    dashboardId: string;
+    name?: string;
+    position?: WidgetPosition;
+  }) => api.post('/nlq/add-to-dashboard', data),
+};
+
+// Agents Jobs
+export const jobsApi = {
+  getById: (jobId: string) =>
+    api.get<{
+      id: string;
+      status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+      result: any;
+      errorMessage: string | null;
+    }>(`/agents/jobs/${jobId}`),
+};
+
+// Targets (Objectifs)
+export const targetsApi = {
+  getAll: (params?: { kpiKey?: string; year?: number; scenario?: string }) =>
+    api.get<Target[]>('/targets', { params }),
+
+  getById: (id: string) =>
+    api.get<Target>(`/targets/${id}`),
+
+  create: (data: Omit<Target, 'id' | 'organizationId' | 'createdAt' | 'updatedAt'>) =>
+    api.post<Target>('/targets', data),
+
+  update: (id: string, data: Partial<Omit<Target, 'id' | 'organizationId' | 'createdAt' | 'updatedAt'>>) =>
+    api.patch<Target>(`/targets/${id}`, data),
+
+  delete: (id: string) =>
+    api.delete(`/targets/${id}`),
 };

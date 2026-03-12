@@ -1,0 +1,18 @@
+src/features/accounting/AccountingPage.tsx(147,54): error TS2345: Argument of type '{ isActive: true; userId: string; organizationId: string; createdAt: string; updatedAt: string; position: { x: number; y: number; w: number; h: number; }; name: string; type: string; vizType?: string; kpiKey?: string; config?: any; }' is not assignable to parameter of type 'Omit<Widget, "id" | "dashboardId">'.
+  Property 'config' is optional in type '{ isActive: true; userId: string; organizationId: string; createdAt: string; updatedAt: string; position: { x: number; y: number; w: number; h: number; }; name: string; type: string; vizType?: string | undefined; kpiKey?: string | undefined; config?: any; }' but required in type 'Omit<Widget, "id" | "dashboardId">'.
+src/features/auth/AuthContext.tsx(3,15): error TS6196: 'User' is declared but never used.
+src/features/auth/LoginPage.tsx(8,1): error TS6192: All imports in import declaration are unused.
+src/features/cashflow/CashFlowChart.tsx(7,12): error TS6133: 'view' is declared but its value is never read.
+src/features/cashflow/CashFlowChart.tsx(7,18): error TS6133: 'setView' is declared but its value is never read.
+src/features/cashflow/TreasuryHeader.tsx(8,32): error TS6198: All destructured elements are unused.
+src/features/dashboard/components/RevenueChart.tsx(2,10): error TS6133: 'LineChart' is declared but its value is never read.
+src/features/dashboard/components/RevenueChart.tsx(2,21): error TS6133: 'Line' is declared but its value is never read.
+src/features/dashboard/components/RevenueChart.tsx(2,103): error TS6133: 'Legend' is declared but its value is never read.
+src/features/dashboard/components/RevenueChart.tsx(26,27): error TS2339: Property 'series' does not exist on type 'KpiDataResult'.
+src/features/health/HealthPage.tsx(3,29): error TS6133: 'CardDescription' is declared but its value is never read.
+src/features/inventory/InventoryPage.tsx(145,54): error TS2345: Argument of type '{ isActive: true; userId: string; organizationId: string; createdAt: string; updatedAt: string; position: { x: number; y: number; w: number; h: number; }; name: string; type: string; vizType?: string; kpiKey?: string; config?: any; }' is not assignable to parameter of type 'Omit<Widget, "id" | "dashboardId">'.
+  Property 'config' is optional in type '{ isActive: true; userId: string; organizationId: string; createdAt: string; updatedAt: string; position: { x: number; y: number; w: number; h: number; }; name: string; type: string; vizType?: string | undefined; kpiKey?: string | undefined; config?: any; }' but required in type 'Omit<Widget, "id" | "dashboardId">'.
+src/features/kpi-store/CreateWidgetTemplateModal.tsx(1,1): error TS6133: 'useState' is declared but its value is never read.
+src/features/risks/RisksPage.tsx(136,54): error TS2345: Argument of type '{ isActive: true; userId: string; organizationId: string; createdAt: string; updatedAt: string; position: { x: number; y: number; w: number; h: number; }; name: string; type: string; vizType?: string; kpiKey?: string; config?: any; }' is not assignable to parameter of type 'Omit<Widget, "id" | "dashboardId">'.
+  Property 'config' is optional in type '{ isActive: true; userId: string; organizationId: string; createdAt: string; updatedAt: string; position: { x: number; y: number; w: number; h: number; }; name: string; type: string; vizType?: string | undefined; kpiKey?: string | undefined; config?: any; }' but required in type 'Omit<Widget, "id" | "dashboardId">'.
+src/features/subscriptions/ClientPlansPage.tsx(4,47): error TS6133: 'Users' is declared but its value is never read.

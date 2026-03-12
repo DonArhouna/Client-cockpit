@@ -167,11 +167,23 @@ export interface AuditLog {
 export interface KpiDefinition {
   id: string;
   key: string;
+  code?: string;
   name: string;
+  domain?: string;
   description?: string;
-  unit?: string;
   category: string;
+  subcategory?: string;
+  usage?: string;
+  unit?: string;
+  frequency?: string;
+  risk?: string;
+  profiles?: string[];
+  sectors?: string[];
   defaultVizType: string;
+  direction?: string;
+  sqlSage100View?: string;
+  sqlSage100Tables?: string[];
+  mlUsage?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -195,6 +207,23 @@ export interface KpiPack {
   description?: string;
   isActive: boolean;
   createdAt: string;
+}
+
+// Targets types
+export interface Target {
+  id: string;
+  kpiKey: string;
+  value: number;
+  valueType: 'ABSOLUTE' | 'PERCENTAGE' | 'DELTA_PERCENT';
+  deltaReference?: 'PREVIOUS_PERIOD' | 'SAME_PERIOD_LAST_YEAR';
+  periodType: 'MENSUEL' | 'BIMESTRE' | 'TRIMESTRE' | 'SEMESTRE' | 'ANNEE';
+  periodIndex: number;
+  year: number;
+  scenario: 'BUDGET' | 'REVISED' | 'FORECAST' | 'STRETCH';
+  label?: string;
+  organizationId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // API Response types
@@ -231,4 +260,42 @@ export interface AuthState {
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+}
+
+// Dashboards types
+export interface WidgetPosition {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface Widget {
+  id: string;
+  name: string;
+  type: string;
+  kpiKey?: string | null;
+  vizType?: string | null;
+  config: Record<string, unknown>;
+  exposure?: string | null;
+  position: WidgetPosition;
+  isActive: boolean;
+  dashboardId: string;
+  userId?: string;
+  organizationId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Dashboard {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  layout: unknown[];
+  userId: string;
+  organizationId: string;
+  widgets?: Widget[];
+  user?: User;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -1,10 +1,13 @@
 import '@testing-library/jest-dom';
+import { vi, afterEach } from 'vitest';
+
+declare var global: any;
 
 // Polyfills for jsdom (required by Radix UI components)
 global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+  observe() { }
+  unobserve() { }
+  disconnect() { }
 };
 
 global.DOMRect = class DOMRect {

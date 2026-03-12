@@ -5,7 +5,7 @@ import { useAuth } from './AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 export function LoginPage() {
@@ -70,7 +70,7 @@ export function LoginPage() {
           />
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground">Cockpit</h2>
-            <p className="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">Administration</p>
+            <p className="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">Client</p>
           </div>
         </div>
 
@@ -112,7 +112,7 @@ export function LoginPage() {
           />
           <div>
             <h1 className="text-3xl font-bold text-foreground tracking-tight">Cockpit</h1>
-            <p className="text-sm font-medium text-primary uppercase tracking-widest opacity-80">Administration</p>
+            <p className="text-sm font-medium text-primary uppercase tracking-widest opacity-80">Paramètre</p>
           </div>
         </div>
 
