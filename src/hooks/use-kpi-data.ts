@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { nlqApi, jobsApi } from '@/api';
+import { getCache, setCache } from '@/lib/cache';
 import { useToast } from '@/hooks/use-toast';
 import { useFilters } from '@/context/FilterContext';
 
@@ -17,8 +18,8 @@ interface KpiDataResult {
     details?: Record<string, any>;
 }
 
-// Fallback data function - Modified to return empty/loading state instead of hardcoded values
-const getFallbackData = (kpiKey: string | null, period: string): KpiDataResult => {
+// Fonction de données de secours - Modifiée pour retourner un état vide/chargement au lieu de valeurs hardcodées
+const getFallbackData = (_kpiKey: string | null, period: string): KpiDataResult => {
     return {
         current: 0,
         previous: 0,
@@ -37,8 +38,18 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
     const { toast } = useToast();
     const { period, currency } = useFilters();
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (force: boolean = false) => {
         if (!kpiKey || !enabled) return;
+
+        // 0. Vérifier le cache
+        const cacheKey = `kpi_${kpiKey}_${period}_${currency}`;
+        if (!force) {
+            const cached = getCache<KpiDataResult>(cacheKey);
+            if (cached) {
+                setData(cached);
+                return;
+            }
+        }
 
         setIsLoading(true);
         setError(null);
@@ -52,8 +63,10 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
             const { jobId, status } = queryResp.data;
 
             if (!jobId || status === 'no_intent') {
-                // If NLQ isn't returning a job, provide rich fallback data
-                setData(getFallbackData(kpiKey, period));
+                // Si le NLQ ne renvoie pas de job, fournir des données de secours riches
+                const fallback = getFallbackData(kpiKey, period);
+                setData(fallback);
+                // Ne pas mettre en cache les secours vides s'il s'agit d'une erreur/absence d'intention
                 setIsLoading(false);
                 return;
             }
@@ -87,7 +100,7 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
                         target: result?.target || null,
                         trend: result?.trend || 0,
                         period: period,
-                        details: result?.details || agentRow || undefined
+                        details: result?.details || result?.result || agentRow || undefined
                     };
 
                     // Calculer le trend si non fourni
@@ -96,20 +109,22 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
                     }
 
                     setData(normalized);
+                    // 3. Stocker dans le cache
+                    setCache(cacheKey, normalized);
                     jobCompleted = true;
                 } else if (job.status === 'FAILED') {
-                    console.warn("Job failed, using fallback data");
+                    console.warn("Le job a échoué, utilisation des données de secours");
                     setData(getFallbackData(kpiKey, period));
-                    jobCompleted = true; // Stop polling
+                    jobCompleted = true; // Arrêter le polling
                 }
             }
 
             if (!jobCompleted) {
-                console.warn("Job timeout, using fallback data");
+                console.warn("Délai d'attente du job dépassé, utilisation des données de secours");
                 setData(getFallbackData(kpiKey, period));
             }
         } catch (err: any) {
-            console.warn(`Error fetching KPI ${kpiKey}, using fallback data:`, err.message);
+            console.warn(`Erreur lors de la récupération du KPI ${kpiKey}, utilisation des données de secours :`, err.message);
             setData(getFallbackData(kpiKey, period));
         } finally {
             setIsLoading(false);

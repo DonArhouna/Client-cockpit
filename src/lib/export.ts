@@ -1,5 +1,5 @@
 /**
- * Utility to export data to CSV and trigger a download.
+ * Utilitaires pour exporter des données dans différents formats.
  */
 export function exportToCsv(filename: string, data: any[]) {
     if (data.length === 0) return;
@@ -19,4 +19,18 @@ export function exportToCsv(filename: string, data: any[]) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+/**
+ * Exporte les données au format Excel (.xlsx) - Stub
+ */
+export function exportToExcel(filename: string, _data: any[]) {
+    alert(`Export Excel (${filename}.xlsx) en cours de préparation...`);
+}
+
+/**
+ * Exporte les données au format PowerPoint (.pptx) - Stub
+ */
+export function exportToPptx(filename: string, _data: any[]) {
+    alert(`Export PowerPoint (${filename}.pptx) en cours de préparation...`);
 }

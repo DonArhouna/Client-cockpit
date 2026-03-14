@@ -66,7 +66,7 @@ export function KpiVisual({ widget, isCompact }: KpiVisualProps) {
 
     return (
         <div className="flex flex-col h-full justify-between pb-1 pt-0 overflow-hidden relative">
-            {/* Labels flottants comme DMP */}
+            {/* Libellés flottants comme DMP */}
             {!isCompact && widget.kpiKey?.includes('dmp') && (
                 <div className="absolute top-0 right-0 text-[10px] font-bold text-slate-900 dark:text-white z-10">
                     DMP moyen: 42 jours

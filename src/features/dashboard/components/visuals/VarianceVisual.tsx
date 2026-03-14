@@ -22,8 +22,8 @@ export function VarianceVisual({ kpiKey, isCompact }: VarianceVisualProps) {
         );
     }
 
-    // Simulation de données de variance si non présentes
-    // Idéalement le backend envoie un tableau de variances dans details
+    // Simulation de données d'écart si non présentes
+    // Idéalement, le backend envoie un tableau d'écarts dans details
     const rawData = kpiData?.details?.items || kpiData?.details || [];
     const data = Array.isArray(rawData) && rawData.length > 0 ? rawData.map(item => ({
         name: item.name || item.Section || item.category || 'N/A',
@@ -96,7 +96,7 @@ export function VarianceVisual({ kpiKey, isCompact }: VarianceVisualProps) {
     );
 }
 
-// Helper local pour éviter les imports circulaires ou complexes dans ce fichier vite fait
+// Assistant local pour éviter les imports circulaires ou complexes dans ce fichier temporaire
 function cn(...classes: any[]) {
     return classes.filter(Boolean).join(' ');
 }

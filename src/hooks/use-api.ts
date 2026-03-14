@@ -15,6 +15,7 @@ import {
     jobsApi,
     targetsApi,
 } from '@/api';
+import { getCache, setCache } from '@/lib/cache';
 import { Agent } from '@/types';
 
 export function useOrganizations() {
@@ -176,7 +177,7 @@ export function useAuditLogEventTypes() {
     });
 }
 
-// Subscription Plans (admin — tous les plans)
+// Plans d'abonnement (admin — tous les plans)
 export function useSubscriptionPlans() {
     return useQuery({
         queryKey: ['subscription-plans'],
@@ -199,12 +200,15 @@ export function useSubscriptionPlan(id: string) {
     });
 }
 
-// KPI Store hooks
+// Hooks du KPI Store
 export function useKpiDefinitions() {
     return useQuery({
         queryKey: ['kpi-definitions'],
         queryFn: async () => {
+            const cached = getCache<any[]>('kpi-definitions');
+            if (cached) return cached;
             const resp = await kpiDefinitionsApi.getAll();
+            setCache('kpi-definitions', resp.data);
             return resp.data;
         },
         staleTime: 5 * 60 * 1000,
@@ -215,7 +219,10 @@ export function useWidgetTemplates() {
     return useQuery({
         queryKey: ['widget-templates'],
         queryFn: async () => {
+            const cached = getCache<any[]>('widget-templates');
+            if (cached) return cached;
             const resp = await widgetTemplatesApi.getAll();
+            setCache('widget-templates', resp.data);
             return resp.data;
         },
         staleTime: 5 * 60 * 1000,
@@ -237,14 +244,17 @@ export function useKpiPacks() {
     return useQuery({
         queryKey: ['kpi-packs'],
         queryFn: async () => {
+            const cached = getCache<any[]>('kpi-packs');
+            if (cached) return cached;
             const resp = await kpiPacksApi.getAll();
+            setCache('kpi-packs', resp.data);
             return resp.data;
         },
         staleTime: 5 * 60 * 1000,
     });
 }
 
-// Client-facing KPI Packs (non-admin, authenticated)
+// Packs KPI destinés aux clients (non-admin, authentifié)
 export function useClientKpiPacks(profile?: string) {
     return useQuery({
         queryKey: ['client-kpi-packs', profile],
@@ -268,7 +278,7 @@ export function useActivePlans() {
     });
 }
 
-// NLQ Hooks
+// Hooks NLQ
 export function useNLQQuery() {
     return useMutation({
         mutationFn: async (query: string) => {
@@ -290,7 +300,7 @@ export function useJobStatus(jobId: string | null, options?: { enabled?: boolean
     });
 }
 
-// Targets (Objectifs)
+// Objectifs (Targets)
 export function useTargets(params?: { kpiKey?: string; year?: number; scenario?: string }) {
     return useQuery({
         queryKey: ['targets', params],

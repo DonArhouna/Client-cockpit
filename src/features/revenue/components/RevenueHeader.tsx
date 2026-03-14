@@ -1,6 +1,7 @@
 import { TrendingUp, Download, Settings2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { forceRefresh } from '@/lib/cache';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { exportToCsv } from '@/lib/export';
 
@@ -63,7 +64,7 @@ export function RevenueHeader({ isEditing, onToggleEdit }: RevenueHeaderProps) {
                         variant="default"
                         size="sm"
                         className="gap-2 bg-[#3b66ac] hover:bg-[#2d5089] text-white shadow-sm font-bold px-4 h-9"
-                        onClick={() => window.location.reload()}
+                        onClick={forceRefresh}
                     >
                         <RefreshCw className="h-4 w-4" />
                         Actualiser

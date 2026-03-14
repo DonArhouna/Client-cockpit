@@ -1,26 +1,31 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { Filter, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { useFilters } from '@/context/FilterContext';
 import { useKpiData } from '@/hooks/use-kpi-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface RevenueEvolutionVisualProps {
     isCompact?: boolean;
+    kpiKey?: string;
 }
 
-export function RevenueEvolutionVisual({ isCompact }: RevenueEvolutionVisualProps) {
+export function RevenueEvolutionVisual({ isCompact, kpiKey = 'f01_ca_ht' }: RevenueEvolutionVisualProps) {
     const { currency } = useFilters();
-    const { data: rawData, isLoading } = useKpiData('f01_ca_ht');
+    const { data: kpiData, isLoading } = useKpiData(kpiKey);
     const currencySymbol = currency === 'XOF' ? 'F' : currency === 'EUR' ? '€' : '$';
 
-    // Process data to match chart format
-    const chartData = Array.isArray(rawData) ? rawData.map((item: any) => ({
-        month: item.month || item.Month || item.periode || '?',
-        revenue: item.revenue || item.CA || item.amount || 0
-    })) : [];
+    // Extraction des données du format KPI
+    const rawItems = kpiData?.details?.items || kpiData?.details || [];
+    const items = Array.isArray(rawItems) ? rawItems : [];
 
-    // Fallback if data is empty (only for visual stability during dev if backend KPI is missing)
+    // Traitement des données pour correspondre au format du graphique
+    const chartData = items.map((item: any) => ({
+        month: item.month || item.Month || item.periode || item.label || '?',
+        revenue: item.revenue || item.CA || item.amount || item.value || 0
+    }));
+
+    // Secours si les données sont vides (uniquement pour la stabilité visuelle en dev si le KPI backend est manquant)
     const displayData = chartData.length > 0 ? chartData : [
         { month: 'Jan', revenue: 0 },
         { month: 'Fév', revenue: 0 },

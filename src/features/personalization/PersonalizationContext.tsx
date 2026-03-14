@@ -183,8 +183,8 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                 if (!dashboardId) return;
                 try {
                     const resp = await dashboardsApi.addWidget(dashboardId, {
-                        name: newWidget.name,
-                        type: newWidget.type,
+                        name: newWidget.name || 'Widget sans nom',
+                        type: newWidget.type || 'kpi',
                         exposure: newWidget.kpiKey,
                         vizType: newWidget.vizType,
                         config: { ...(newWidget.config || {}), kpiKey: newWidget.kpiKey },
@@ -218,8 +218,8 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                 for (const w of widgets) {
                     try {
                         const resp = await dashboardsApi.addWidget(dashboardId, {
-                            name: w.name,
-                            type: w.type,
+                            name: w.name || 'Widget sans nom',
+                            type: w.type || 'kpi',
                             exposure: w.kpiKey,
                             vizType: w.vizType,
                             config: { ...(w.config || {}), kpiKey: w.kpiKey },

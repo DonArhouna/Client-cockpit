@@ -378,13 +378,43 @@ Seuls les KPIs dont le `defaultVizType` est compatible avec le template sont aff
 
 ---
 
+## 12. Stratégie de Cache Local (Mitigation Rate-Limiting)
+
+### Problème
+Le backend impose un rate-limiting. Chaque navigation déclenchait un appel API, épuisant rapidement les quotas et affichant des valeurs à 0.
+
+### Solution
+Mise en place d'un cache local persistant dans le navigateur.
+
+**Fichier** : `src/lib/cache.ts` *(nouveau)*
+- Utilitaire gérant le `localStorage` avec un TTL (Time To Live) par défaut de 60 minutes.
+- Clés préfixées par `cockpit_cache_`.
+
+**Fichiers modifiés** :
+- `src/hooks/use-kpi-data.ts` : Vérifie le cache avant de lancer une requête NLQ. Stocke le résultat normalisé.
+- `src/hooks/use-api.ts` : Intégration du cache dans les hooks React Query (`kpi-definitions`, `widget-templates`, `kpi-packs`).
+- `src/features/dashboard/DashboardPage.tsx` & `src/features/revenue/components/RevenueHeader.tsx` : Mise à jour des boutons "Actualiser" pour vider le cache (`forceRefresh`) et forcer une mise à jour réelle.
+
+---
+
+## 13. Internationalisation des commentaires et Nettoyage
+
+### Actions effectuées
+1.  **Traduction des commentaires** : Tous les commentaires techniques dans le code source ont été traduits en français pour assurer la cohérence avec le reste de l'application.
+2.  **Suppression des fichiers inutilisés** : Identification et suppression des composants obsolètes ou redondants pour alléger la base de code.
+
+---
+
 ## À retenir pour le développement frontend
 
 1. **Ne jamais hardcoder un `kpiKey`** — toujours utiliser `kpi.key` depuis `useKpiDefinitions()`
 2. **Filtrer par `category`** pour le peuplement par défaut des pages
 3. **Filtrer par `defaultVizType === 'card'`** pour les KPIs scalaires dans les grilles
-4. **Le localStorage est un cache** — il est écrasé au montage par les données API si elles existent
-5. **La clé technique = l'intent NLQ** — le backend NLQ reconnait maintenant la clé directe (`f01_ca_ht`) en plus des keywords naturels
-6. **`kpiKey` frontend = `exposure` en base** — ne pas confondre les deux noms de champ
-7. **Widget = conteneur visuel + lien KPI** — un widget seul ne contient aucune donnée, c'est `useKpiData(kpiKey)` qui la charge au rendu
-8. **Templates ≠ KPIs** — les templates définissent le type de visualisation, les KPIs définissent la donnée. Les deux doivent être combinés pour un widget fonctionnel
+4. **Le localStorage gère deux types de données** :
+    - Les **layouts** (widgets, positions) via `PersonalizationContext`.
+    - Le **cache de données** (valeurs API) via `src/lib/cache.ts`.
+5. **Le bouton "Actualiser" est sacré** — c'est le seul moyen de contourner le cache local pour obtenir des données fraîches.
+6. **Clé technique = l'intent NLQ** — le backend NLQ reconnait maintenant la clé directe (`f01_ca_ht`).
+7. **`kpiKey` frontend = `exposure` en base**.
+8. **Widget = conteneur visuel + lien KPI**.
+9. **Templates ≠ KPIs**.

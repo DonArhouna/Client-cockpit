@@ -119,7 +119,7 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
         const compatibleKpis = (kpis ?? []).filter(kpi =>
             kpi.isActive && compatibleVizTypes.includes(kpi.defaultVizType)
         );
-        // Fallback : si aucun KPI compatible, on affiche tous les KPI actifs
+        // Secours : si aucun KPI compatible, on affiche tous les KPI actifs
         const baseKpis = compatibleKpis.length > 0 ? compatibleKpis : (kpis ?? []).filter(k => k.isActive);
 
         const filteredKpis = baseKpis.filter(kpi =>
@@ -135,7 +135,7 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs text-muted-foreground">Template sélectionné</p>
+                        <p className="text-xs text-muted-foreground">Modèle sélectionné</p>
                         <p className="font-semibold text-sm truncate">{pendingTemplate.name}</p>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={onClose}>
@@ -274,7 +274,7 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
                                         className="flex flex-col p-3 border rounded-lg bg-emerald-50/30 border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer group"
                                         onClick={() => {
                                             if (!kpis) return;
-                                            pack.kpiKeys.forEach((key) => {
+                                            pack.kpiKeys.forEach((key: string) => {
                                                 const kpiDef = kpis.find(k => k.key === key);
                                                 if (kpiDef) {
                                                     onAddWidget({
@@ -387,7 +387,7 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
                     <div className="p-4">
                         <div className="text-center py-12 text-sm text-muted-foreground">
                             <p>Aucune requête récente</p>
-                            <p className="text-xs mt-2">Vos dernières requêtes NLQ apparaîtront ici</p>
+                            <p className="text-xs mt-2">Précédemment nommé "Vos dernières requêtes NLQ apparaîtront ici"</p>
                         </div>
                     </div>
                 </TabsContent>

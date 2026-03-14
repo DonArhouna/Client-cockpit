@@ -14,24 +14,29 @@ import {
 
 interface TopClientsVisualProps {
     isCompact?: boolean;
+    kpiKey?: string;
 }
 
-export function TopClientsVisual({ isCompact }: TopClientsVisualProps) {
+export function TopClientsVisual({ isCompact, kpiKey = 'c03_top10_clients_ca' }: TopClientsVisualProps) {
     const { currency } = useFilters();
-    const { data: rawData, isLoading } = useKpiData('c03_top10_clients_ca');
+    const { data: kpiData, isLoading } = useKpiData(kpiKey);
     const currencySymbol = currency === 'XOF' ? 'F' : currency === 'EUR' ? '€' : '$';
 
-    const clients = Array.isArray(rawData) ? rawData.map((item: any) => ({
+    // Extraction des données du format KPI
+    const rawItems = kpiData?.details?.items || kpiData?.details || [];
+    const items = Array.isArray(rawItems) ? rawItems : [];
+
+    const clients = items.map((item: any) => ({
         id: item.id || item.Client_ID || Math.random(),
-        name: item.Nom_Client || item.client || item.Client || 'Inconnu',
+        name: item.Nom_Client || item.client || item.Client || item.name || item.label || 'Inconnu',
         sector: item.Secteur || item.sector || '-',
-        ca: item.CA || item.amount || 0,
-        pending: item.Encours || 0,
+        ca: item.CA || item.amount || item.value || 0,
+        pending: item.Encours || item.pending || 0,
         growth: item.Croissance || item.growth || '0%',
-        margin: item.Marge || '-',
-        dso: item.DSO || '-',
+        margin: item.Marge || item.margin || '-',
+        dso: item.DSO || item.dso || '-',
         risk: item.Risque || item.risk || 'Faible'
-    })) : [];
+    }));
 
     if (isLoading) {
         return (

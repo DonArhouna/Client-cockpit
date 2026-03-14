@@ -3,6 +3,7 @@ import { useKpiData } from '@/hooks/use-kpi-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFilters } from '@/context/FilterContext';
 
+// Palette de couleurs pour les segments du graphique à secteurs
 const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#f97316'];
 
 interface PieVisualProps {

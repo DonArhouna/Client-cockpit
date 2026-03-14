@@ -30,13 +30,13 @@ export function RevenueKpiGrid() {
 
     return (
         <div className="space-y-6">
-            {/* Primary KPI Grid */}
+            {/* Grille de KPIs principaux */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KpiCard
                     title="Chiffre d'Affaires Total"
                     value={isLoadingCa ? "..." : formatCurrency(caHt)}
                     subtitle="vs période précédente"
-                    trend={isLoadingCa ? "" : "+12.5%"} // Trend might need another KPI or calculation
+                    trend={isLoadingCa ? "" : "+12.5%"} // La tendance pourrait nécessiter un autre KPI ou calcul
                     trendIsPositive={true}
                     icon={Euro}
                     iconBg="bg-blue-900"
@@ -74,7 +74,7 @@ export function RevenueKpiGrid() {
                 />
             </div>
 
-            {/* Net Growth Summary (shown below Waterfall in design, but we'll include here for structure) */}
+            {/* Résumé de croissance nette (affiché sous le Waterfall dans le design, mais inclus ici pour la structure) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <SecondaryKpiCard
                     title="Croissance Totale"

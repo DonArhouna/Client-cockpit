@@ -40,7 +40,7 @@ export function TableVisual({ kpiKey, isCompact }: TableVisualProps) {
         );
     }
 
-    // Déterminer les colonnes dynamiquement à partir du premier item
+    // Déterminer les colonnes dynamiquement à partir du premier élément
     const columns = Object.keys(items[0]).filter(key => 
         !['id', 'key', '_id'].includes(key.toLowerCase())
     );

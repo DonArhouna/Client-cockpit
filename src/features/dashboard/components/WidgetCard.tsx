@@ -53,19 +53,19 @@ export function WidgetCard({ widget, isEditing, onRemove, h, className, style }:
 
         // 3. Évolutions temporelles (Graphiques aire/ligne)
         if (widget.type === 'graph' || widget.vizType === 'area' || widget.vizType === 'line' || widget.kpiKey?.includes('evolution') || widget.kpiKey?.includes('prevision')) {
-            return <RevenueEvolutionVisual isCompact={isCompact} />;
+            return <RevenueEvolutionVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
         }
 
         // 4. Listes spécialisées (Balance Âgée)
         if (widget.kpiKey === 'balance_agee_clients' || widget.kpiKey === 'accounts_receivable_age' || (widget.vizType === 'bar' && widget.name.includes('Créances'))) {
-            return <ReceivablesVisual isCompact={isCompact} />;
+            return <ReceivablesVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
         }
 
         // 5. Tableaux de données (Anomalies, etc.)
         if (widget.type === 'table' || widget.vizType === 'table') {
             // Cas particulier pour Top Clients qui est une table très spécifique
-            if (widget.kpiKey?.includes('top_clients')) {
-                return <TopClientsVisual isCompact={isCompact} />;
+            if (widget.kpiKey?.includes('top_clients') || widget.kpiKey?.includes('top10_clients')) {
+                return <TopClientsVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
             }
             return <TableVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
         }
@@ -77,7 +77,7 @@ export function WidgetCard({ widget, isEditing, onRemove, h, className, style }:
 
         // 7. Autres graphiques (Barres, etc.)
         if (widget.vizType === 'bar') {
-            return <RevenueEvolutionVisual isCompact={isCompact} />;
+            return <RevenueEvolutionVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
         }
 
         // Rendu par défaut si le type n'est pas géré spécifiquement
@@ -119,12 +119,12 @@ export function WidgetCard({ widget, isEditing, onRemove, h, className, style }:
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => {
-                                    // Implement export logic later
+                                    // Implémenter la logique d'export plus tard
                                 }}>
                                     {t('dashboard.export', 'Exporter les données')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => {
-                                    // Implement analyze logic later
+                                    // Implémenter la logique d'analyse plus tard
                                 }}>
                                     {t('dashboard.analyze', 'Analyse détaillée')}
                                 </DropdownMenuItem>

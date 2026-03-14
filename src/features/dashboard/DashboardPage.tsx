@@ -1,14 +1,14 @@
-import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, LayoutDashboard } from 'lucide-react';
-import { useMyDashboard, useUpdateWidget, useRemoveWidget, useCreateDashboard } from '@/hooks/use-dashboards';
+import { Loader2, RefreshCw, LayoutDashboard, Calendar, ChevronDown } from 'lucide-react';
+import { useMyDashboard, useUpdateWidget } from '@/hooks/use-dashboards';
 import { DashboardGrid } from './components/DashboardGrid';
 import { WidgetSidebar } from './components/WidgetSidebar';
 import { DashboardKpis } from './components/DashboardKpis';
-import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
+import { getLastUpdate, forceRefresh } from '@/lib/cache';
 import { useFilters } from '@/context/FilterContext';
 import {
   DropdownMenu,
@@ -18,17 +18,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
-import { Calendar, ChevronDown } from 'lucide-react';
 
 export function DashboardPage() {
-  const { t } = useTranslation();
-  const { toast } = useToast();
-  const { data: dashboard, isLoading: isBackendLoading, error, refetch } = useMyDashboard();
+  const { data: dashboard, isLoading: isBackendLoading } = useMyDashboard();
   const { layouts, addWidgetToPage, removeWidgetFromPage, updateLayoutForPage } = usePersonalization();
 
   const updateWidget = useUpdateWidget();
-  const removeWidget = useRemoveWidget();
-  const createDashboard = useCreateDashboard();
 
   const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
 
@@ -36,29 +31,15 @@ export function DashboardPage() {
   const personalizedWidgets = layouts['dashboard'] || [];
   const widgets = personalizedWidgets.length > 0 ? personalizedWidgets : (dashboard?.widgets || []);
 
-  const handleCreateDashboard = () => {
-    createDashboard.mutate({
-      name: 'Mon Cockpit',
-      isDefault: true
-    }, {
-      onError: (err: any) => {
-        toast({
-          title: "Erreur",
-          description: err?.response?.data?.message || "Impossible de créer le cockpit",
-          variant: "destructive"
-        });
-      }
-    });
-  };
-
   const { period, setPeriod, currency, setCurrency } = useFilters();
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLastUpdate(getLastUpdate());
+  }, []);
 
   const handleRefresh = () => {
-    refetch();
-    toast({
-      title: "Actualisation",
-      description: "Les données de votre cockpit ont été mises à jour.",
-    });
+    forceRefresh();
   };
 
   const handleLayoutChange = (layoutUpdates: Record<string, { x: number, y: number, w: number, h: number }>) => {
@@ -168,7 +149,7 @@ export function DashboardPage() {
                 <RefreshCw className={cn("h-4 w-4", isBackendLoading && "animate-spin")} />
               </Button>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                Mis à jour: 09:36
+                Mis à jour: {lastUpdate || '--:--'}
               </span>
             </div>
           </div>
