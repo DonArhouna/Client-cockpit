@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import {
@@ -13,7 +13,7 @@ import {
   ChevronRight,
   Settings2,
   ShieldAlert,
-  Settings,
+  Palette,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -33,7 +33,6 @@ const navItems = [
   { path: '/accounting', icon: FileText, labelKey: 'nav.accountingAnalytic' },
   { path: '/risks', icon: ShieldAlert, labelKey: 'nav.risksAndRecovery' },
   { path: '/smart-queries', icon: BrainCircuit, labelKey: 'nav.smartQueries' },
-  { path: '/admin', icon: Settings, labelKey: 'nav.administration' },
 ];
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
@@ -103,7 +102,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   >
                     <Icon className="h-5 w-5 shrink-0" />
                     {!collapsed && (
-                      <span className="truncate">{t(item.labelKey)}</span>
+                       <span className="truncate">{t(item.labelKey)}</span>
                     )}
                   </NavLink>
                 </li>
@@ -111,22 +110,42 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             })}
           </ul>
         </nav>
-        {/* Personnaliser button - Global Toggle */}
-        <div className="p-3">
-          <div
-            onClick={(e) => {
-              e.preventDefault();
-              toggleEditMode();
-            }}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 border border-primary/20 hover:border-primary/50 group cursor-pointer',
-              isEditing ? 'bg-blue-600 text-white border-none shadow-md' : 'text-sidebar-foreground bg-transparent hover:bg-sidebar-accent'
-            )}
-          >
-            <Settings2 className={cn("h-5 w-5 shrink-0 group-hover:rotate-45 transition-transform")} />
-            {!collapsed && (
-              <span className="truncate">Personnaliser</span>
-            )}
+
+        {/* Footer Area with Settings and Personalization */}
+        <div className="mt-auto flex flex-col gap-2">
+          {/* Settings Section */}
+          <div className="px-4 py-4 border-t border-slate-200 dark:border-slate-800">
+            <Link
+              to="/settings"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group",
+                location.pathname === '/settings'
+                  ? "bg-[#3b66ac] text-white shadow-lg shadow-blue-500/20"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100"
+              )}
+            >
+              <Settings2 className={cn("h-5 w-5 shrink-0 group-hover:rotate-45 transition-transform")} />
+              {!collapsed && <span>{t('nav.settings') || 'Paramètres'}</span>}
+            </Link>
+          </div>
+
+          {/* Personalization Section */}
+          <div className="px-4 pb-4">
+            <div
+              onClick={(e) => {
+                e.preventDefault();
+                toggleEditMode();
+              }}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 border border-primary/20 hover:border-primary/50 group cursor-pointer shadow-sm',
+                isEditing ? 'bg-[#3b66ac] text-white border-none shadow-blue-500/20' : 'text-slate-600 bg-slate-50 hover:bg-slate-100 dark:text-slate-300 dark:bg-slate-800/40 dark:hover:bg-slate-800/60'
+              )}
+            >
+              <Palette className={cn("h-5 w-5 shrink-0 transition-transform", isEditing ? "animate-pulse" : "group-hover:scale-110")} />
+              {!collapsed && (
+                <span className="truncate">Personnaliser</span>
+              )}
+            </div>
           </div>
         </div>
 

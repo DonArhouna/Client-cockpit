@@ -34,6 +34,7 @@ import { OperationalPerformancePage } from './features/operational/OperationalPe
 import InventoryPage from './features/inventory/InventoryPage';
 import AccountingPage from './features/accounting/AccountingPage';
 import RisksPage from './features/risks/RisksPage';
+import { SettingsPage } from './features/settings/SettingsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -92,6 +93,7 @@ export default function App() {
                       <Route path="/client-plans" element={<ClientPlansPage />} />
                       <Route path="/kpi-store" element={<KpiStorePage />} />
                       <Route path="/kpi-store/widget-templates/:id" element={<WidgetTemplateDetailPage />} />
+                      <Route path="/settings" element={<SettingsPage />} />
                     </Routes>
                   </MainLayout>
                 </FilterProvider>
