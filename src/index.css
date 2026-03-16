@@ -67,6 +67,14 @@
   }
 }
 
+/* Onboarding — data flow animation (architecture diagram Step 3) */
+@keyframes slide-right {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(800%); opacity: 0; }
+}
+
 /* Custom scrollbar for dark mode */
 .dark ::-webkit-scrollbar {
   width: 8px;

@@ -187,7 +187,11 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <div className="pt-4 border-t border-border/50 text-center">
+          <div className="pt-4 border-t border-border/50 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Pas encore de compte ?{' '}
+              <Link to="/register" className="text-primary font-semibold hover:underline">Créer un compte</Link>
+            </p>
             <p className="text-sm text-muted-foreground">
               Besoin d'aide ? <button className="text-primary font-semibold hover:underline">Support technique</button>
             </p>

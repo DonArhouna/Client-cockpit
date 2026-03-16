@@ -15,21 +15,27 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('accessToken');
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.set('Authorization', `Bearer ${token}`);
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
+// Add _retry flag type
+interface RetryConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
 // Response interceptor - handle errors
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiError>) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as RetryConfig;
     
     // Handle 401 - try refresh token
-    if (error.response?.status === 401 && originalRequest) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (refreshToken) {
@@ -44,7 +50,7 @@ api.interceptors.response.use(
           
           // Retry original request
           if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            originalRequest.headers.set('Authorization', `Bearer ${accessToken}`);
           }
           return api(originalRequest);
         } catch {

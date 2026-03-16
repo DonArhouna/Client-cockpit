@@ -3,10 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { CreditCard, Loader2, MoreHorizontal, Users, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/shared/DataTable';
 import { useOrganizations } from '@/hooks/use-api';
+import { adminBillingApi } from '@/api';
 import { Organization } from '@/types';
+import { SubscriptionBadge } from '@/components/shared/SubscriptionBadge';
 import { EditOrganizationModal } from '../organizations/EditOrganizationModal';
 import {
     DropdownMenu,
@@ -24,6 +27,15 @@ export function ClientPlansPage() {
     const [editOrg, setEditOrg] = useState<Organization | null>(null);
 
     const { data: organizations, isLoading, error } = useOrganizations();
+    const { data: billingData } = useQuery({
+        queryKey: ['admin-billing-subscriptions'],
+        queryFn: () => adminBillingApi.getSubscriptions().then(r => r.data),
+        staleTime: 60_000,
+    });
+    const subByOrgId = new Map(
+        (billingData?.subscriptions ?? []).map(s => [s.organizationId, s])
+    );
+    const summary = billingData?.summary;
 
     const columns: ColumnDef<Organization>[] = [
         {
@@ -53,6 +65,20 @@ export function ClientPlansPage() {
                             )}
                         </div>
                     </div>
+                );
+            },
+        },
+        {
+            id: 'subscription',
+            header: 'Abonnement',
+            cell: ({ row }) => {
+                const sub = subByOrgId.get(row.original.id);
+                return (
+                    <SubscriptionBadge
+                        status={sub?.status ?? null}
+                        trialEndsAt={sub?.trialEndsAt ?? null}
+                        showDate
+                    />
                 );
             },
         },
@@ -181,6 +207,27 @@ export function ClientPlansPage() {
                 <h1 className="text-2xl font-bold tracking-tight">{t('clientPlans.title')}</h1>
                 <p className="text-muted-foreground">{t('clientPlans.subtitle')}</p>
             </div>
+
+            {/* Bandeau de résumé abonnements */}
+            {summary && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {[
+                        { label: 'Total clients',   value: summary.total,           cls: 'text-foreground' },
+                        { label: 'En essai',         value: summary.trialing,        cls: 'text-amber-600' },
+                        { label: 'Actifs',           value: summary.active,          cls: 'text-green-600' },
+                        { label: 'Impayés',          value: summary.pastDue,         cls: 'text-orange-600' },
+                        { label: 'Annulés',          value: summary.cancelled,       cls: 'text-red-600' },
+                        { label: 'Sans abonnement',  value: summary.neverSubscribed, cls: 'text-muted-foreground' },
+                    ].map(s => (
+                        <Card key={s.label} className="py-3">
+                            <CardContent className="px-4 py-0">
+                                <p className={`text-2xl font-bold ${s.cls}`}>{s.value}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
 
             <Card>
                 <CardHeader>

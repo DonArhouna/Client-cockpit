@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Plus, Building2, Loader2, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CreateOrganizationModal } from './CreateOrganizationModal';
 import { EditOrganizationModal } from './EditOrganizationModal';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { useOrganizations } from '@/hooks/use-api';
-import { organizationsApi } from '@/api';
+import { organizationsApi, adminBillingApi } from '@/api';
+import { SubscriptionBadge } from '@/components/shared/SubscriptionBadge';
 import { useToast } from '@/hooks/use-toast';
 import { ColumnDef } from '@tanstack/react-table';
 import { Organization } from '@/types';
@@ -42,6 +43,14 @@ export function OrganizationsPage() {
   const [deleteOrg, setDeleteOrg] = useState<Organization | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const { data: organizations, isLoading, error } = useOrganizations();
+  const { data: billingData } = useQuery({
+    queryKey: ['admin-billing-subscriptions'],
+    queryFn: () => adminBillingApi.getSubscriptions().then(r => r.data),
+    staleTime: 60_000,
+  });
+  const subByOrgId = new Map(
+    (billingData?.subscriptions ?? []).map(s => [s.organizationId, s])
+  );
 
   const deleteMutation = useMutation({
     mutationFn: (orgId: string) => organizationsApi.delete(orgId),
@@ -99,13 +108,20 @@ export function OrganizationsPage() {
       },
     },
     {
-      accessorKey: 'status',
-      header: 'Statut',
-      cell: () => (
-        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-          Active
-        </span>
-      ),
+      id: 'subscription',
+      header: 'Abonnement',
+      cell: ({ row }) => {
+        const sub = subByOrgId.get(row.original.id);
+        return (
+          <div className="flex flex-col gap-0.5">
+            <SubscriptionBadge
+              status={sub?.status ?? null}
+              trialEndsAt={sub?.trialEndsAt ?? null}
+              showDate
+            />
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'createdAt',

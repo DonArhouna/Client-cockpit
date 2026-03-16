@@ -56,6 +56,7 @@ export interface Organization {
   sageType?: string;
   sageHost?: string;
   sagePort?: number;
+  selectedProfiles?: string[];
   ownerId?: string;
   owner?: User;
   _count?: {
@@ -296,6 +297,43 @@ export interface Dashboard {
   organizationId: string;
   widgets?: Widget[];
   user?: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Onboarding types
+export interface OnboardingStatus {
+  id: string;
+  organizationId: string;
+  currentStep: number;
+  completedSteps: number[];
+  isComplete: boolean;
+  inviteLater: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OnboardingProfile {
+  name: string;
+  label: string;
+  description: string;
+}
+
+// Billing types
+export type BillingStatusType = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'UNPAID' | 'PAUSED';
+
+export interface BillingSubscription {
+  id: string;
+  organizationId: string;
+  fwSubscriptionId: string | null;
+  planId: string;
+  plan: Pick<SubscriptionPlan, 'id' | 'name' | 'label' | 'priceMonthly' | 'maxUsers' | 'maxKpis' | 'maxWidgets' | 'hasNlq' | 'hasAdvancedReports'>;
+  status: BillingStatusType;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  trialEndsAt: string | null;
+  cancelledAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

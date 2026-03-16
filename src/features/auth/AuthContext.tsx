@@ -1,9 +1,13 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authApi } from '@/api';
-import type { AuthState, LoginCredentials } from '@/types';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { authApi, onboardingApi } from '@/api';
+import type { AuthState, LoginCredentials, OnboardingStatus, User } from '@/types';
 
 interface AuthContextValue extends AuthState {
+  onboardingStatus: OnboardingStatus | null;
+  onboardingLoading: boolean;
+  refetchOnboarding: () => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithTokens: (accessToken: string, refreshToken: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: { firstName?: string; lastName?: string }) => Promise<void>;
 }
@@ -17,6 +21,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
     isLoading: true,
   });
+
+  const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+
+  const fetchOnboardingStatus = useCallback(async () => {
+    setOnboardingLoading(true);
+    try {
+      const res = await onboardingApi.getStatus();
+      setOnboardingStatus(res.data.status);
+    } catch {
+      setOnboardingStatus(null);
+    } finally {
+      setOnboardingLoading(false);
+    }
+  }, []);
 
   // Check auth state on mount
   useEffect(() => {
@@ -36,8 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isAuthenticated: true,
           isLoading: false,
         });
+        await fetchOnboardingStatus();
       } catch {
-        // Token invalid - clear storage
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setState({
@@ -50,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     checkAuth();
-  }, []);
+  }, [fetchOnboardingStatus]);
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authApi.login(credentials);
@@ -59,12 +78,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
 
-    setState({
-      user,
-      accessToken,
-      isAuthenticated: true,
-      isLoading: false,
-    });
+    setState({ user, accessToken, isAuthenticated: true, isLoading: false });
+    await fetchOnboardingStatus();
+  };
+
+  // Used after registration — tokens already in hand, no second API call needed
+  const loginWithTokens = async (accessToken: string, refreshToken: string, user: User) => {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+
+    setState({ user, accessToken, isAuthenticated: true, isLoading: false });
+    await fetchOnboardingStatus();
   };
 
   const logout = async () => {
@@ -77,24 +101,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
 
-    setState({
-      user: null,
-      accessToken: null,
-      isAuthenticated: false,
-      isLoading: false,
-    });
+    setState({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
+    setOnboardingStatus(null);
   };
 
   const updateProfile = async (data: { firstName?: string; lastName?: string }) => {
     const response = await authApi.updateMe(data);
-    setState(prev => ({
-      ...prev,
-      user: response.data,
-    }));
+    setState(prev => ({ ...prev, user: response.data }));
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, updateProfile }}>
+    <AuthContext.Provider value={{
+      ...state,
+      onboardingStatus,
+      onboardingLoading,
+      refetchOnboarding: fetchOnboardingStatus,
+      login,
+      loginWithTokens,
+      logout,
+      updateProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );

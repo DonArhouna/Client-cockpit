@@ -18,7 +18,9 @@ import type {
   Dashboard,
   Widget,
   WidgetPosition,
-  Target
+  Target,
+  OnboardingStatus,
+  BillingSubscription,
 } from '@/types';
 
 // Auth
@@ -43,6 +45,25 @@ export const authApi = {
 
   resetPassword: (data: any) =>
     api.post('/auth/reset-password', data),
+
+  getInvitationInfo: (token: string) =>
+    api.get<{ email: string; organizationName: string; role: string }>(`/auth/invitation-info?token=${encodeURIComponent(token)}`),
+
+  register: (data: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    invitationToken: string;
+  }) => api.post<AuthResponse>('/auth/register', data),
+
+  signup: (data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    organizationName: string;
+  }) => api.post<AuthResponse>('/auth/signup', data),
 };
 
 // Admin - Organizations
@@ -66,6 +87,18 @@ export const organizationsApi = {
     adminLastName: string;
     planId?: string;
   }) => api.post('/admin/clients', data),
+};
+
+// Admin - Billing
+export const adminBillingApi = {
+  getSubscriptions: () =>
+    api.get<{
+      subscriptions: (BillingSubscription & {
+        organization: { id: string; name: string; sector: string | null };
+      })[];
+      unsubscribed: { id: string; name: string }[];
+      summary: { total: number; active: number; trialing: number; pastDue: number; cancelled: number; neverSubscribed: number };
+    }>('/admin/billing/subscriptions'),
 };
 
 // Admin - General
@@ -333,4 +366,55 @@ export const targetsApi = {
 
   delete: (id: string) =>
     api.delete(`/targets/${id}`),
+};
+
+// Subscriptions (public — plans catalogue)
+export const subscriptionsApi = {
+  getPlans: () =>
+    api.get<SubscriptionPlan[]>('/subscriptions/plans'),
+};
+
+// Onboarding Wizard
+export const onboardingApi = {
+  getStatus: () =>
+    api.get<{ status: OnboardingStatus; organization: Organization | null }>('/onboarding/status'),
+
+  step1: (data: { plan: string }) =>
+    api.post('/onboarding/step1', data),
+
+  step2: (data: { name?: string; sector?: string; size?: string; country?: string }) =>
+    api.post('/onboarding/step2', data),
+
+  step3: (data: { sageType: string; sageMode: string; sageHost?: string; sagePort?: number }) =>
+    api.post('/onboarding/step3', data),
+
+  linkAgent: (agentToken: string) =>
+    api.post('/onboarding/agent-link', { agentToken }),
+
+  getProfiles: () =>
+    api.get<{ name: string; label: string; description: string }[]>('/onboarding/profiles'),
+
+  step4: (data: { profiles: string[] }) =>
+    api.post('/onboarding/step4', data),
+
+  step5: (data: { invitations?: { email: string; role: string }[]; inviteLater?: boolean }) =>
+    api.post('/onboarding/step5', data),
+
+  testConnection: (agentToken?: string) =>
+    api.post('/datasource/test-connection', agentToken ? { agentToken } : {}),
+};
+
+// Billing (Flutterwave)
+export const billingApi = {
+  getSubscription: () =>
+    api.get<{ hasSubscription: boolean; subscription: BillingSubscription | null }>('/billing/subscription'),
+
+  getInvoices: () =>
+    api.get('/billing/invoices'),
+
+  createCheckout: (data: { planId: string; successUrl?: string; cancelUrl?: string }) =>
+    api.post<{ url: string }>('/billing/checkout', data),
+
+  cancelSubscription: (data: { immediately?: boolean }) =>
+    api.post('/billing/cancel', data),
 };
