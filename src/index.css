@@ -67,6 +67,22 @@
   }
 }
 
+/* React Grid Layout Stability */
+.react-grid-item:not(.react-draggable-dragging):not(.resizing) {
+  transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease !important;
+}
+
+.react-grid-item.react-draggable-dragging,
+.react-grid-item.resizing {
+  transition: none !important;
+  z-index: 1000;
+}
+
+/* Suppression des animations chaotiques lors de l'ajout */
+.layout-adding-widget .react-grid-item {
+  transition: none !important;
+}
+
 /* Onboarding — data flow animation (architecture diagram Step 3) */
 @keyframes slide-right {
   0%   { transform: translateX(-100%); opacity: 0; }

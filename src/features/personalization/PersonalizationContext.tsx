@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Widget } from '@/types';
-import { dashboardsApi } from '@/api';
+import { dashboardsApi, kpiDefinitionsApi } from '@/api';
+import { PAGE_DEFAULT_WIDGETS } from './DefaultLayouts';
 
 /**
  * Interface pour le contexte de personnalisation.
@@ -128,6 +129,43 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                         }
                     })();
                 }
+                // Population automatique des layouts par défaut pour les pages vides
+                if (apiReady.current) {
+                    try {
+                        const kpisResp = await kpiDefinitionsApi.getAll();
+                        const allKpis = kpisResp.data;
+
+                        const pages = [
+                            'dashboard', 'finance', 'revenue', 'purchases', 
+                            'stocks', 'accounting', 'risks', 'inventory', 
+                            'operational'
+                        ];
+
+                        for (const pageId of pages) {
+                            // Si la page n'a pas de widgets (ni API, ni local)
+                            if (!fromApi[pageId] && (!localLayouts[pageId] || localLayouts[pageId].length === 0)) {
+                                const defaultGenerator = PAGE_DEFAULT_WIDGETS[pageId];
+                                if (defaultGenerator) {
+                                    const defaultWidgets = defaultGenerator(allKpis).map(dw => ({
+                                        ...dw,
+                                        id: `local-def-${pageId}-${Math.random().toString(36).substr(2, 9)}`,
+                                        isActive: true,
+                                        userId: 'default',
+                                        organizationId: 'default',
+                                        createdAt: new Date().toISOString(),
+                                        updatedAt: new Date().toISOString(),
+                                        dashboardId: 'local-personalization',
+                                    } as Widget));
+                                    
+                                    // Utiliser setPageLayout pour synchroniser avec la DB en arrière-plan
+                                    setPageLayout(pageId, defaultWidgets);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Failed to populate default layouts", e);
+                    }
+                }
             } catch {
                 // API indisponible ou non connecté → conserver le localStorage
             }
@@ -167,36 +205,45 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
         const w = widgetData.position?.w || 4;
         const h = widgetData.position?.h || 3;
         
-        // Find first empty spot (naive horizontal-first search)
-        let foundX = 0;
-        let foundY = 0;
-        let isOccupied = true;
-        
-        const COLS = 12;
+        // Find bottom position (maxY)
+        const maxY = pageWidgets.length > 0 
+            ? Math.max(...pageWidgets.map(widget => (widget.position?.y || 0) + (widget.position?.h || 0)))
+            : 0;
 
-        while (isOccupied) {
-            isOccupied = pageWidgets.some(widget => {
-                const wp = widget.position;
-                if (!wp) return false;
-                // Collision check
-                return (
-                    foundX < wp.x + wp.w &&
-                    foundX + w > wp.x &&
-                    foundY < wp.y + wp.h &&
-                    foundY + h > wp.y
-                );
-            });
+        let foundX = 0;
+        let foundY = maxY;
+        
+        if (w < 12) {
+            // Try to find a spot on the current last row if there's space
+            const COLS = 12;
             
-            if (isOccupied) {
-                foundX += 1;
-                if (foundX + w > COLS) {
-                    foundX = 0;
-                    foundY += 1;
+            // Check if there's space on the row before just appending at the very bottom
+            // Actually, to be safe and follow the request "always at the bottom", 
+            // we check if we can fit it at foundY without overlap, or increment foundY.
+            
+            let isOccupied = true;
+            while (isOccupied) {
+                isOccupied = pageWidgets.some(widget => {
+                    const wp = widget.position;
+                    if (!wp) return false;
+                    return (
+                        foundX < wp.x + wp.w &&
+                        foundX + w > wp.x &&
+                        foundY < wp.y + wp.h &&
+                        foundY + h > wp.y
+                    );
+                });
+                
+                if (isOccupied) {
+                    foundX += 1;
+                    if (foundX + w > COLS) {
+                        foundX = 0;
+                        foundY += 1;
+                    }
                 }
+                
+                if (foundY > maxY + 50) break; // Safety
             }
-            
-            // Safety break
-            if (foundY > 1000) break; // Increased safety break limit
         }
 
         const newWidget: Widget = {

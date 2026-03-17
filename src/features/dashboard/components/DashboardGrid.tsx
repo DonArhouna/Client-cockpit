@@ -117,6 +117,7 @@ export function DashboardGrid({ widgets, isEditing, onLayoutChangeAction, onRemo
                 compactType="vertical"
                 useCSSTransforms={true}
                 measureBeforeMount={false}
+                transformScale={1}
             >
                 {widgets.map((widget) => {
                     // Find the current layout for this widget to keep it synced
