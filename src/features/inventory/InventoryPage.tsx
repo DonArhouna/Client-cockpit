@@ -7,6 +7,7 @@ import { usePersonalization } from '@/features/personalization/PersonalizationCo
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
+import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 
 const PAGE_ID = 'inventory';
 
@@ -22,19 +23,11 @@ export default function InventoryPage() {
         if (!isLoading && kpiDefinitions && widgets.length === 0) {
             const now = new Date().toISOString();
 
-            const stockKpis = kpiDefinitions
-                .filter(kpi => kpi.isActive && kpi.category === 'stocks' && kpi.defaultVizType === 'card')
-                .slice(0, 4);
-
-            const defaultWidgets: any[] = stockKpis.map((kpi, index) => ({
-                id: `inventory-${Date.now()}-kpi-${index}`,
+            const defaultWidgets = PAGE_DEFAULT_WIDGETS['inventory'](kpiDefinitions);
+            const initialWidgets = defaultWidgets.map((w, index) => ({
+                ...w,
+                id: `inventory-${Date.now()}-${index}`,
                 dashboardId: 'local-personalization',
-                name: kpi.name,
-                type: 'kpi',
-                kpiKey: kpi.key,
-                vizType: kpi.defaultVizType,
-                position: { x: index * 3, y: 0, w: 3, h: 3 },
-                config: { unit: kpi.unit, description: kpi.description },
                 isActive: true,
                 userId: 'local-user',
                 organizationId: 'local-org',
@@ -42,42 +35,7 @@ export default function InventoryPage() {
                 updatedAt: now,
             }));
 
-            // Graphiques fixes (composants visuels dédiés)
-            defaultWidgets.push(
-                {
-                    id: `inventory-${Date.now()}-chart-1`,
-                    dashboardId: 'local-personalization',
-                    name: 'Évolution de la Valeur de Stock',
-                    type: 'graph',
-                    kpiKey: 'inventory_evolution',
-                    vizType: 'area',
-                    position: { x: 0, y: 3, w: 8, h: 4 },
-                    config: {},
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now,
-                },
-                {
-                    id: `inventory-${Date.now()}-chart-2`,
-                    dashboardId: 'local-personalization',
-                    name: 'Top 10 Articles Valorisés',
-                    type: 'table',
-                    kpiKey: 'top10_articles_valorises',
-                    vizType: 'table',
-                    position: { x: 8, y: 3, w: 4, h: 8 },
-                    config: {},
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now,
-                }
-            );
-
-            // @ts-ignore
-            setPageLayout(PAGE_ID, defaultWidgets);
+            setPageLayout(PAGE_ID, initialWidgets as any);
         }
     }, [isLoading, kpiDefinitions, widgets.length, setPageLayout]);
 

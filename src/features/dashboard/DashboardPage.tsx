@@ -4,7 +4,8 @@ import { Loader2, RefreshCw, LayoutDashboard, Calendar, ChevronDown } from 'luci
 import { useMyDashboard, useUpdateWidget } from '@/hooks/use-dashboards';
 import { DashboardGrid } from './components/DashboardGrid';
 import { WidgetSidebar } from './components/WidgetSidebar';
-import { DashboardKpis } from './components/DashboardKpis';
+import { useKpiDefinitions } from '@/hooks/use-api';
+import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 import { cn } from '@/lib/utils';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
@@ -21,14 +22,37 @@ import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 
 export function DashboardPage() {
   const { data: dashboard, isLoading: isBackendLoading } = useMyDashboard();
-  const { layouts, addWidgetToPage, removeWidgetFromPage, updateLayoutForPage } = usePersonalization();
+  const { layouts, addWidgetToPage, removeWidgetFromPage, updateLayoutForPage, setPageLayout } = usePersonalization();
 
   const updateWidget = useUpdateWidget();
 
   const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
 
+  const { data: kpiDefinitions, isLoading: isKpisLoading } = useKpiDefinitions();
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Widgets unifiés
   const personalizedWidgets = layouts['dashboard'] || [];
+  
+  // Peupler par défaut s'il n'y a rien
+  useEffect(() => {
+    if (!isKpisLoading && kpiDefinitions && personalizedWidgets.length === 0 && !isInitialized) {
+      setIsInitialized(true);
+      const defaultWidgets = PAGE_DEFAULT_WIDGETS['dashboard'](kpiDefinitions);
+      const initialWidgets = defaultWidgets.map((w, index) => ({
+        ...w,
+        id: `dashboard-${Date.now()}-${index}`,
+        dashboardId: 'local-personalization',
+        isActive: true,
+        userId: 'local-user',
+        organizationId: 'local-org',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+      setPageLayout('dashboard', initialWidgets as any);
+    }
+  }, [isKpisLoading, kpiDefinitions, personalizedWidgets.length, isInitialized, setPageLayout]);
+
   const widgets = personalizedWidgets.length > 0 ? personalizedWidgets : (dashboard?.widgets || []);
 
   const { period, setPeriod, currency, setCurrency } = useFilters();
@@ -155,9 +179,7 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* Contenu principal */}
         <div className="flex-1 overflow-y-auto px-6 space-y-6 pb-6">
-          <DashboardKpis />
           <DashboardGrid
             widgets={widgets}
             isEditing={isEditing}

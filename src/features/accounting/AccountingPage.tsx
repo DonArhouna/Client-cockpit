@@ -7,6 +7,7 @@ import { usePersonalization } from '@/features/personalization/PersonalizationCo
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
+import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 
 const PAGE_ID = 'accounting';
 
@@ -22,19 +23,11 @@ export default function AccountingPage() {
         if (!isLoading && kpiDefinitions && widgets.length === 0) {
             const now = new Date().toISOString();
 
-            const accountingKpis = kpiDefinitions
-                .filter(kpi => kpi.isActive && kpi.category === 'comptabilite' && kpi.defaultVizType === 'card')
-                .slice(0, 4);
-
-            const defaultWidgets: any[] = accountingKpis.map((kpi, index) => ({
-                id: `accounting-${Date.now()}-kpi-${index}`,
+            const defaultWidgets = PAGE_DEFAULT_WIDGETS['accounting'](kpiDefinitions);
+            const initialWidgets = defaultWidgets.map((w, index) => ({
+                ...w,
+                id: `accounting-${Date.now()}-${index}`,
                 dashboardId: 'local-personalization',
-                name: kpi.name,
-                type: 'kpi',
-                kpiKey: kpi.key,
-                vizType: kpi.defaultVizType,
-                position: { x: index * 3, y: 0, w: 3, h: 3 },
-                config: { unit: kpi.unit, description: kpi.description },
                 isActive: true,
                 userId: 'local-user',
                 organizationId: 'local-org',
@@ -42,42 +35,7 @@ export default function AccountingPage() {
                 updatedAt: now,
             }));
 
-            // Graphiques fixes (composants visuels dédiés)
-            defaultWidgets.push(
-                {
-                    id: `accounting-${Date.now()}-chart-1`,
-                    dashboardId: 'local-personalization',
-                    name: 'Évolution du P&L',
-                    type: 'graph',
-                    kpiKey: 'pnl_evolution',
-                    vizType: 'line',
-                    position: { x: 0, y: 3, w: 8, h: 4 },
-                    config: {},
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now,
-                },
-                {
-                    id: `accounting-${Date.now()}-chart-2`,
-                    dashboardId: 'local-personalization',
-                    name: 'Répartition des Charges',
-                    type: 'chart',
-                    kpiKey: 'repartition_charges',
-                    vizType: 'pie',
-                    position: { x: 8, y: 3, w: 4, h: 4 },
-                    config: {},
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: now,
-                    updatedAt: now,
-                }
-            );
-
-            // @ts-ignore
-            setPageLayout(PAGE_ID, defaultWidgets);
+            setPageLayout(PAGE_ID, initialWidgets as any);
         }
     }, [isLoading, kpiDefinitions, widgets.length, setPageLayout]);
 

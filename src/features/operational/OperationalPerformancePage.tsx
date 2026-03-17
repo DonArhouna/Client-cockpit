@@ -6,6 +6,7 @@ import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
+import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 
 export function OperationalPerformancePage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
@@ -19,19 +20,11 @@ export function OperationalPerformancePage() {
         if (!isKpisLoading && kpiDefinitions && widgets.length === 0 && !isInitialized) {
             setIsInitialized(true);
 
-            const operationalKpis = kpiDefinitions
-                .filter(kpi => kpi.isActive && kpi.category === 'fournisseurs' && kpi.defaultVizType === 'card')
-                .slice(0, 4);
-
-            const initialWidgets: any[] = operationalKpis.map((kpi, index) => ({
-                id: `operational-${Date.now()}-kpi-${index}`,
+            const defaultWidgets = PAGE_DEFAULT_WIDGETS['operational'](kpiDefinitions);
+            const initialWidgets = defaultWidgets.map((w, index) => ({
+                ...w,
+                id: `operational-${Date.now()}-${index}`,
                 dashboardId: 'local-personalization',
-                name: kpi.name,
-                type: 'kpi',
-                vizType: kpi.defaultVizType,
-                kpiKey: kpi.key,
-                config: { unit: kpi.unit, description: kpi.description },
-                position: { x: index * 3, y: 0, w: 3, h: 3 },
                 isActive: true,
                 userId: 'local-user',
                 organizationId: 'local-org',
@@ -39,54 +32,7 @@ export function OperationalPerformancePage() {
                 updatedAt: new Date().toISOString(),
             }));
 
-            // 2. Add Charts / Tables
-            initialWidgets.push({
-                id: `operational-${Date.now()}-chart-1`,
-                dashboardId: 'local-personalization',
-                name: "Évolution des Achats",
-                type: 'graph',
-                kpiKey: 'purchases_evolution',
-                vizType: 'area',
-                config: {},
-                position: { x: 0, y: 3, w: 9, h: 4 },
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            initialWidgets.push({
-                id: `operational-${Date.now()}-chart-2`,
-                dashboardId: 'local-personalization',
-                name: "Top 10 Fournisseurs",
-                type: 'table',
-                kpiKey: 'top10_fournisseurs_achats',
-                config: {},
-                position: { x: 9, y: 3, w: 3, h: 8 },
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            initialWidgets.push({
-                id: `operational-${Date.now()}-chart-3`,
-                dashboardId: 'local-personalization',
-                name: "Dettes Fournisseurs par Échéance",
-                type: 'list',
-                kpiKey: 'dettes_fournisseurs_echeance',
-                config: {},
-                position: { x: 0, y: 7, w: 9, h: 4 },
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            setPageLayout('operational', initialWidgets);
+            setPageLayout('operational', initialWidgets as any);
         }
     }, [isKpisLoading, kpiDefinitions, widgets.length, isInitialized, setPageLayout]);
 

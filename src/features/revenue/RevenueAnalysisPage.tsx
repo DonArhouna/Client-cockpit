@@ -6,8 +6,8 @@ import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
+import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 
-const REVENUE_CATEGORIES = ['finance', 'clients'];
 
 export function RevenueAnalysisPage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
@@ -21,19 +21,11 @@ export function RevenueAnalysisPage() {
         if (!isKpisLoading && kpiDefinitions && widgets.length === 0 && !isInitialized) {
             setIsInitialized(true);
 
-            const revenueKpis = kpiDefinitions
-                .filter(kpi => kpi.isActive && REVENUE_CATEGORIES.includes(kpi.category) && kpi.defaultVizType === 'card')
-                .slice(0, 4);
-
-            const initialWidgets: any[] = revenueKpis.map((kpi, index) => ({
-                id: `revenue-${Date.now()}-kpi-${index}`,
+            const defaultWidgets = PAGE_DEFAULT_WIDGETS['revenue'](kpiDefinitions);
+            const initialWidgets = defaultWidgets.map((w, index) => ({
+                ...w,
+                id: `revenue-${Date.now()}-${index}`,
                 dashboardId: 'local-personalization',
-                name: kpi.name,
-                type: 'kpi',
-                vizType: kpi.defaultVizType,
-                kpiKey: kpi.key,
-                config: { unit: kpi.unit, description: kpi.description },
-                position: { x: index * 3, y: 0, w: 3, h: 3 },
                 isActive: true,
                 userId: 'local-user',
                 organizationId: 'local-org',
@@ -41,54 +33,7 @@ export function RevenueAnalysisPage() {
                 updatedAt: new Date().toISOString(),
             }));
 
-            // 2. Add Charts (matching previous static UI layout)
-            initialWidgets.push({
-                id: `revenue-${Date.now()}-chart-1`,
-                dashboardId: 'local-personalization',
-                name: "Évolution des Revenus",
-                type: 'graph',
-                kpiKey: 'revenue_evolution',
-                vizType: 'area',
-                config: {},
-                position: { x: 0, y: 3, w: 9, h: 4 }, // Adjusted Y for Search bar space
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            initialWidgets.push({
-                id: `revenue-${Date.now()}-chart-2`,
-                dashboardId: 'local-personalization',
-                name: "Balance Âgée Clients",
-                type: 'list',
-                kpiKey: 'accounts_receivable_age',
-                config: {},
-                position: { x: 0, y: 7, w: 9, h: 4 },
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            initialWidgets.push({
-                id: `revenue-${Date.now()}-chart-3`,
-                dashboardId: 'local-personalization',
-                name: "Top Performers",
-                type: 'table',
-                kpiKey: 'top_clients',
-                config: {},
-                position: { x: 9, y: 3, w: 3, h: 8 },
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            setPageLayout('revenue', initialWidgets);
+            setPageLayout('revenue', initialWidgets as any);
         }
     }, [isKpisLoading, kpiDefinitions, widgets.length, isInitialized, setPageLayout]);
 

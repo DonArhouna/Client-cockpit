@@ -162,17 +162,54 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
         widgetData: Partial<Omit<Widget, 'id' | 'dashboardId'>> & { name: string; type: string },
     ) => {
         const tempId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        const pageWidgets = (layouts[pageId] || []).filter(w => w.isActive);
+        const w = widgetData.position?.w || 4;
+        const h = widgetData.position?.h || 3;
+        
+        // Find first empty spot (naive horizontal-first search)
+        let foundX = 0;
+        let foundY = 0;
+        let isOccupied = true;
+        
+        const COLS = 12;
+
+        while (isOccupied) {
+            isOccupied = pageWidgets.some(widget => {
+                const wp = widget.position;
+                if (!wp) return false;
+                // Collision check
+                return (
+                    foundX < wp.x + wp.w &&
+                    foundX + w > wp.x &&
+                    foundY < wp.y + wp.h &&
+                    foundY + h > wp.y
+                );
+            });
+            
+            if (isOccupied) {
+                foundX += 1;
+                if (foundX + w > COLS) {
+                    foundX = 0;
+                    foundY += 1;
+                }
+            }
+            
+            // Safety break
+            if (foundY > 1000) break; // Increased safety break limit
+        }
+
         const newWidget: Widget = {
-            config: {},
+            config: {}, // Default config
             isActive: true,
             userId: 'local-user',
             organizationId: 'local-org',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            position: { x: 0, y: 0, w: 4, h: 3 },
-            ...widgetData,
-            id: tempId,
+            ...widgetData, // Overwrite defaults with provided widgetData
+            id: tempId, // Use the generated tempId
             dashboardId: 'local-personalization',
+            position: { x: foundX, y: foundY, w, h }, // Calculated position
         };
 
         setLayouts(prev => ({ ...prev, [pageId]: [...(prev[pageId] || []), newWidget] }));
@@ -185,8 +222,8 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                     const resp = await dashboardsApi.addWidget(dashboardId, {
                         name: newWidget.name || 'Widget sans nom',
                         type: newWidget.type || 'kpi',
-                        exposure: newWidget.kpiKey,
-                        vizType: newWidget.vizType,
+                        exposure: newWidget.kpiKey || undefined,
+                        vizType: newWidget.vizType || undefined,
                         config: { ...(newWidget.config || {}), kpiKey: newWidget.kpiKey },
                         position: newWidget.position || { x: 0, y: 100, w: 4, h: 3 },
                     });
@@ -220,8 +257,8 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                         const resp = await dashboardsApi.addWidget(dashboardId, {
                             name: w.name || 'Widget sans nom',
                             type: w.type || 'kpi',
-                            exposure: w.kpiKey,
-                            vizType: w.vizType,
+                            exposure: w.kpiKey || undefined,
+                            vizType: w.vizType || undefined,
                             config: { ...(w.config || {}), kpiKey: w.kpiKey },
                             position: w.position || { x: 0, y: 0, w: 4, h: 3 },
                         });

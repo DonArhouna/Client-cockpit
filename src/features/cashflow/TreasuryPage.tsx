@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
+import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 
-const TREASURY_CATEGORIES = ['tresorerie', 'finance'];
 
 export function TreasuryPage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
@@ -36,94 +36,19 @@ export function TreasuryPage() {
         if (!isKpisLoading && kpiDefinitions && widgets.length === 0 && !isInitialized) {
             setIsInitialized(true);
 
-            // 1. Trouver les KPIs de trésorerie
-            const mainKpis = kpiDefinitions
-                .filter(kpi => kpi.isActive && TREASURY_CATEGORIES.includes(kpi.category) && kpi.defaultVizType === 'card')
-                .slice(0, 4);
-            const initialWidgets: any[] = [];
-
-            // 2. Ajouter automatiquement les 4 KPIs en tant que widgets draggables
-            mainKpis.forEach((kpi, index) => {
-                initialWidgets.push({
-                    id: `finance-${Date.now()}-kpi-${index}`,
-                    dashboardId: 'local-personalization',
-                    name: kpi.name,
-                    type: 'kpi',
-                    vizType: kpi.defaultVizType || 'card',
-                    kpiKey: kpi.key,
-                    config: { unit: kpi.unit, description: kpi.description },
-                    position: { x: index * 3, y: 0, w: 3, h: 3 },
-                    exposure: kpi.key,
-                    isActive: true,
-                    userId: 'local-user',
-                    organizationId: 'local-org',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                });
-            });
-
-            // 3. Ajouter les graphiques de base de trésorerie
-            initialWidgets.push({
-                id: `finance-${Date.now()}-chart-1`,
+            const defaultWidgets = PAGE_DEFAULT_WIDGETS['finance'](kpiDefinitions);
+            const initialWidgets = defaultWidgets.map((w, index) => ({
+                ...w,
+                id: `finance-${Date.now()}-${index}`,
                 dashboardId: 'local-personalization',
-                name: "Flux de Trésorerie Projets",
-                type: 'widget',
-                vizType: 'flux_tresorerie_chart',
-                config: {},
-                position: { x: 0, y: 3, w: 8, h: 4 },
                 isActive: true,
                 userId: 'local-user',
                 organizationId: 'local-org',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
-            });
+            }));
 
-            initialWidgets.push({
-                id: `finance-${Date.now()}-chart-2`,
-                dashboardId: 'local-personalization',
-                name: "Répartition des Encaissements",
-                type: 'widget',
-                vizType: 'encaissements_pie',
-                config: {},
-                position: { x: 8, y: 3, w: 4, h: 4 },
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            initialWidgets.push({
-                id: `finance-${Date.now()}-chart-3`,
-                dashboardId: 'local-personalization',
-                name: "Analyse des Créances",
-                type: 'widget',
-                vizType: 'creances_analysis',
-                config: {},
-                position: { x: 0, y: 7, w: 8, h: 4 },
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            initialWidgets.push({
-                id: `finance-${Date.now()}-chart-4`,
-                dashboardId: 'local-personalization',
-                name: "Risques Clients",
-                type: 'widget',
-                vizType: 'client_risk_table',
-                config: {},
-                position: { x: 8, y: 7, w: 4, h: 8 },
-                isActive: true,
-                userId: 'local-user',
-                organizationId: 'local-org',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            setPageLayout('finance', initialWidgets);
+            setPageLayout('finance', initialWidgets as any);
         }
     }, [isKpisLoading, kpiDefinitions, widgets.length, isInitialized, setPageLayout]);
 

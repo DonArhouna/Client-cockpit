@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Toaster } from '@/components/ui/toaster';
 import { QuickActions } from '@/components/shared/QuickActions';
+import { ChatbotAssistant } from '@/components/chatbot/ChatbotAssistant';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
         </div>
       </div>
+      <ChatbotAssistant />
       <Toaster />
     </div>
   );

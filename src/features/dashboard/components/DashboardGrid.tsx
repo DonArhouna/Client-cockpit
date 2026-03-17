@@ -105,7 +105,7 @@ export function DashboardGrid({ widgets, isEditing, onLayoutChangeAction, onRemo
                 className="layout"
                 layouts={{ lg: currentLayout }}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                cols={{ lg: 12, md: 12, sm: 12, xs: 4, xxs: 2 }}
                 rowHeight={100}
                 onLayoutChange={onLayoutChange}
                 onDragStop={onDragStop}
@@ -113,9 +113,10 @@ export function DashboardGrid({ widgets, isEditing, onLayoutChangeAction, onRemo
                 isDraggable={isEditing}
                 isResizable={isEditing}
                 draggableHandle=".drag-handle"
-                margin={[16, 16]}
+                margin={[20, 20]} // Improved spacing
                 compactType="vertical"
                 useCSSTransforms={true}
+                measureBeforeMount={false}
             >
                 {widgets.map((widget) => {
                     // Find the current layout for this widget to keep it synced
