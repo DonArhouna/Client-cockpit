@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, LayoutDashboard, Calendar, ChevronDown } from 'lucide-react';
+import { Loader2, RefreshCw, Calendar, ChevronDown } from 'lucide-react';
 import { useMyDashboard, useUpdateWidget } from '@/hooks/use-dashboards';
 import { DashboardGrid } from './components/DashboardGrid';
 import { WidgetSidebar } from './components/WidgetSidebar';
@@ -11,14 +11,51 @@ import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 import { getLastUpdate, forceRefresh } from '@/lib/cache';
 import { useFilters } from '@/context/FilterContext';
+import { useAuth } from '@/features/auth/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
+import { InsightBanner } from '@/components/shared/InsightBanner';
+
+// ── Welcome Banner ───────────────────────────────────────────────
+function WelcomeBanner({ lastUpdate, onRefresh, isLoading }: {
+  lastUpdate: string | null;
+  onRefresh: () => void;
+  isLoading: boolean;
+}) {
+  const { user } = useAuth();
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const firstName = user?.firstName ?? '';
+
+  return (
+    <div className="px-6 pt-6 pb-2 flex items-start justify-between gap-4 flex-shrink-0 animate-fade-up">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+            {greeting}{firstName ? `, ${firstName}` : ''} 👋
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Voici une synthèse de votre tableau de bord exécutif.
+        </p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0 pt-1">
+        <button
+          onClick={onRefresh}
+          className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
+          <span>Mis à jour : {lastUpdate ?? '--:--'}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function DashboardPage() {
   const { data: dashboard, isLoading: isBackendLoading } = useMyDashboard();
@@ -101,11 +138,8 @@ export function DashboardPage() {
     <div className="flex w-full overflow-x-hidden relative bg-slate-50/20 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'pr-80' : ''}`}>
 
-        {/* Breadcrumbs & Title */}
-        <div className="px-6 pt-6 flex flex-col gap-6 flex-shrink-0">
-          <Breadcrumbs currentPage="Tableau de bord" PageIcon={LayoutDashboard} />
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Tableau de bord Exécutif</h1>
-        </div>
+        {/* ── Welcome banner ────────────────────────────────── */}
+        <WelcomeBanner lastUpdate={lastUpdate} onRefresh={handleRefresh} isLoading={isBackendLoading} />
 
         {/* Barre d'outils unifiée */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4 px-6 flex-shrink-0">
@@ -179,7 +213,9 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 space-y-6 pb-6">
+        <div className="flex-1 overflow-y-auto px-6 space-y-4 pb-6">
+          {/* Insight alerts */}
+          <InsightBanner />
           <DashboardGrid
             widgets={widgets}
             isEditing={isEditing}

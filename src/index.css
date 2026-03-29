@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -63,11 +65,104 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
+/* ── Domain Color Tokens ─────────────────────────────── */
+:root {
+  /* Finance / Trésorerie */
+  --domain-finance-bg:    210 100% 97%;
+  --domain-finance-ring:  221 83% 53%;
+  --domain-finance-text:  221 83% 40%;
+
+  /* Revenus / CA */
+  --domain-revenue-bg:    142 71% 95%;
+  --domain-revenue-ring:  142 71% 45%;
+  --domain-revenue-text:  142 71% 32%;
+
+  /* Opérationnel / Fournisseurs */
+  --domain-ops-bg:        271 76% 96%;
+  --domain-ops-ring:      271 76% 53%;
+  --domain-ops-text:      271 76% 40%;
+
+  /* Stocks / Inventaire */
+  --domain-stock-bg:      28 100% 95%;
+  --domain-stock-ring:    28 100% 52%;
+  --domain-stock-text:    28 90% 38%;
+
+  /* Comptabilité */
+  --domain-accounting-bg: 0 72% 95%;
+  --domain-accounting-ring:0 72% 51%;
+  --domain-accounting-text:0 72% 38%;
+}
+
+.dark {
+  --domain-finance-bg:    221 83% 10%;
+  --domain-revenue-bg:    142 50% 10%;
+  --domain-ops-bg:        271 50% 10%;
+  --domain-stock-bg:      28 80% 10%;
+  --domain-accounting-bg: 0 60% 10%;
+}
+
+/* ── Premium Card ─────────────────────────────────────── */
+.card-premium {
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+.card-premium:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 12px 32px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+}
+
+/* ── Glassmorphism ────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass {
+  background: rgba(15,23,42,0.7);
+}
+
+/* ── Animations ───────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+.animate-fade-up {
+  animation: fade-up 0.45s cubic-bezier(0.16,1,0.3,1) both;
+}
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ── Trend Badge ──────────────────────────────────────── */
+.trend-up {
+  background: hsl(142 71% 90%);
+  color: hsl(142 71% 32%);
+}
+.dark .trend-up {
+  background: hsl(142 50% 14%);
+  color: hsl(142 60% 60%);
+}
+.trend-down {
+  background: hsl(0 72% 92%);
+  color: hsl(0 72% 40%);
+}
+.dark .trend-down {
+  background: hsl(0 60% 14%);
+  color: hsl(0 72% 65%);
+}
+
 /* React Grid Layout Stability */
+
 .react-grid-item:not(.react-draggable-dragging):not(.resizing) {
   transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease !important;
 }
