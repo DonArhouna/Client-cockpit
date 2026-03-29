@@ -38,7 +38,7 @@ export function ChatbotAssistant() {
       {!isOpen && (
         <div className="absolute right-16 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl shadow-lg whitespace-nowrap animate-in fade-in slide-in-from-right-3 duration-500 pointer-events-none hidden md:block">
            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-             Besoin d'aide ? <span className="text-blue-500">Demandez à Cockpit</span>
+             Besoin d'aide ? <span className="text-blue-500">Demandez à Zuri</span>
            </span>
         </div>
       )}

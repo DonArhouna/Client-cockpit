@@ -30,9 +30,116 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     isProcessing 
   } = useChatbot();
 
+  // Position and Size states
+  const [position, setPosition] = useState({ x: window.innerWidth - 420, y: window.innerHeight - 720 });
+  const [size, setSize] = useState({ width: 400, height: 600 });
+  
+  // Dragging state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
+  // Resizing state
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, w: 0, h: 0 });
+
   const [input, setInput] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load from localStorage
+  useEffect(() => {
+    const savedPos = localStorage.getItem('zuri-chat-pos');
+    const savedSize = localStorage.getItem('zuri-chat-size');
+    
+    if (savedPos) {
+      try {
+        const pos = JSON.parse(savedPos);
+        // Ensure within bounds
+        const x = Math.max(0, Math.min(pos.x, window.innerWidth - 100));
+        const y = Math.max(0, Math.min(pos.y, window.innerHeight - 100));
+        setPosition({ x, y });
+      } catch (e) {}
+    }
+    
+    if (savedSize) {
+      try {
+        const s = JSON.parse(savedSize);
+        setSize({
+          width: Math.max(320, Math.min(s.width, window.innerWidth - 40)),
+          height: Math.max(400, Math.min(s.height, window.innerHeight - 40))
+        });
+      } catch (e) {}
+    }
+  }, []);
+
+  // Save to localStorage
+  useEffect(() => {
+    localStorage.setItem('zuri-chat-pos', JSON.stringify(position));
+  }, [position]);
+
+  useEffect(() => {
+    localStorage.setItem('zuri-chat-size', JSON.stringify(size));
+  }, [size]);
+
+  // Drag handlers
+  const handleDragStart = (e: React.MouseEvent) => {
+    // Only drag via header (not buttons)
+    if ((e.target as HTMLElement).closest('button')) return;
+    
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  // Resize handlers
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      w: size.width,
+      h: size.height
+    });
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - size.width));
+        const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - size.height));
+        setPosition({ x: newX, y: newY });
+      }
+      
+      if (isResizing) {
+        const deltaX = e.clientX - resizeStart.x;
+        const deltaY = e.clientY - resizeStart.y;
+        
+        const newW = Math.max(320, Math.min(resizeStart.w + deltaX, window.innerWidth - position.x - 20));
+        const newH = Math.max(400, Math.min(resizeStart.h + deltaY, window.innerHeight - position.y - 20));
+        
+        setSize({ width: newW, height: newH });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+    };
+
+    if (isDragging || isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, isResizing, dragOffset, resizeStart, position, size]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,19 +162,32 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     }
   };
 
+
   return (
-    <div className="flex flex-col h-[600px] w-[400px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-5 duration-500">
+    <div 
+      className="fixed z-[100] flex flex-col bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-5 duration-500"
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        width: `${size.width}px`,
+        height: `${size.height}px`,
+        cursor: isDragging ? 'grabbing' : 'auto'
+      }}
+    >
       {/* Header */}
-      <div className="p-4 px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
+      <div 
+        className="p-4 px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10 cursor-grab active:cursor-grabbing select-none"
+        onMouseDown={handleDragStart}
+      >
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Cockpit Assistant</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Zuri</h2>
             <div className="flex items-center gap-1.5">
               <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[10px] text-slate-400 font-medium">Assistant intelligent actif</span>
+              <span className="text-[10px] text-slate-400 font-medium">AI de Cockpit</span>
             </div>
           </div>
         </div>
@@ -120,7 +240,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                       Bienvenue, {user?.firstName || 'utilisateur'}.
                     </h3>
                     <p className="text-sm text-slate-500 max-w-[280px] mx-auto leading-relaxed">
-                      Je suis l'assistant intelligent de Cockpit. Je peux vous aider à analyser vos données financières et opérationnelles.
+                      Je suis Zuri, l'assistant intelligent de Cockpit. Je peux vous aider à analyser vos données financières et opérationnelles.
                     </p>
                   </div>
                   
@@ -180,6 +300,14 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
             </div>
           </div>
         )}
+      </div>
+      
+      {/* Resize Handle */}
+      <div 
+        className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-20 flex items-center justify-center group"
+        onMouseDown={handleResizeStart}
+      >
+        <div className="w-1.5 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity translate-x-1 translate-y-1" />
       </div>
     </div>
   );
