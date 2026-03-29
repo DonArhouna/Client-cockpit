@@ -5,13 +5,25 @@ import { WidgetSidebar } from '@/features/dashboard/components/WidgetSidebar';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 import { useKpiDefinitions } from '@/hooks/use-api';
-import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
+import { PageInsight } from '@/components/shared/PageInsight';
+import { useKpiData } from '@/hooks/use-kpi-data';
+import { useMemo } from 'react';
 
 export function OperationalPerformancePage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
     const { layouts, addWidgetToPage, setPageLayout, removeWidgetFromPage, updateLayoutForPage } = usePersonalization();
     const { data: kpiDefinitions, isLoading: isKpisLoading } = useKpiDefinitions();
+
+    const { data: opsData } = useKpiData('taux_efficacite_ops');
+
+    const operationalInsight = useMemo(() => {
+        const rate = opsData?.current || 0;
+        return {
+            text: `Le taux d'efficacité opérationnelle est de ${rate.toFixed(0)}% ce mois. La performance globale reste stable avec quelques points d'optimisation identifiés.`,
+            variant: (rate > 85 ? 'success' : rate > 70 ? 'warning' : 'danger') as any
+        };
+    }, [opsData]);
 
     const [isInitialized, setIsInitialized] = useState(false);
     const widgets = layouts['operational'] || [];
@@ -59,11 +71,18 @@ export function OperationalPerformancePage() {
                 <div className="p-6 h-full overflow-y-auto space-y-6 flex-1 flex flex-col">
                     <OperationalHeader isEditing={isEditing} onToggleEdit={handleToggleEdit} />
 
-                    <div className="flex justify-center flex-shrink-0">
-                        <KpiSearchBar placeholder="Posez votre question sur la performance opérationnelle" />
-                    </div>
-
                     <OperationalFilters />
+
+                    {operationalInsight && (
+                        <div className="mt-2">
+                            <PageInsight
+                                icon="Activity"
+                                label="Performances"
+                                text={operationalInsight.text}
+                                variant={operationalInsight.variant}
+                            />
+                        </div>
+                    )}
 
                     <div className="flex-1">
                         <DashboardGrid

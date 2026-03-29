@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { InsightBanner } from '@/components/shared/InsightBanner';
+import { PageInsight } from '@/components/shared/PageInsight';
+import { useKpiData } from '@/hooks/use-kpi-data';
+import { useMemo } from 'react';
 
 // ── Welcome Banner ───────────────────────────────────────────────
 function WelcomeBanner({ lastUpdate, onRefresh, isLoading }: {
@@ -93,6 +96,26 @@ export function DashboardPage() {
   const widgets = personalizedWidgets.length > 0 ? personalizedWidgets : (dashboard?.widgets || []);
 
   const { period, setPeriod, currency, setCurrency } = useFilters();
+  const { data: caData } = useKpiData('ca');
+
+  const dashboardInsight = useMemo(() => {
+    if (!caData) return null;
+    const formatter = new Intl.NumberFormat('fr-FR', { 
+      style: 'currency', 
+      currency: currency, 
+      maximumFractionDigits: 0 
+    });
+    const val = formatter.format(caData.current);
+    const trendVal = caData.trend || 0;
+    const trendStr = trendVal > 0 ? `+${trendVal.toFixed(1)}%` : `${trendVal.toFixed(1)}%`;
+    const targetPct = caData.target ? ((caData.current / caData.target) * 100).toFixed(0) : '0';
+    
+    return {
+      text: `Le chiffre d'affaires du mois atteint ${val}, en ${trendVal >= 0 ? 'hausse' : 'baisse'} de ${trendStr} vs le mois précédent. L'objectif mensuel est atteint à ${targetPct}%. La dynamique globale est ${trendVal >= 0 ? 'positive' : 'incertaine'}.`,
+      variant: (trendVal > 0 ? 'success' : trendVal < 0 ? 'danger' : 'info') as any
+    };
+  }, [caData, currency]);
+
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
   useEffect(() => {
@@ -141,7 +164,7 @@ export function DashboardPage() {
         {/* ── Welcome banner ────────────────────────────────── */}
         <WelcomeBanner lastUpdate={lastUpdate} onRefresh={handleRefresh} isLoading={isBackendLoading} />
 
-        {/* Barre d'outils unifiée */}
+        {/* Barre d'outils unifiée (Filtres) */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4 px-6 flex-shrink-0">
           <div className="flex items-center gap-3">
             <DropdownMenu>
@@ -214,6 +237,18 @@ export function DashboardPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 space-y-4 pb-6">
+          {/* Page Insight (placé juste sous les filtres) */}
+          {dashboardInsight && (
+            <div className="mt-2 text-slate-900 dark:text-slate-100">
+              <PageInsight
+                icon="TrendingUp"
+                label="Indicateur clé"
+                text={dashboardInsight.text}
+                variant={dashboardInsight.variant}
+              />
+            </div>
+          )}
+
           {/* Insight alerts */}
           <InsightBanner />
           <DashboardGrid
@@ -230,8 +265,8 @@ export function DashboardPage() {
         className={`absolute top-0 right-0 bottom-0 h-full z-20 transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <WidgetSidebar
-          onClose={() => setIsSidebarOpen(false)}
-          onAddWidget={handleAddWidget}
+            onClose={() => setIsSidebarOpen(false)}
+            onAddWidget={handleAddWidget}
         />
       </div>
     </div>

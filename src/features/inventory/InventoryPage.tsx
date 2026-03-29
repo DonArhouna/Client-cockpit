@@ -8,6 +8,8 @@ import { useKpiDefinitions } from '@/hooks/use-api';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
+import { PageInsight } from '@/components/shared/PageInsight';
+import { useKpiData } from '@/hooks/use-kpi-data';
 
 const PAGE_ID = 'inventory';
 
@@ -17,6 +19,16 @@ export default function InventoryPage() {
     const { data: kpiDefinitions, isLoading } = useKpiDefinitions();
 
     const widgets = useMemo(() => layouts[PAGE_ID] || [], [layouts, PAGE_ID]);
+
+    const { data: stockData } = useKpiData('nb_articles_rupture');
+
+    const inventoryInsight = useMemo(() => {
+        const ruptures = stockData?.current || 0;
+        return {
+            text: `${ruptures} articles sont en rupture de stock critique. La gestion des approvisionnements est en cours d'optimisation pour réduire ces écarts.`,
+            variant: (ruptures === 0 ? 'success' : ruptures <= 5 ? 'warning' : 'danger') as any
+        };
+    }, [stockData]);
 
     // Auto-population automatique si la page est vide
     useEffect(() => {
@@ -56,11 +68,18 @@ export default function InventoryPage() {
                         setIsSidebarOpen(!isEditing);
                     }} />
 
-                    <div className="flex justify-center flex-shrink-0">
-                        <KpiSearchBar placeholder="Posez votre question sur vos stocks" />
-                    </div>
-
                     <InventoryFilters />
+
+                    {inventoryInsight && (
+                        <div className="mt-2 text-slate-900 dark:text-slate-100 italic">
+                            <PageInsight
+                                icon="Package"
+                                label="État des stocks"
+                                text={inventoryInsight.text}
+                                variant={inventoryInsight.variant}
+                            />
+                        </div>
+                    )}
 
                     <div className="flex-1">
                         <DashboardGrid

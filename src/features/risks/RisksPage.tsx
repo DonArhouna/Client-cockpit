@@ -7,6 +7,9 @@ import { usePersonalization } from '../personalization/PersonalizationContext';
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { PageInsight } from '@/components/shared/PageInsight';
+import { useKpiData } from '@/hooks/use-kpi-data';
+import { useFilters } from '@/context/FilterContext';
 
 const PAGE_ID = 'risks';
 
@@ -16,6 +19,26 @@ export default function RisksPage() {
     const { data: kpiDefinitions, isLoading } = useKpiDefinitions();
 
     const widgets = useMemo(() => layouts[PAGE_ID] || [], [layouts, PAGE_ID]);
+    const { currency } = useFilters();
+
+    const { data: riskExposureData } = useKpiData('montant_expose_risque');
+    const { data: highRiskClientsData } = useKpiData('nb_clients_risque_eleve');
+
+    const risksInsight = useMemo(() => {
+        if (!riskExposureData) return null;
+        const formatter = new Intl.NumberFormat('fr-FR', { 
+            style: 'currency', 
+            currency: currency, 
+            maximumFractionDigits: 0 
+        });
+        const val = formatter.format(riskExposureData.current || 0);
+        const count = highRiskClientsData?.current || 0;
+        
+        return {
+            text: `${val} sont exposés à un risque de non-recouvrement. ${count} clients sont classés en risque élevé. Une relance immédiate est recommandée pour les dossiers les plus anciens.`,
+            variant: (count === 0 ? 'success' : count <= 2 ? 'warning' : 'danger') as any
+        };
+    }, [riskExposureData, highRiskClientsData, currency]);
 
     // Auto-population automatique si la page est vide
     useEffect(() => {
@@ -105,6 +128,17 @@ export default function RisksPage() {
                     </div>
 
                     <RisksFilters />
+
+                    {risksInsight && (
+                        <div className="mt-2 text-slate-900 dark:text-slate-100 italic">
+                            <PageInsight
+                                icon="ShieldAlert"
+                                label="Alerte Risques"
+                                text={risksInsight.text}
+                                variant={risksInsight.variant}
+                            />
+                        </div>
+                    )}
 
                     <div className="flex-1">
                         <DashboardGrid

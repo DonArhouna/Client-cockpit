@@ -32,6 +32,7 @@ import { useKpiDefinitions, useNLQQuery, useJobStatus } from '@/hooks/use-api';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { cn } from '@/lib/utils';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { PageInsight } from '@/components/shared/PageInsight';
 
 const PAGE_ID = 'smart-queries';
 
@@ -149,6 +150,7 @@ export function IntelligentQueriesPage() {
                         </div>
                     </div>
 
+
                     {/* Main Content */}
                     <div className="flex-1 px-6 pb-6 space-y-6">
                         {/* Language Selector */}
@@ -196,48 +198,115 @@ export function IntelligentQueriesPage() {
                             </div>
                         </div>
 
-                        {/* Suggestions Section */}
+                        {/* State Initial: Suggestions, Insight et Empty State */}
                         {!isProcessing && !showResult && (
-                            <div className="max-w-3xl mx-auto space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-semibold text-foreground">Suggestions de requêtes</h3>
-                                    <button className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors">
-                                        <RefreshCw className="h-3 w-3" />
-                                        Actualiser
-                                    </button>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {suggestions.map((s, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => handleAnalyze(s)}
-                                            className="flex items-center gap-3 p-3 text-left rounded-lg border border-border bg-background hover:border-primary/40 hover:bg-accent/50 transition-all group"
-                                        >
-                                            <Lightbulb className="h-4 w-4 text-amber-500 shrink-0" />
-                                            <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                                                {s}
-                                            </span>
+                            <div className="space-y-8 pb-10">
+                                {/* Suggestions Section */}
+                                <div className="max-w-3xl mx-auto space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-semibold text-foreground">Suggestions de requêtes</h3>
+                                        <button className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors">
+                                            <RefreshCw className="h-3 w-3" />
+                                            Actualiser
                                         </button>
-                                    ))}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {suggestions.map((s, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleAnalyze(s)}
+                                                className="flex items-center gap-3 p-3 text-left rounded-lg border border-border bg-background hover:border-primary/40 hover:bg-accent/50 transition-all group"
+                                            >
+                                                <Lightbulb className="h-4 w-4 text-amber-500 shrink-0" />
+                                                <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                                                    {s}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Filter Tabs */}
+                                    <div className="flex items-center gap-3 pt-2">
+                                        {filterTabs.map((tab) => (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => setActiveTab(tab.id)}
+                                                className={cn(
+                                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                                                    activeTab === tab.id
+                                                        ? "bg-primary/10 text-primary"
+                                                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                                                )}
+                                            >
+                                                {tab.icon}
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                {/* Filter Tabs */}
-                                <div className="flex items-center gap-3 pt-2">
-                                    {filterTabs.map((tab) => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
-                                            className={cn(
-                                                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                                                activeTab === tab.id
-                                                    ? "bg-primary/10 text-primary"
-                                                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                                            )}
-                                        >
-                                            {tab.icon}
-                                            {tab.label}
-                                        </button>
-                                    ))}
+                                {/* Page Insight (placé sous les suggestions et onglets de filtrage) */}
+                                <div className="max-w-3xl mx-auto px-1">
+                                    <PageInsight
+                                        icon="Zap"
+                                        label="Recommandation IA"
+                                        text="Posez une question en langage naturel pour analyser vos données instantanément. Suggestion du jour : 'Quel est l'impact des impayés sur la trésorerie du trimestre ?'"
+                                        variant="info"
+                                    />
+                                </div>
+
+                                {/* Empty State Section */}
+                                <div className="py-6 space-y-10 max-w-3xl mx-auto">
+                                    <div className="text-center space-y-3">
+                                        <div className="h-14 w-14 flex items-center justify-center bg-accent rounded-2xl mx-auto">
+                                            <MessageSquare className="h-7 w-7 text-primary" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-foreground">
+                                            Commencez par poser une question
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                                            Utilisez le langage naturel pour explorer vos données financières. Notre IA comprend vos questions et génère automatiquement les visualisations appropriées.
+                                        </p>
+                                    </div>
+
+                                    {/* Summary Cards */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {[
+                                            {
+                                                title: "Chiffre d'affaires en hausse",
+                                                desc: "Le CA de septembre affiche +12.3% vs août",
+                                                color: "border-emerald-200 dark:border-emerald-900/50",
+                                                icon: <TrendingUp className="h-4 w-4 text-emerald-500" />,
+                                                iconBg: "bg-emerald-50 dark:bg-emerald-900/30"
+                                            },
+                                            {
+                                                title: "DSO sous contrôle",
+                                                desc: "34 jours en moyenne, -3 jours vs objectif",
+                                                color: "border-blue-200 dark:border-blue-900/50",
+                                                icon: <Target className="h-4 w-4 text-blue-500" />,
+                                                iconBg: "bg-blue-50 dark:bg-blue-900/30"
+                                            },
+                                            {
+                                                title: "Créances à surveiller",
+                                                desc: "156k€ de créances > 90 jours (-8.5%)",
+                                                color: "border-orange-200 dark:border-orange-900/50",
+                                                icon: <AlertTriangle className="h-4 w-4 text-orange-500" />,
+                                                iconBg: "bg-orange-50 dark:bg-orange-900/30"
+                                            }
+                                        ].map((card, i) => (
+                                            <Card key={i} className={cn("border shadow-sm hover:shadow-md transition-all cursor-pointer group", card.color)}>
+                                                <CardContent className="p-5 space-y-3">
+                                                    <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center", card.iconBg)}>
+                                                        {card.icon}
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <h4 className="font-bold text-sm text-foreground">{card.title}</h4>
+                                                        <p className="text-xs text-muted-foreground leading-relaxed">{card.desc}</p>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -345,62 +414,6 @@ export function IntelligentQueriesPage() {
                                         onLayoutChangeAction={updateLayoutForPage.bind(null, PAGE_ID)}
                                         onRemoveWidget={removeWidgetFromPage.bind(null, PAGE_ID)}
                                     />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Empty State */}
-                        {!showResult && !isProcessing && (
-                            <div className="py-12 space-y-10 max-w-3xl mx-auto">
-                                <div className="text-center space-y-3">
-                                    <div className="h-14 w-14 flex items-center justify-center bg-accent rounded-2xl mx-auto">
-                                        <MessageSquare className="h-7 w-7 text-primary" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-foreground">
-                                        Commencez par poser une question
-                                    </h3>
-                                    <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                                        Utilisez le langage naturel pour explorer vos données financières. Notre IA comprend vos questions et génère automatiquement les visualisations appropriées.
-                                    </p>
-                                </div>
-
-                                {/* Summary Cards */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {[
-                                        {
-                                            title: "Chiffre d'affaires en hausse",
-                                            desc: "Le CA de septembre affiche +12.3% vs août",
-                                            color: "border-emerald-200 dark:border-emerald-900/50",
-                                            icon: <TrendingUp className="h-4 w-4 text-emerald-500" />,
-                                            iconBg: "bg-emerald-50 dark:bg-emerald-900/30"
-                                        },
-                                        {
-                                            title: "DSO sous contrôle",
-                                            desc: "34 jours en moyenne, -3 jours vs objectif",
-                                            color: "border-blue-200 dark:border-blue-900/50",
-                                            icon: <Target className="h-4 w-4 text-blue-500" />,
-                                            iconBg: "bg-blue-50 dark:bg-blue-900/30"
-                                        },
-                                        {
-                                            title: "Créances à surveiller",
-                                            desc: "156k€ de créances > 90 jours (-8.5%)",
-                                            color: "border-orange-200 dark:border-orange-900/50",
-                                            icon: <AlertTriangle className="h-4 w-4 text-orange-500" />,
-                                            iconBg: "bg-orange-50 dark:bg-orange-900/30"
-                                        }
-                                    ].map((card, i) => (
-                                        <Card key={i} className={cn("border shadow-sm hover:shadow-md transition-all cursor-pointer group", card.color)}>
-                                            <CardContent className="p-5 space-y-3">
-                                                <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center", card.iconBg)}>
-                                                    {card.icon}
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <h4 className="font-bold text-sm text-foreground">{card.title}</h4>
-                                                    <p className="text-xs text-muted-foreground leading-relaxed">{card.desc}</p>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
                                 </div>
                             </div>
                         )}

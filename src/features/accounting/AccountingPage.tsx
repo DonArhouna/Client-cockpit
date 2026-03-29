@@ -8,6 +8,9 @@ import { useKpiDefinitions } from '@/hooks/use-api';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
+import { PageInsight } from '@/components/shared/PageInsight';
+import { useKpiData } from '@/hooks/use-kpi-data';
+import { useFilters } from '@/context/FilterContext';
 
 const PAGE_ID = 'accounting';
 
@@ -17,6 +20,26 @@ export default function AccountingPage() {
     const { data: kpiDefinitions, isLoading } = useKpiDefinitions();
 
     const widgets = useMemo(() => layouts[PAGE_ID] || [], [layouts, PAGE_ID]);
+    const { currency } = useFilters();
+
+    const { data: accResultData } = useKpiData('resultat_comptable');
+    const { data: budgetData } = useKpiData('ecart_budgetaire');
+
+    const accountingInsight = useMemo(() => {
+        if (!accResultData) return null;
+        const formatter = new Intl.NumberFormat('fr-FR', { 
+            style: 'currency', 
+            currency: currency, 
+            maximumFractionDigits: 0 
+        });
+        const val = formatter.format(accResultData.current || 0);
+        const variance = Math.abs(budgetData?.current || 0);
+        
+        return {
+            text: `Le résultat comptable du mois est de ${val}. L'écart budgétaire global est de ${variance.toFixed(1)}%, ce qui reste dans les limites acceptables de gestion.`,
+            variant: (variance < 5 ? 'success' : variance <= 10 ? 'warning' : 'danger') as any
+        };
+    }, [accResultData, budgetData, currency]);
 
     // Auto-population automatique si la page est vide
     useEffect(() => {
@@ -62,6 +85,17 @@ export default function AccountingPage() {
 
                     <AccountingFilters />
 
+                    {accountingInsight && (
+                        <div className="mt-2 text-slate-900 dark:text-slate-100 italic">
+                            <PageInsight
+                                icon="BookOpen"
+                                label="Synthèse comptable"
+                                text={accountingInsight.text}
+                                variant={accountingInsight.variant}
+                            />
+                        </div>
+                    )}
+
                     <div className="flex-1">
                         <DashboardGrid
                             widgets={widgets}
@@ -70,6 +104,7 @@ export default function AccountingPage() {
                             onLayoutChangeAction={(layoutUpdates) => updateLayoutForPage(PAGE_ID, layoutUpdates)}
                         />
                     </div>
+
                 </div>
             </div>
 

@@ -5,14 +5,30 @@ import { WidgetSidebar } from '@/features/dashboard/components/WidgetSidebar';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 import { useKpiDefinitions } from '@/hooks/use-api';
-import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
+import { PageInsight } from '@/components/shared/PageInsight';
+import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
+import { useKpiData } from '@/hooks/use-kpi-data';
+import { useMemo } from 'react';
 
 
 export function RevenueAnalysisPage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
     const { layouts, addWidgetToPage, setPageLayout, removeWidgetFromPage, updateLayoutForPage } = usePersonalization();
     const { data: kpiDefinitions, isLoading: isKpisLoading } = useKpiDefinitions();
+
+    const { data: revData } = useKpiData('ca');
+
+    const revenueInsight = useMemo(() => {
+        if (!revData) return null;
+        const growth = revData.trend || 0;
+        const growthStr = growth >= 0 ? `+${growth.toFixed(1)}%` : `${growth.toFixed(1)}%`;
+        
+        return {
+            text: `Les revenus progressent de ${growthStr} ce trimestre. La dynamique de croissance reste solide sur les segments clés.`,
+            variant: (growth > 5 ? 'success' : growth >= 0 ? 'info' : 'danger') as any
+        };
+    }, [revData]);
 
     const [isInitialized, setIsInitialized] = useState(false);
     const widgets = layouts['revenue'] || [];
@@ -65,6 +81,17 @@ export function RevenueAnalysisPage() {
                     </div>
 
                     <RevenueFilters />
+
+                    {revenueInsight && (
+                        <div className="mt-2">
+                            <PageInsight
+                                icon="TrendingUp"
+                                label="Indicateur clé"
+                                text={revenueInsight.text}
+                                variant={revenueInsight.variant}
+                            />
+                        </div>
+                    )}
 
                     <div className="flex-1">
                         <DashboardGrid

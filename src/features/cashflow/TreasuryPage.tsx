@@ -18,6 +18,9 @@ import {
 
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
+import { PageInsight } from '@/components/shared/PageInsight';
+import { useKpiData } from '@/hooks/use-kpi-data';
+import { useMemo } from 'react';
 
 
 export function TreasuryPage() {
@@ -68,6 +71,28 @@ export function TreasuryPage() {
         setIsEditing(!isEditing);
         setIsSidebarOpen(!isEditing);
     };
+
+    const { data: treasuryData } = useKpiData('solde_tresorerie');
+    const { data: coverageData } = useKpiData('taux_couverture_flux');
+
+    const treasuryInsight = useMemo(() => {
+        if (!treasuryData) return null;
+        const formatter = new Intl.NumberFormat('fr-FR', { 
+            style: 'currency', 
+            currency: currency, 
+            maximumFractionDigits: 0 
+        });
+        const val = formatter.format(treasuryData.current || 0);
+        const coverage = coverageData?.current || 0;
+        const msgLiquidite = coverage >= 100 
+            ? "Aucune tension de liquidité détectée sur les 30 prochains jours." 
+            : "Une attention particulière sur la liquidité est recommandée.";
+        
+        return {
+            text: `La trésorerie disponible s'élève à ${val}. Les flux entrants couvrent les flux sortants à ${coverage.toFixed(0)}% ce mois. ${msgLiquidite}`,
+            variant: (coverage >= 100 ? 'success' : coverage >= 80 ? 'warning' : 'danger') as any
+        };
+    }, [treasuryData, coverageData, currency]);
 
     return (
         <div className="flex w-full overflow-x-hidden relative bg-slate-50/20 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
@@ -143,8 +168,20 @@ export function TreasuryPage() {
                 </div>
 
                 {/* Contenu principal (entièrement géré par DashboardGrid) */}
-                <div className="flex-1 overflow-y-auto px-6 space-y-6 pb-6">
+                <div className="flex-1 overflow-y-auto px-6 space-y-4 pb-6 mt-4">
                     <TreasuryFilters />
+
+                    {/* Page Insight (placé juste sous les filtres) */}
+                    {treasuryInsight && (
+                        <div className="mt-2">
+                            <PageInsight
+                                icon="DollarSign"
+                                label="Indicateur clé"
+                                text={treasuryInsight.text}
+                                variant={treasuryInsight.variant}
+                            />
+                        </div>
+                    )}
 
                     <DashboardGrid
                         widgets={widgets}
