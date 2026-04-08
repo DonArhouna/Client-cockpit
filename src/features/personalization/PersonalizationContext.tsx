@@ -231,10 +231,14 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
             ? Math.max(...pageWidgets.map(widget => (widget.position?.y || 0) + (widget.position?.h || 0)))
             : 0;
 
+        // On place le nouveau widget dans une zone garantie vide en bas
+        // Utiliser maxY garantit qu'il n'y a pas de collision initiale
         let foundX = 0;
         let foundY = maxY;
         const COLS = 12;
 
+        // Petite boucle de sécurité pour trouver la première colonne libre à partir de maxY
+        // Même si maxY est le bas, certains widgets asymétriques pourraient dépasser
         let isOccupied = true;
         while (isOccupied) {
             isOccupied = pageWidgets.some(widget => {
