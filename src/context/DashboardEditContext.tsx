@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
 interface DashboardEditContextType {
     isEditing: boolean;
@@ -6,6 +6,8 @@ interface DashboardEditContextType {
     isSidebarOpen: boolean;
     setIsSidebarOpen: (value: boolean) => void;
     toggleEditMode: () => void;
+    navCollapsed: boolean;
+    setNavCollapsed: (value: boolean) => void;
 }
 
 const DashboardEditContext = createContext<DashboardEditContextType | undefined>(undefined);
@@ -13,21 +15,27 @@ const DashboardEditContext = createContext<DashboardEditContextType | undefined>
 export function DashboardEditProvider({ children }: { children: ReactNode }) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [navCollapsed, setNavCollapsed] = useState(false);
 
-    const toggleEditMode = () => {
+    const toggleEditMode = useCallback(() => {
         const nextState = !isEditing;
         setIsEditing(nextState);
         setIsSidebarOpen(nextState);
-    };
+        if (nextState) setNavCollapsed(true);
+    }, [isEditing]);
+
+    const value = useMemo(() => ({
+        isEditing,
+        setIsEditing,
+        isSidebarOpen,
+        setIsSidebarOpen,
+        toggleEditMode,
+        navCollapsed,
+        setNavCollapsed,
+    }), [isEditing, isSidebarOpen, toggleEditMode, navCollapsed]);
 
     return (
-        <DashboardEditContext.Provider value={{
-            isEditing,
-            setIsEditing,
-            isSidebarOpen,
-            setIsSidebarOpen,
-            toggleEditMode
-        }}>
+        <DashboardEditContext.Provider value={value}>
             {children}
         </DashboardEditContext.Provider>
     );

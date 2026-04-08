@@ -63,6 +63,7 @@
     "@types/react-resizable": "^3.0.8",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.0.18",
+    "agentation": "^3.0.2",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",
     "eslint-plugin-react-hooks": "^5.0.0",

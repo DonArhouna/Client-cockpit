@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Users, Bell, Lock } from 'lucide-react';
 import { ProfilePage } from '../profile/ProfilePage';
 import { CollaboratorsTab } from './CollaboratorsTab';
+import { SecurityTab } from './SecurityTab';
+import { NotificationsTab } from './NotificationsTab';
 
 export function SettingsPage() {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('profile');
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-6 min-h-[calc(100vh/0.9-4rem)]">
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold tracking-tight">{t('settings.title') || 'Paramètres'}</h1>
                 <p className="text-muted-foreground">
@@ -48,27 +49,11 @@ export function SettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="security" className="mt-0 focus-visible:outline-none">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Sécurité</CardTitle>
-                            <CardDescription>Gérez votre mot de passe et la sécurité de votre compte.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground italic">Paramètres bientôt disponibles.</p>
-                        </CardContent>
-                    </Card>
+                    <SecurityTab />
                 </TabsContent>
 
                 <TabsContent value="notifications" className="mt-0 focus-visible:outline-none">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Notifications</CardTitle>
-                            <CardDescription>Configurez vos préférences de notification.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground italic">Paramètres bientôt disponibles.</p>
-                        </CardContent>
-                    </Card>
+                    <NotificationsTab />
                 </TabsContent>
             </Tabs>
         </div>

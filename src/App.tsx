@@ -36,6 +36,8 @@ import InventoryPage from './features/inventory/InventoryPage';
 import AccountingPage from './features/accounting/AccountingPage';
 import RisksPage from './features/risks/RisksPage';
 import { SettingsPage } from './features/settings/SettingsPage';
+import { TargetsPage } from './features/targets/TargetsPage';
+import { TargetDetailPage } from './features/targets/TargetDetailPage';
 import { OnboardingPage } from './features/onboarding';
 import { AcceptInvitationPage } from './features/auth/AcceptInvitationPage';
 import { RegisterPage } from './features/auth/RegisterPage';
@@ -136,13 +138,15 @@ export default function App() {
                         <Route path="/agents/:id" element={<AgentDetailPage />} />
                         <Route path="/audit-logs" element={<AuditLogsPage />} />
                         <Route path="/health" element={<HealthPage />} />
-                        <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/profile" element={<div className="p-6"><ProfilePage /></div>} />
                         <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
                         <Route path="/subscription-plans/:id" element={<SubscriptionPlanDetailPage />} />
                         <Route path="/client-plans" element={<ClientPlansPage />} />
                         <Route path="/kpi-store" element={<KpiStorePage />} />
                         <Route path="/kpi-store/widget-templates/:id" element={<WidgetTemplateDetailPage />} />
                         <Route path="/settings" element={<SettingsPage />} />
+                        <Route path="/targets" element={<TargetsPage />} />
+                        <Route path="/targets/:id" element={<TargetDetailPage />} />
                       </Routes>
                     </MainLayout>
                   </FilterProvider>

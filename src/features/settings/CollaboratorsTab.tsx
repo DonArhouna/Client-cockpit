@@ -9,7 +9,10 @@ import {
     MoreHorizontal, 
     Mail, 
     Trash2, 
-    UserCog
+    UserCog,
+    Users as UsersIcon,
+    ShieldCheck,
+    Clock
 } from 'lucide-react';
 import { useAdminUsers, useRoles } from '@/hooks/use-api';
 import { DataTable } from '@/components/shared/DataTable';
@@ -34,6 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 import { InviteUserModal } from '../users/InviteUserModal';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { usersApi } from '@/api';
+import { cn } from '@/lib/utils';
 
 export function CollaboratorsTab() {
     const { t } = useTranslation();
@@ -44,6 +48,10 @@ export function CollaboratorsTab() {
 
     const { data: users, isLoading } = useAdminUsers();
     const { data: roles } = useRoles();
+
+    const filteredUsers = (users || []).filter(u => u.userRoles?.[0]?.role?.name !== 'superadmin');
+    const activeUsers = filteredUsers.filter(u => u.isActive).length;
+    const totalUsers = filteredUsers.length;
 
     const deleteMutation = useMutation({
         mutationFn: (userId: string) => usersApi.delete(userId),
@@ -59,7 +67,7 @@ export function CollaboratorsTab() {
 
     const updateRoleMutation = useMutation({
         mutationFn: ({ userId, roleName }: { userId: string; roleName: string }) => 
-            usersApi.update(userId, { role: roleName } as any), // Mocking role update via generic update
+            usersApi.update(userId, { role: roleName } as any),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-users'] });
             toast({
@@ -75,9 +83,9 @@ export function CollaboratorsTab() {
             header: 'Collaborateur',
             cell: ({ row }) => (
                 <div className="flex flex-col">
-                    <span className="font-medium">{row.original.firstName} {row.original.lastName}</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{row.original.firstName} {row.original.lastName}</span>
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Mail className="h-3 w-3" /> {row.original.email}
+                        <Mail className="h-3.5 w-3.5" /> {row.original.email}
                     </span>
                 </div>
             ),
@@ -92,16 +100,16 @@ export function CollaboratorsTab() {
                         defaultValue={currentRole} 
                         onValueChange={(value) => updateRoleMutation.mutate({ userId: row.original.id, roleName: value })}
                     >
-                        <SelectTrigger className="w-[180px] h-8 text-xs capitalize border-slate-200 bg-slate-50/50">
+                        <SelectTrigger className="w-[180px] h-9 text-xs capitalize border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-none">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800 shadow-xl">
                             <SelectItem value="DAF">DAF</SelectItem>
                             <SelectItem value="Contrôleur">Contrôleur</SelectItem>
                             <SelectItem value="Comptable">Comptable</SelectItem>
                             <SelectItem value="Analyste">Analyste</SelectItem>
                             <DropdownMenuSeparator />
-                            {roles?.map(r => (
+                            {roles?.filter(r => r.name !== 'superadmin').map(r => (
                                 <SelectItem key={r.id} value={r.name} className="capitalize">{r.name}</SelectItem>
                             ))}
                         </SelectContent>
@@ -113,7 +121,13 @@ export function CollaboratorsTab() {
             accessorKey: 'isActive',
             header: 'Statut',
             cell: ({ row }) => (
-                <Badge variant={row.original.isActive ? 'default' : 'secondary'} className="rounded-full px-2 text-[10px] uppercase tracking-wider">
+                <Badge 
+                    variant={row.original.isActive ? 'default' : 'secondary'} 
+                    className={cn(
+                        "rounded-full px-3 py-0.5 text-[10px] uppercase tracking-wider font-bold",
+                        row.original.isActive ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400" : ""
+                    )}
+                >
                     {row.original.isActive ? 'Actif' : 'Inactif'}
                 </Badge>
             ),
@@ -124,18 +138,18 @@ export function CollaboratorsTab() {
                 <div className="text-right">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-100 rounded-full">
+                            <Button variant="ghost" className="h-9 w-9 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                                 <MoreHorizontal className="h-4 w-4 text-slate-400" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 rounded-xl border-slate-200">
-                            <DropdownMenuLabel className="text-xs text-slate-500 font-normal">Actions</DropdownMenuLabel>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                                <UserCog className="h-4 w-4" /> Gérer les accès
+                        <DropdownMenuContent align="end" className="w-52 rounded-xl border-slate-200 dark:border-slate-800 shadow-xl p-1.5">
+                            <DropdownMenuLabel className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest px-2 py-1.5">Actions</DropdownMenuLabel>
+                            <DropdownMenuItem className="gap-2.5 cursor-pointer rounded-lg px-2 py-2 text-sm">
+                                <UserCog className="h-4 w-4 text-slate-500" /> Gérer les accès
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                            <DropdownMenuSeparator className="my-1.5" />
                             <DropdownMenuItem 
-                                className="text-destructive focus:text-destructive gap-2 cursor-pointer"
+                                className="text-destructive focus:text-destructive focus:bg-destructive/5 gap-2.5 cursor-pointer rounded-lg px-2 py-2 text-sm"
                                 onClick={() => setDeleteUser(row.original)}
                             >
                                 <Trash2 className="h-4 w-4" /> Retirer l'accès
@@ -148,31 +162,73 @@ export function CollaboratorsTab() {
     ];
 
     return (
-        <Card className="border-none shadow-none bg-transparent">
-            <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between space-y-0">
-                <div>
-                    <CardTitle className="text-xl font-bold">Collaborateurs</CardTitle>
-                    <CardDescription>
-                        Invitez les membres de votre équipe et définissez leurs niveaux d'accès.
-                    </CardDescription>
-                </div>
-                <Button 
-                    onClick={() => setInviteOpen(true)}
-                    className="bg-[#3b66ac] hover:bg-[#2d5089] text-white rounded-xl shadow-lg shadow-blue-500/10 transition-all active:scale-95"
-                >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Inviter un collaborateur
-                </Button>
-            </CardHeader>
-            <CardContent className="px-0 pt-6">
-                <DataTable
-                    columns={columns}
-                    data={users || []}
-                    isLoading={isLoading}
-                    searchKey="email"
-                    searchPlaceholder="Rechercher par email..."
-                />
-            </CardContent>
+        <div className="space-y-6">
+            {/* ── Top row : Stats ─────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+                    <CardContent className="pt-6">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                                <UsersIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground font-medium">Total collaborateurs</p>
+                                <p className="text-2xl font-bold">{totalUsers}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+                    <CardContent className="pt-6">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0">
+                                <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground font-medium">Comptes actifs</p>
+                                <p className="text-2xl font-bold">{activeUsers}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+            </div>
+
+            {/* ── Main table ──────────────────────────────────────────────── */}
+            <Card className="shadow-sm border-slate-200 dark:border-slate-800 overflow-hidden">
+                <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/10">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                            <CardTitle className="text-lg font-bold">Liste des accès</CardTitle>
+                            <CardDescription>Gérez les permissions et les statuts de vos collaborateurs.</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground bg-white dark:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm mr-2">
+                                <Clock className="h-3.5 w-3.5" />
+                                Dernière activité : Aujourd'hui
+                            </div>
+                            <Button 
+                                onClick={() => setInviteOpen(true)}
+                                className="bg-[#3b66ac] hover:bg-[#2d5089] text-white rounded-xl shadow-lg shadow-blue-500/10 transition-all active:scale-95 h-10 px-4 gap-2 text-xs font-semibold"
+                            >
+                                <UserPlus className="h-4 w-4" />
+                                <span className="hidden md:inline">Inviter un collaborateur</span>
+                                <span className="md:hidden">Inviter</span>
+                            </Button>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="px-0 pt-0">
+                    <DataTable
+                        columns={columns}
+                        data={filteredUsers}
+                        isLoading={isLoading}
+                        searchKey="email"
+                        searchPlaceholder="Rechercher par email..."
+                    />
+                </CardContent>
+            </Card>
 
             <InviteUserModal 
                 open={inviteOpen} 
@@ -189,6 +245,7 @@ export function CollaboratorsTab() {
                 confirmLabel="Retirer l'accès"
                 cancelLabel="Annuler"
             />
-        </Card>
+        </div>
     );
 }
+

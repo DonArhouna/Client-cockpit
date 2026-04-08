@@ -45,19 +45,43 @@ export function TableVisual({ kpiKey, isCompact }: TableVisualProps) {
         !['id', 'key', '_id'].includes(key.toLowerCase())
     );
 
+    const formatValue = (value: any) => {
+        if (value === null || value === undefined) return '-';
+        
+        // Nettoyage des nombres (ex: 123.000000 -> 123)
+        if (typeof value === 'number' || (!isNaN(Number(value)) && typeof value === 'string' && value.includes('.'))) {
+            const num = Number(value);
+            return num.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        return String(value);
+    };
+
+    const isNumericColumn = (key: string, value: any) => {
+        const k = key.toLowerCase();
+        return typeof value === 'number' || 
+               k.includes('montant') || 
+               k.includes('total') || 
+               k.includes('solde') || 
+               k.includes('debit') || 
+               k.includes('credit') ||
+               k.includes('ca');
+    };
+
     if (isCompact) {
         return (
             <div className="flex flex-col h-full justify-center space-y-2">
                 {items.slice(0, 3).map((item, idx) => (
-                    <div key={idx} className="flex flex-col border-b border-slate-50 pb-1 last:border-0">
+                    <div key={idx} className="flex flex-col border-b border-slate-50 dark:border-slate-800/50 pb-1 last:border-0">
                         <div className="flex justify-between text-[11px]">
-                            <span className="font-bold text-slate-800 truncate">
-                                {Object.values(item)[0] as string}
+                            <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                                {formatValue(Object.values(item)[0])}
                             </span>
-                            <span className="text-slate-500 font-black">
-                                {typeof Object.values(item)[1] === 'number' 
-                                    ? (Object.values(item)[1] as number).toLocaleString() 
-                                    : Object.values(item)[1] as string}
+                            <span className="text-slate-500 dark:text-slate-400 font-black">
+                                {formatValue(Object.values(item)[1])}
                             </span>
                         </div>
                     </div>
@@ -67,31 +91,50 @@ export function TableVisual({ kpiKey, isCompact }: TableVisualProps) {
     }
 
     return (
-        <div className="flex-1 w-full overflow-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                        {columns.map(col => (
-                            <TableHead key={col} className="font-bold text-slate-700 text-xs uppercase px-2 py-3">
-                                {col.replace(/_/g, ' ')}
-                            </TableHead>
-                        ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {items.map((item, idx) => (
-                        <TableRow key={idx} className="group border-b border-slate-50 hover:bg-slate-50/50">
-                            {columns.map(col => (
-                                <TableCell key={`${idx}-${col}`} className="py-2.5 px-2 text-sm text-slate-600">
-                                    {typeof item[col] === 'number' 
-                                        ? item[col].toLocaleString() 
-                                        : (item[col] || '-')}
-                                </TableCell>
+        <div className="w-full h-full overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-auto scrollbar-thin">
+                <Table>
+                    <TableHeader className="sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10">
+                        <TableRow className="hover:bg-transparent border-b dark:border-slate-800/50">
+                            {columns.map((column) => (
+                                <TableHead 
+                                    key={column} 
+                                    className={`font-bold text-slate-700 dark:text-slate-300 text-[11px] uppercase whitespace-nowrap px-4 py-3 ${
+                                        isNumericColumn(column, items[0][column]) ? 'text-right' : 'text-left'
+                                    }`}
+                                >
+                                    {column.replace(/_/g, ' ')}
+                                </TableHead>
                             ))}
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {items.map((item, rowIndex) => (
+                            <TableRow 
+                                key={rowIndex} 
+                                className="border-b border-slate-50 dark:border-slate-800/40 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                            >
+                                {columns.map((column) => {
+                                    const value = item[column];
+                                    const numeric = isNumericColumn(column, value);
+                                    return (
+                                        <TableCell 
+                                            key={column} 
+                                            className={`py-3 px-4 text-sm font-medium ${
+                                                numeric 
+                                                    ? 'text-right font-mono text-slate-900 dark:text-slate-200' 
+                                                    : 'text-left text-slate-600 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            {formatValue(value)}
+                                        </TableCell>
+                                    );
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     );
 }

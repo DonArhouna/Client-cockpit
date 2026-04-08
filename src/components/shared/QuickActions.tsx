@@ -13,19 +13,13 @@ export function QuickActions() {
   const { toggleEditMode } = useDashboardEdit();
 
   return (
-    <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-lg">
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Actions rapides</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Accès direct aux fonctionnalités principales</p>
-          </div>
-          <div className="flex items-center gap-3">
+    <div className="max-w-fit mx-auto mb-6 px-1 py-1.5 bg-[#3b66ac] dark:bg-slate-800/95 backdrop-blur-xl border border-white/10 dark:border-slate-700/50 rounded-2xl shadow-2xl shadow-blue-500/30 dark:shadow-none animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex items-center gap-1.5 px-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 text-white/90 hover:bg-white/10 dark:text-slate-400 dark:hover:bg-slate-800 h-9 px-3 rounded-xl transition-all hover:scale-105 active:scale-95">
                   <Download className="h-4 w-4" />
-                  Exporter
+                  <span className="hidden sm:inline">Exporter</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px]">
@@ -45,20 +39,20 @@ export function QuickActions() {
             </DropdownMenu>
 
             <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm" 
-                className="gap-2"
+                className="gap-2 text-white/90 hover:bg-white/10 dark:text-slate-400 dark:hover:bg-slate-800 h-9 px-3 rounded-xl transition-all hover:scale-105 active:scale-95"
                 onClick={toggleEditMode}
             >
               <Settings className="h-4 w-4" />
-              Personnaliser
+              <span className="hidden sm:inline">Personnaliser</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-2">
+            <div className="h-6 w-[1px] bg-white/10 dark:bg-slate-800 mx-1" />
+
+            <Button variant="ghost" size="sm" className="gap-2 text-white/90 hover:bg-white/10 dark:text-slate-400 dark:hover:bg-slate-800 h-9 px-3 rounded-xl transition-all hover:scale-105 active:scale-95">
               <Share2 className="h-4 w-4" />
-              Partager
+              <span className="hidden sm:inline">Partager</span>
             </Button>
-          </div>
-        </div>
       </div>
     </div>
   );

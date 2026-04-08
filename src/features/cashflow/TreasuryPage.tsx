@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar, RefreshCw, ChevronDown } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 import { useFilters } from '@/context/FilterContext';
@@ -8,14 +8,6 @@ import { useKpiDefinitions } from '@/hooks/use-api';
 import { TreasuryHeader, TreasuryFilters } from './';
 import { DashboardGrid } from '@/features/dashboard/components/DashboardGrid';
 import { WidgetSidebar } from '@/features/dashboard/components/WidgetSidebar';
-
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 import { PageInsight } from '@/components/shared/PageInsight';
@@ -26,7 +18,7 @@ import { useMemo } from 'react';
 export function TreasuryPage() {
     const { isEditing, setIsEditing, isSidebarOpen, setIsSidebarOpen } = useDashboardEdit();
     const { layouts, addWidgetToPage, setPageLayout, removeWidgetFromPage, updateLayoutForPage } = usePersonalization();
-    const { period, setPeriod, currency, setCurrency } = useFilters();
+    const { currency } = useFilters();
     const { data: kpiDefinitions, isLoading: isKpisLoading } = useKpiDefinitions();
 
     // Suivi de l'initialisation pour éviter des boucles d'ajouts
@@ -103,67 +95,19 @@ export function TreasuryPage() {
                     <TreasuryHeader isEditing={isEditing} onToggleEdit={handleToggleEdit} />
                 </div>
 
-                {/* Barre d'outils unifiée */}
+                {/* Barre d'outils */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4 px-6 flex-shrink-0">
-                    <div className="flex items-center gap-3">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex items-center justify-between gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm min-w-[160px]">
-                                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                                        <Calendar className="h-4 w-4 text-primary" />
-                                        <span>
-                                            {period === 'current_quarter'
-                                                ? 'Ce trimestre'
-                                                : period === 'current_month'
-                                                    ? 'Ce mois'
-                                                    : 'Cette année'}
-                                        </span>
-                                    </div>
-                                    <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[160px]">
-                                <DropdownMenuItem onClick={() => setPeriod('current_month')}>Ce mois</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setPeriod('current_quarter')}>Ce trimestre</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setPeriod('current_year')}>Cette année</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex items-center justify-between gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm w-[110px]">
-                                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                                        <span className="text-primary text-xs font-bold">
-                                            {currency === 'EUR' ? '€' : currency === 'USD' ? '$' : 'FCFA'}
-                                        </span>
-                                        <span className="text-xs">{currency}</span>
-                                    </div>
-                                    <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[110px]">
-                                <DropdownMenuItem onClick={() => setCurrency('XOF')}>XOF</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setCurrency('EUR')}>EUR</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setCurrency('USD')}>USD</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-
                     <div className="flex-1 flex justify-center">
                         <KpiSearchBar placeholder="Posez votre question sur la trésorerie" />
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        {/* Le bouton "Terminer" est maintenant géré par le Header */}
-
-                        <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="gap-2">
-                                <RefreshCw className="h-4 w-4" />
-                            </Button>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                                Mis à jour: 10:45
-                            </span>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" className="gap-2">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                            Mis à jour: 10:45
+                        </span>
                     </div>
                 </div>
 

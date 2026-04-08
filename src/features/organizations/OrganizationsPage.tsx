@@ -168,12 +168,20 @@ export function OrganizationsPage() {
   return (
     <div className="space-y-6" data-testid="organizations-page">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('organizations.title')}</h1>
-          <p className="text-muted-foreground">{t('organizations.subtitle')}</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 px-2">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            Gestion des Organisations
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+            Administrez vos entités clientes et leurs abonnements.
+          </p>
         </div>
-        <Button data-testid="create-org-btn" onClick={() => setIsCreateModalOpen(true)}>
+        <Button 
+          data-testid="create-org-btn" 
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 shadow-md font-bold"
+        >
           <Plus className="h-4 w-4 mr-2" />
           {t('organizations.createClient')}
         </Button>

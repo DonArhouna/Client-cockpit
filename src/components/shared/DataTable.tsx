@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react"
 import { useTranslation } from 'react-i18next'
+import { cn } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -37,6 +39,8 @@ interface DataTableProps<TData, TValue> {
     searchKey?: string
     searchPlaceholder?: string
     isLoading?: boolean
+    className?: string
+    onRowClick?: (row: TData) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -45,6 +49,8 @@ export function DataTable<TData, TValue>({
     searchKey,
     searchPlaceholder,
     isLoading,
+    className,
+    onRowClick,
 }: DataTableProps<TData, TValue>) {
     const { t } = useTranslation()
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -76,7 +82,7 @@ export function DataTable<TData, TValue>({
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-6 pt-4">
                 <div className="flex flex-1 items-center space-x-2">
                     {searchKey && (
                         <Input
@@ -111,7 +117,7 @@ export function DataTable<TData, TValue>({
                                 return (
                                     <DropdownMenuCheckboxItem
                                         key={column.id}
-                                        className="capitalize"
+                                        className={cn("capitalize")}
                                         checked={column.getIsVisible()}
                                         onCheckedChange={(value) => column.toggleVisibility(!!value)}
                                     >
@@ -122,7 +128,7 @@ export function DataTable<TData, TValue>({
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <div className="rounded-md border">
+            <div className={cn("mx-6 rounded-md border", className)}>
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -144,16 +150,22 @@ export function DataTable<TData, TValue>({
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    {t('common.loading')}
-                                </TableCell>
-                            </TableRow>
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    {columns.map((_, j) => (
+                                        <TableCell key={j} className="h-16 py-4">
+                                            <Skeleton className="h-6 w-full opacity-60" />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
                         ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
+                                    className={cn("hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors group", onRowClick ? "cursor-pointer" : "cursor-default")}
+                                    onClick={() => onRowClick?.(row.original)}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -179,13 +191,17 @@ export function DataTable<TData, TValue>({
                 </Table>
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
-                    {t('dataTable.rowsSelected', {
-                        count: table.getFilteredSelectedRowModel().rows.length,
-                        total: table.getFilteredRowModel().rows.length
-                    })}
+                <div className="flex-1 text-sm text-muted-foreground px-6">
+                    {table.getFilteredRowModel().rows.length > 0 ? (
+                        <>
+                            Affichage de <span className="font-medium">{table.getRowModel().rows.length}</span> sur{" "}
+                            <span className="font-medium">{table.getFilteredRowModel().rows.length}</span> résultats
+                        </>
+                    ) : (
+                        "Aucun résultat"
+                    )}
                 </div>
-                <div className="space-x-2">
+                <div className="space-x-2 px-6">
                     <Button
                         variant="outline"
                         size="sm"

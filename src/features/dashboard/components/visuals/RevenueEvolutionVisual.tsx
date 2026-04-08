@@ -1,6 +1,6 @@
 import {
     ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
-    CartesianGrid, Tooltip, Legend, TooltipProps
+    CartesianGrid, Tooltip, TooltipProps
 } from 'recharts';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { useFilters } from '@/context/FilterContext';
@@ -8,6 +8,8 @@ import { useKpiData } from '@/hooks/use-kpi-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+
+import { useTheme } from '@/components/shared/ThemeProvider';
 
 interface RevenueEvolutionVisualProps {
     isCompact?: boolean;
@@ -30,7 +32,7 @@ function CustomTooltip({ active, payload, label, currencySymbol }: TooltipProps<
                         </span>
                         <span className={cn(
                             'font-bold tabular-nums',
-                            entry.name === 'Variation' && (isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')
+                            entry.name === 'Variation' && (isPositive ? 'text-primary' : 'text-red-500')
                         )}>
                             {typeof entry.value === 'number'
                                 ? `${entry.value >= 0 ? '' : ''}${(entry.value / 1000).toFixed(0)}k ${currencySymbol}`
@@ -45,9 +47,14 @@ function CustomTooltip({ active, payload, label, currencySymbol }: TooltipProps<
 
 export function RevenueEvolutionVisual({ isCompact, kpiKey = 'f01_ca_ht' }: RevenueEvolutionVisualProps) {
     const { currency } = useFilters();
+    const { theme } = useTheme();
     const { data: kpiData, isLoading } = useKpiData(kpiKey);
     const currencySymbol = currency === 'XOF' ? 'FCFA' : currency === 'EUR' ? '€' : '$';
     const [hideSeries, setHideSeries] = useState<Record<string, boolean>>({});
+
+    const isDark = theme === 'dark';
+    const axisColor = isDark ? '#94a3b8' : '#94a3b8'; // keep original but maybe slightly brighter if needed
+    const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(148,163,184,0.2)';
 
     // ── Build chart data ──────────────────────────────────────────
     const rawItems = kpiData?.details?.items ?? kpiData?.details ?? [];
@@ -99,11 +106,11 @@ export function RevenueEvolutionVisual({ isCompact, kpiKey = 'f01_ca_ht' }: Reve
                         <AreaChart data={displayData} margin={{ top: 4, right: 4, left: -44, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="compactRev" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#3b66ac" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#3b66ac" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <Area type="monotone" dataKey="revenus" stroke="#3b82f6" strokeWidth={2} fill="url(#compactRev)" dot={false} />
+                            <Area type="monotone" dataKey="revenus" stroke="#3b66ac" strokeWidth={2} fill="url(#compactRev)" dot={false} />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
@@ -160,50 +167,50 @@ export function RevenueEvolutionVisual({ isCompact, kpiKey = 'f01_ca_ht' }: Reve
                     <AreaChart data={displayData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                         <defs>
                             <linearGradient id="gradRev" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.18} />
-                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                <stop offset="5%"  stopColor="#3b66ac" stopOpacity={0.18} />
+                                <stop offset="95%" stopColor="#3b66ac" stopOpacity={0} />
                             </linearGradient>
                             <linearGradient id="gradSorties" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%"  stopColor="#f43f5e" stopOpacity={0.15} />
-                                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                                <stop offset="5%"  stopColor="#94a3b8" stopOpacity={0.15} />
+                                <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
                             </linearGradient>
                         </defs>
 
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.2)" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
                         <XAxis
                             dataKey="month"
                             axisLine={false} tickLine={false}
-                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                            tick={{ fill: axisColor, fontSize: 10, fontWeight: 600 }}
                             dy={8}
                         />
                         <YAxis
                             axisLine={false} tickLine={false}
-                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                            tick={{ fill: axisColor, fontSize: 10, fontWeight: 600 }}
                             tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                             width={48}
                         />
                         <Tooltip
                             content={<CustomTooltip currencySymbol={currencySymbol} />}
-                            cursor={{ stroke: 'rgba(148,163,184,0.3)', strokeWidth: 1 }}
+                            cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(148,163,184,0.3)', strokeWidth: 1 }}
                         />
 
                         {!hideSeries['revenus'] && (
                             <Area
                                 type="monotone" dataKey="revenus" name="Entrées"
-                                stroke="#3b82f6" strokeWidth={2.5}
+                                stroke="#3b66ac" strokeWidth={2.5}
                                 fill="url(#gradRev)"
                                 dot={false}
-                                activeDot={{ r: 5, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+                                activeDot={{ r: 5, fill: '#3b66ac', stroke: '#fff', strokeWidth: 2 }}
                             />
                         )}
                         {!hideSeries['sorties'] && (
                             <Area
                                 type="monotone" dataKey="sorties" name="Sorties"
-                                stroke="#f43f5e" strokeWidth={2}
+                                stroke="#94a3b8" strokeWidth={2}
                                 strokeDasharray="5 3"
                                 fill="url(#gradSorties)"
                                 dot={false}
-                                activeDot={{ r: 4, fill: '#f43f5e', stroke: '#fff', strokeWidth: 2 }}
+                                activeDot={{ r: 4, fill: '#94a3b8', stroke: '#fff', strokeWidth: 2 }}
                             />
                         )}
                     </AreaChart>
@@ -213,11 +220,11 @@ export function RevenueEvolutionVisual({ isCompact, kpiKey = 'f01_ca_ht' }: Reve
             {/* ── Legend ── */}
             <div className="flex items-center gap-4 text-[11px] text-muted-foreground px-1">
                 <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-4 rounded-full bg-blue-500 inline-block" />
+                    <span className="h-2 w-4 rounded-full inline-block" style={{ backgroundColor: '#3b66ac' }} />
                     Entrées
                 </span>
                 <span className="flex items-center gap-1.5">
-                    <span className="h-[2px] w-4 border-t-2 border-dashed border-rose-500 inline-block" />
+                    <span className="h-[2px] w-4 border-t-2 border-dashed inline-block" style={{ borderColor: '#94a3b8' }} />
                     Sorties
                 </span>
             </div>

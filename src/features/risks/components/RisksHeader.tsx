@@ -1,7 +1,6 @@
-import { ShieldAlert, Download, Share2, RefreshCw } from 'lucide-react';
+import { Download, Share2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { exportToCsv } from '@/lib/export';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 
@@ -24,8 +23,7 @@ export function RisksHeader({ isEditing, onToggleEdit }: RisksHeaderProps) {
     };
 
     return (
-        <div className="flex flex-col gap-6 mb-6">
-            <Breadcrumbs currentPage="Risques & Recouvrement" PageIcon={ShieldAlert} />
+        <div className="flex flex-col gap-0 mb-6">
 
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-1">
