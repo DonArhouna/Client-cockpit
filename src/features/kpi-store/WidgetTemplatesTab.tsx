@@ -154,7 +154,7 @@ export function WidgetTemplatesTab() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <DataTable columns={columns} data={templates ?? []} searchKey="name" />
+        <DataTable tableId="admin-widget-templates" columns={columns} data={templates ?? []} searchKey="name" />
       )}
 
       <CreateWidgetTemplateModal open={isCreateOpen} onOpenChange={setIsCreateOpen} />

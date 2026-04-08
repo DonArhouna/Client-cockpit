@@ -98,6 +98,7 @@ export default function AccountingPage() {
 
                     <div className="flex-1">
                         <DashboardGrid
+                            pageId={PAGE_ID}
                             widgets={widgets}
                             isEditing={isEditing}
                             onRemoveWidget={(id) => removeWidgetFromPage(PAGE_ID, id)}

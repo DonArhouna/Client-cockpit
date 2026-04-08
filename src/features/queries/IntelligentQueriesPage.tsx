@@ -406,6 +406,7 @@ export function IntelligentQueriesPage() {
                                         </div>
                                     </div>
                                     <DashboardGrid
+                                        pageId={PAGE_ID}
                                         widgets={widgets}
                                         isEditing={isEditing}
                                         onLayoutChangeAction={updateLayoutForPage.bind(null, PAGE_ID)}

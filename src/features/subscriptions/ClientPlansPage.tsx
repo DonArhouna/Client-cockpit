@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Loader2, MoreHorizontal, Users, BarChart3 } from 'lucide-react';
+import { CreditCard, Loader2, MoreHorizontal, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
@@ -249,7 +249,7 @@ export function ClientPlansPage() {
                             Erreur lors du chargement des plans clients
                         </div>
                     ) : (
-                        <DataTable columns={columns} data={organizations ?? []} searchKey="name" />
+                        <DataTable tableId="admin-client-plans" columns={columns} data={organizations ?? []} searchKey="name" />
                     )}
                 </CardContent>
             </Card>

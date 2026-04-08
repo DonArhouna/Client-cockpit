@@ -209,6 +209,7 @@ export function DashboardPage() {
           {/* Insight alerts */}
           <InsightBanner />
           <DashboardGrid
+            pageId="dashboard"
             widgets={widgets}
             isEditing={isEditing}
             onLayoutChangeAction={handleLayoutChange}

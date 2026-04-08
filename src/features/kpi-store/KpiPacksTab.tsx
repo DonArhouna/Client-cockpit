@@ -144,7 +144,7 @@ export function KpiPacksTab() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <DataTable columns={columns} data={packs ?? []} searchKey="label" />
+        <DataTable tableId="admin-kpi-packs" columns={columns} data={packs ?? []} searchKey="label" />
       )}
 
       <CreateKpiPackModal open={isCreateOpen} onOpenChange={setIsCreateOpen} />

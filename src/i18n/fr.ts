@@ -443,13 +443,5 @@ export const fr = {
     previous: 'Précédent',
     next: 'Suivant',
     rowsSelected: '{{count}} sur {{total}} ligne(s) sélectionnée(s).',
-    rename: 'Renommer la colonne',
-    hide: 'Masquer la colonne',
-    sortAsc: 'Trier croissant',
-    sortDesc: 'Trier décroissant',
-    options: 'Options',
-    reset: 'Réinitialiser',
-    detail: 'Détails',
-    confirm: 'Confirmer',
   },
 };

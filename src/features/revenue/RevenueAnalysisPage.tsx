@@ -95,6 +95,7 @@ export function RevenueAnalysisPage() {
 
                     <div className="flex-1">
                         <DashboardGrid
+                            pageId="revenue"
                             widgets={widgets}
                             isEditing={isEditing}
                             onLayoutChangeAction={handleLayoutChange}

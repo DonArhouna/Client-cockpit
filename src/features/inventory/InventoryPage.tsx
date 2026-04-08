@@ -6,7 +6,6 @@ import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 import { PageInsight } from '@/components/shared/PageInsight';
 import { useKpiData } from '@/hooks/use-kpi-data';
@@ -83,6 +82,7 @@ export default function InventoryPage() {
 
                     <div className="flex-1">
                         <DashboardGrid
+                            pageId={PAGE_ID}
                             widgets={widgets}
                             isEditing={isEditing}
                             onRemoveWidget={(id) => removeWidgetFromPage(PAGE_ID, id)}

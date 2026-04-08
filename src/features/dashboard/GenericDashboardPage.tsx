@@ -74,6 +74,7 @@ export function GenericDashboardPage({ pageId, titleKey, subtitle }: GenericDash
                 isSidebarOpen ? "pr-80" : ""
             )}>
                 <DashboardGrid
+                    pageId={pageId}
                     widgets={widgets}
                     isEditing={isEditing}
                     onLayoutChangeAction={handleLayoutChange}

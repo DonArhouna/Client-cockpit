@@ -19,6 +19,7 @@ import { TableVisual } from './visuals/TableVisual';
 import { PieVisual } from './visuals/PieVisual';
 
 interface WidgetCardProps {
+    pageId: string;
     widget: Widget;
     isEditing: boolean;
     onRemove: (id: string) => void;
@@ -28,7 +29,7 @@ interface WidgetCardProps {
     style?: CSSProperties;
 }
 
-export function WidgetCard({ widget, isEditing, onRemove, h, className, style }: WidgetCardProps) {
+export function WidgetCard({ pageId, widget, isEditing, onRemove, h, className, style }: WidgetCardProps) {
     const { t } = useTranslation();
 
     const isMainKpi = widget.id?.startsWith('main-kpi-');
@@ -55,7 +56,11 @@ export function WidgetCard({ widget, isEditing, onRemove, h, className, style }:
             if (widget.kpiKey?.includes('top_clients') || widget.kpiKey?.includes('top10_clients')) {
                 return <TopClientsVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
             }
-            return <TableVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
+            return <TableVisual 
+                pageId={pageId}
+                widget={widget} 
+                isCompact={isCompact} 
+            />;
         }
         if (widget.vizType === 'pie' || widget.vizType === 'donut') {
             return <PieVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;

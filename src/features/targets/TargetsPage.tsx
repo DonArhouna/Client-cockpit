@@ -306,7 +306,7 @@ export function TargetsPage() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <DataTable columns={columns} data={filteredTargets} onRowClick={(t) => navigate(`/targets/${t.id}`)} />
+            <DataTable tableId="admin-targets" columns={columns} data={filteredTargets} onRowClick={(t) => navigate(`/targets/${t.id}`)} />
           )}
         </CardContent>
       </Card>

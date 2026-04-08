@@ -9,13 +9,14 @@ import { WidgetCard } from './WidgetCard';
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface DashboardGridProps {
+    pageId: string;
     widgets: Widget[];
     isEditing: boolean;
     onLayoutChangeAction?: (layouts: { [widgetId: string]: { x: number, y: number, w: number, h: number } }) => void;
     onRemoveWidget: (id: string) => void;
 }
 
-export function DashboardGrid({ widgets, isEditing, onLayoutChangeAction, onRemoveWidget }: DashboardGridProps) {
+export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction, onRemoveWidget }: DashboardGridProps) {
 
     // Transform widgets array to react-grid-layout expected format
     const generateLayout = (widgets: Widget[]): LayoutItem[] => {
@@ -103,9 +104,9 @@ export function DashboardGrid({ widgets, isEditing, onLayoutChangeAction, onRemo
         <div className="w-full relative px-2">
             <ResponsiveGridLayout
                 className="layout"
-                layouts={{ lg: currentLayout, md: currentLayout, sm: currentLayout }} // Stabilise les points de rupture
+                layouts={{ lg: currentLayout }}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                cols={{ lg: 12, md: 12, sm: 12, xs: 4, xxs: 2 }}
                 rowHeight={100}
                 onLayoutChange={onLayoutChange}
                 onDragStop={onDragStop}
@@ -113,12 +114,11 @@ export function DashboardGrid({ widgets, isEditing, onLayoutChangeAction, onRemo
                 isDraggable={isEditing}
                 isResizable={isEditing}
                 draggableHandle=".drag-handle"
-                margin={[16, 16]} // Marge plus serrée et constante
+                margin={[20, 20]} // Improved spacing
                 compactType="vertical"
                 useCSSTransforms={true}
-                measureBeforeMount={true} // Pré-mesure pour éviter le flash blanc au chargement
+                measureBeforeMount={false}
                 transformScale={1}
-                droppingItem={{ i: "__dropping-elem__", x: 0, y: 0, h: 3, w: 4 }}
             >
                 {widgets.map((widget) => {
                     // Find the current layout for this widget to keep it synced
@@ -130,6 +130,7 @@ export function DashboardGrid({ widgets, isEditing, onLayoutChangeAction, onRemo
                     return (
                         <div key={widget.id} data-grid={dataGrid} className="h-full">
                             <WidgetCard
+                                pageId={pageId}
                                 widget={widget}
                                 isEditing={isEditing}
                                 onRemove={onRemoveWidget}

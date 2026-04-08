@@ -10,29 +10,16 @@ import {
     getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
+    ColumnOrderState,
 } from "@tanstack/react-table"
-import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent,
-} from '@dnd-kit/core';
-import {
-    arrayMove,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    horizontalListSortingStrategy,
-} from '@dnd-kit/sortable';
 
 import {
     Table,
     TableBody,
     TableCell,
-    TableRow,
+    TableHead,
     TableHeader,
+    TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,10 +33,30 @@ import { ChevronLeft, ChevronRight, Settings2, RotateCcw } from "lucide-react"
 import { useTranslation } from 'react-i18next'
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useTableSettings } from "@/features/personalization/TableSettingsContext"
-import { SortableHeader } from "./DataTable/SortableHeader"
+import { useAuth } from "@/features/auth/AuthContext"
+import { DataTableColumnHeader } from "./DataTableColumnHeader"
+
+// DnD Kit imports
+import {
+    DndContext,
+    KeyboardSensor,
+    MouseSensor,
+    TouchSensor,
+    closestCenter,
+    type DragEndEvent,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core'
+import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
+import {
+    SortableContext,
+    horizontalListSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface DataTableProps<TData, TValue> {
+    tableId: string // Identifiant unique pour la persistance
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
     searchKey?: string
@@ -57,15 +64,73 @@ interface DataTableProps<TData, TValue> {
     isLoading?: boolean
     className?: string
     onRowClick?: (row: TData) => void
-    tableId?: string // Identifiant unique pour la persistance des réglages
+    // Configuration optionnelle persistée via le parent (ex: widget config)
+    externalConfig?: {
+        columnOrder?: string[]
+        columnVisibility?: VisibilityState
+        columnAliases?: Record<string, string>
+    }
+    onConfigChangeAction?: (config: {
+        columnOrder: string[]
+        columnVisibility: VisibilityState
+        columnAliases: Record<string, string>
+    }) => void
 }
 
 /**
- * Composant de tableau de données avancé.
- * Gère le tri, le filtrage, la pagination, le réordonnancement des colonnes (DnD),
- * la visibilité et le renommage personnalisé des en-têtes.
+ * Composant de cellule d'en-tête draggable
+ */
+function DraggableTableHeader({ header, table, onRename, displayTitle }: any) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+        useSortable({
+            id: header.id,
+        })
+
+    const style: React.CSSProperties = {
+        transform: CSS.Translate.toString(transform),
+        transition,
+        cursor: isDragging ? 'grabbing' : 'auto',
+        zIndex: isDragging ? 20 : 0,
+        opacity: isDragging ? 0.8 : 1,
+        position: 'relative',
+    }
+
+    return (
+        <TableHead
+            ref={setNodeRef}
+            style={style}
+            key={header.id}
+            className="p-0"
+        >
+            <div className="flex items-center">
+                {/* Poignée de drag invisible mais activable par tout l'en-tête sauf le menu */}
+                <div {...attributes} {...listeners} className="absolute inset-0 z-0" />
+                
+                <div className="relative z-10 w-full px-4 py-1">
+                    {header.isPlaceholder
+                        ? null
+                        : <DataTableColumnHeader 
+                            column={header.column} 
+                            title={displayTitle} 
+                            onRename={onRename}
+                          />
+                    }
+                </div>
+            </div>
+        </TableHead>
+    )
+}
+
+/**
+ * DataTable Premium avec :
+ * - Persistance par utilisateur
+ * - Drag & Drop des colonnes
+ * - Renommage des colonnes (Alias)
+ * - Masquage des colonnes
+ * - Réinitialisation
  */
 export function DataTable<TData, TValue>({
+    tableId,
     columns,
     data,
     searchKey,
@@ -73,98 +138,101 @@ export function DataTable<TData, TValue>({
     isLoading,
     className,
     onRowClick,
-    tableId,
+    externalConfig,
+    onConfigChangeAction,
 }: DataTableProps<TData, TValue>) {
     const { t } = useTranslation()
-    const { getTableSettings, updateTableSettings, resetTableSettings } = useTableSettings()
+    const { user } = useAuth()
     
-    // États internes de TanStack Table
+    // Identifiant de stockage local (isolé par utilisateur et par tableau)
+    const storageKey = React.useMemo(() => 
+        `cockpit_table_${tableId}_user_${user?.id || 'guest'}`, 
+    [tableId, user?.id])
+
+    // États du tableau
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+    
+    // États persistés (initialisés depuis localStorage ou config externe)
+    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
+        if (externalConfig?.columnVisibility) return externalConfig.columnVisibility
+        const saved = localStorage.getItem(`${storageKey}_visibility`)
+        return saved ? JSON.parse(saved) : {}
+    })
+    
+    const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(() => {
+        if (externalConfig?.columnOrder) return externalConfig.columnOrder
+        const saved = localStorage.getItem(`${storageKey}_order`)
+        return saved ? JSON.parse(saved) : columns.map((c) => c.id!)
+    })
+
+    const [columnAliases, setColumnAliases] = React.useState<Record<string, string>>(() => {
+        if (externalConfig?.columnAliases) return externalConfig.columnAliases
+        const saved = localStorage.getItem(`${storageKey}_aliases`)
+        return saved ? JSON.parse(saved) : {}
+    })
+
     const [rowSelection, setRowSelection] = React.useState({})
 
-    // Récupération des réglages persistés
-    const settings = tableId ? getTableSettings(tableId) : null
-    
-    // État de visibilité des colonnes (synchronisé avec les réglages)
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(
-        settings?.columnVisibility || {}
-    )
-
-    // État de l'ordre des colonnes (synchronisé avec les réglages)
-    const [columnOrder, setColumnOrder] = React.useState<string[]>(
-        settings?.columnOrder || columns.map(c => c.id || (c as any).accessorKey as string).filter(Boolean)
-    )
-
-    // Synchronisation de la visibilité si les réglages changent (ex: reset)
+    // Sauvegarde automatique des réglages
     React.useEffect(() => {
-        if (settings?.columnVisibility) {
-            setColumnVisibility(settings.columnVisibility);
-        }
-    }, [settings?.columnVisibility]);
-
-    // Synchronisation de l'ordre si les réglages changent
-    React.useEffect(() => {
-        if (settings?.columnOrder && settings.columnOrder.length > 0) {
-            setColumnOrder(settings.columnOrder);
-        }
-    }, [settings?.columnOrder]);
-
-    // Capteurs pour le Drag & Drop
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-    );
-
-    /**
-     * Gère la fin d'un glisser-déposer de colonne.
-     */
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        if (active && over && active.id !== over.id) {
-            setColumnOrder((items) => {
-                const oldIndex = items.indexOf(active.id as string);
-                const newIndex = items.indexOf(over.id as string);
-                const newOrder = arrayMove(items, oldIndex, newIndex);
-                if (tableId) {
-                    updateTableSettings(tableId, { columnOrder: newOrder });
-                }
-                return newOrder;
-            });
-        }
-    };
-
-    /**
-     * Gère le changement de visibilité des colonnes.
-     */
-    const handleVisibilityChange = (updater: any) => {
-        const next = typeof updater === 'function' ? updater(columnVisibility) : updater;
-        setColumnVisibility(next);
-        if (tableId) {
-            updateTableSettings(tableId, { columnVisibility: next });
-        }
-    };
+        const config = { columnOrder, columnVisibility, columnAliases }
+        localStorage.setItem(`${storageKey}_visibility`, JSON.stringify(columnVisibility))
+        localStorage.setItem(`${storageKey}_order`, JSON.stringify(columnOrder))
+        localStorage.setItem(`${storageKey}_aliases`, JSON.stringify(columnAliases))
+        onConfigChangeAction?.(config)
+    }, [columnVisibility, columnOrder, columnAliases, storageKey, onConfigChangeAction])
 
     const table = useReactTable({
         data,
         columns,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        onColumnVisibilityChange: handleVisibilityChange,
-        onRowSelectionChange: setRowSelection,
-        onColumnOrderChange: setColumnOrder,
         state: {
             sorting,
             columnFilters,
             columnVisibility,
-            rowSelection,
             columnOrder,
+            rowSelection,
         },
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        onColumnVisibilityChange: setColumnVisibility,
+        onColumnOrderChange: setColumnOrder,
+        onRowSelectionChange: setRowSelection,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
     })
+
+    // Capteurs pour le DnD
+    const sensors = useSensors(
+        useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+        useSensor(KeyboardSensor)
+    )
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event
+        if (active && over && active.id !== over.id) {
+            setColumnOrder((prev) => {
+                const oldIndex = prev.indexOf(active.id as string)
+                const newIndex = prev.indexOf(over.id as string)
+                const newOrder = [...prev]
+                newOrder.splice(oldIndex, 1)
+                newOrder.splice(newIndex, 0, active.id as string)
+                return newOrder
+            })
+        }
+    }
+
+    const resetLayout = () => {
+        setColumnOrder(columns.map((c) => (c.id || (c as any).accessorKey) as string))
+        setColumnVisibility({})
+        setColumnAliases({})
+        localStorage.removeItem(`${storageKey}_visibility`)
+        localStorage.removeItem(`${storageKey}_order`)
+        localStorage.removeItem(`${storageKey}_aliases`)
+    }
 
     return (
         <div className="space-y-4">
@@ -181,19 +249,19 @@ export function DataTable<TData, TValue>({
                         />
                     )}
                 </div>
-                <div className="flex items-center space-x-2 ml-auto">
-                    {tableId && settings && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-muted-foreground"
-                            onClick={() => resetTableSettings(tableId)}
-                            title={t('dataTable.reset')}
-                        >
-                            <RotateCcw className="h-4 w-4 mr-1" />
-                            <span className="hidden lg:inline">{t('dataTable.reset')}</span>
-                        </Button>
-                    )}
+                <div className="flex items-center gap-2 ml-auto">
+                    {/* Bouton de réinitialisation */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetLayout}
+                        className="h-8 px-2 text-slate-500 hover:text-primary transition-colors"
+                        title="Rétablir la vue par défaut"
+                    >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        <span className="hidden sm:inline">Rétablir</span>
+                    </Button>
+
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
@@ -205,7 +273,7 @@ export function DataTable<TData, TValue>({
                                 {t('dataTable.columns')}
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[180px]">
+                        <DropdownMenuContent align="end" className="w-[180px] rounded-xl shadow-lg">
                             {table
                                 .getAllColumns()
                                 .filter(
@@ -213,15 +281,15 @@ export function DataTable<TData, TValue>({
                                         typeof column.accessorFn !== "undefined" && column.getCanHide()
                                 )
                                 .map((column) => {
-                                    const customLabel = settings?.customLabels[column.id];
+                                    const title = columnAliases[column.id] || (column.columnDef as any).header || column.id
                                     return (
                                         <DropdownMenuCheckboxItem
                                             key={column.id}
-                                            className={cn("capitalize")}
+                                            className={cn("capitalize text-[13px]")}
                                             checked={column.getIsVisible()}
                                             onCheckedChange={(value) => column.toggleVisibility(!!value)}
                                         >
-                                            {customLabel || column.id}
+                                            {title}
                                         </DropdownMenuCheckboxItem>
                                     )
                                 })}
@@ -230,13 +298,14 @@ export function DataTable<TData, TValue>({
                 </div>
             </div>
             
-            <div className={cn("mx-6 rounded-md border", className)}>
-                <Table>
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
+            <div className={cn("mx-6 rounded-md border overflow-hidden", className)}>
+                <DndContext
+                    collisionDetection={closestCenter}
+                    modifiers={[restrictToHorizontalAxis]}
+                    onDragEnd={handleDragEnd}
+                    sensors={sensors}
+                >
+                    <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
@@ -245,66 +314,71 @@ export function DataTable<TData, TValue>({
                                         strategy={horizontalListSortingStrategy}
                                     >
                                         {headerGroup.headers.map((header) => {
-                                            const customLabel = settings?.customLabels[header.column.id];
+                                            const originalTitle = (header.column.columnDef as any).header || header.id
+                                            const displayTitle = columnAliases[header.id] || originalTitle
+                                            
                                             return (
-                                                <SortableHeader
-                                                    key={header.id}
-                                                    header={header}
-                                                    tableId={tableId || 'default'}
-                                                    customLabel={customLabel}
+                                                <DraggableTableHeader 
+                                                    key={header.id} 
+                                                    header={header} 
+                                                    table={table}
+                                                    displayTitle={displayTitle}
+                                                    onRename={(newTitle: string) => {
+                                                        setColumnAliases(prev => ({ ...prev, [header.id]: newTitle }))
+                                                    }}
                                                 />
-                                            );
+                                            )
                                         })}
                                     </SortableContext>
                                 </TableRow>
                             ))}
                         </TableHeader>
-                    </DndContext>
-                    <TableBody>
-                        {isLoading ? (
-                            Array.from({ length: 5 }).map((_, i) => (
-                                <TableRow key={i}>
-                                    {columns.map((_, j) => (
-                                        <TableCell key={j} className="h-16 py-4">
-                                            <Skeleton className="h-6 w-full opacity-60" />
-                                        </TableCell>
-                                    ))}
+                        <TableBody>
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        {columns.map((_, j) => (
+                                            <TableCell key={j} className="h-16 py-4">
+                                                <Skeleton className="h-6 w-full opacity-60" />
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow
+                                        key={row.id}
+                                        data-state={row.getIsSelected() && "selected"}
+                                        className={cn("hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors group", onRowClick ? "cursor-pointer" : "cursor-default")}
+                                        onClick={() => onRowClick?.(row.original)}
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={columns.length}
+                                        className="h-24 text-center"
+                                    >
+                                        {t('dataTable.noResults')}
+                                    </TableCell>
                                 </TableRow>
-                            ))
-                        ) : table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
-                                    className={cn("hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors group", onRowClick ? "cursor-pointer" : "cursor-default")}
-                                    onClick={() => onRowClick?.(row.original)}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
-                                            )}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-24 text-center"
-                                >
-                                    {t('dataTable.noResults')}
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                            )}
+                        </TableBody>
+                    </Table>
+                </DndContext>
             </div>
-
-            <div className="flex items-center justify-end space-x-2 py-4 px-6">
-                <div className="flex-1 text-sm text-muted-foreground">
+            
+            <div className="flex items-center justify-end space-x-2 py-4">
+                <div className="flex-1 text-sm text-muted-foreground px-6">
                     {table.getFilteredRowModel().rows.length > 0 ? (
                         <>
                             Affichage de <span className="font-medium">{table.getRowModel().rows.length}</span> sur{" "}
@@ -314,14 +388,14 @@ export function DataTable<TData, TValue>({
                         "Aucun résultat"
                     )}
                 </div>
-                <div className="space-x-2">
+                <div className="space-x-2 px-6">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                     >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        <ChevronLeft className="h-4 w-4" />
                         {t('dataTable.previous')}
                     </Button>
                     <Button
@@ -331,11 +405,10 @@ export function DataTable<TData, TValue>({
                         disabled={!table.getCanNextPage()}
                     >
                         {t('dataTable.next')}
-                        <ChevronRight className="h-4 w-4 ml-1" />
+                        <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
         </div>
     );
 }
-

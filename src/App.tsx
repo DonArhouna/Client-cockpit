@@ -27,7 +27,6 @@ import { LoadingSpinner } from './components/shared/LoadingSpinner';
 import { DashboardEditProvider } from './context/DashboardEditContext';
 import { PersonalizationPage } from './features/personalization/PersonalizationPage';
 import { PersonalizationProvider } from './features/personalization/PersonalizationContext';
-import { TableSettingsProvider } from './features/personalization/TableSettingsContext';
 import { FilterProvider } from './context/FilterContext';
 import { IntelligentQueriesPage } from './features/queries/IntelligentQueriesPage';
 import { TreasuryPage } from './features/cashflow/TreasuryPage';
@@ -113,9 +112,8 @@ export default function App() {
           <ProtectedRoute>
             <OnboardingGuard>
               <DashboardEditProvider>
-                <TableSettingsProvider>
-                  <PersonalizationProvider>
-                    <FilterProvider>
+                <PersonalizationProvider>
+                  <FilterProvider>
                     <MainLayout>
                       <Routes>
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -153,8 +151,7 @@ export default function App() {
                     </MainLayout>
                   </FilterProvider>
                 </PersonalizationProvider>
-              </TableSettingsProvider>
-            </DashboardEditProvider>
+              </DashboardEditProvider>
             </OnboardingGuard>
           </ProtectedRoute>
         }

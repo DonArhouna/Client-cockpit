@@ -86,6 +86,7 @@ export function OperationalPerformancePage() {
 
                     <div className="flex-1">
                         <DashboardGrid
+                            pageId="operational"
                             widgets={widgets}
                             isEditing={isEditing}
                             onLayoutChangeAction={handleLayoutChange}

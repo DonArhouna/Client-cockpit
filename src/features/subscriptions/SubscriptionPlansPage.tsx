@@ -239,7 +239,7 @@ export function SubscriptionPlansPage() {
               Erreur lors du chargement des plans
             </div>
           ) : (
-            <DataTable columns={columns} data={plans ?? []} searchKey="label" />
+            <DataTable tableId="admin-subscription-plans" columns={columns} data={plans ?? []} searchKey="label" />
           )}
         </CardContent>
       </Card>

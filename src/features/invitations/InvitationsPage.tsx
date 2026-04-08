@@ -150,6 +150,7 @@ export function InvitationsPage() {
                 </CardHeader>
                 <CardContent>
                     <DataTable
+                        tableId="admin-invitations"
                         columns={columns}
                         data={filteredInvitations}
                         isLoading={isLoading}

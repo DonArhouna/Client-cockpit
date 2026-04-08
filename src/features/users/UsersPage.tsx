@@ -265,7 +265,7 @@ export function UsersPage() {
         </CardHeader>
         <CardContent>
           <DataTable
-            tableId="users"
+            tableId="admin-users"
             columns={columns}
             data={filteredUsers}
             searchKey="firstName"

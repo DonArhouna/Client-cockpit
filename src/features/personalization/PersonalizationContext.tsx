@@ -14,6 +14,7 @@ interface PersonalizationContextType {
     setPageLayout: (pageId: string, widgets: Widget[]) => void;
     removeWidgetFromPage: (pageId: string, widgetId: string) => void;
     updateLayoutForPage: (pageId: string, layoutUpdates: Record<string, { x: number, y: number, w: number, h: number }>) => void;
+    updateWidgetConfig: (pageId: string, widgetId: string, config: Record<string, any>) => void;
 }
 
 const PersonalizationContext = createContext<PersonalizationContextType | undefined>(undefined);
@@ -231,14 +232,10 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
             ? Math.max(...pageWidgets.map(widget => (widget.position?.y || 0) + (widget.position?.h || 0)))
             : 0;
 
-        // On place le nouveau widget dans une zone garantie vide en bas
-        // Utiliser maxY garantit qu'il n'y a pas de collision initiale
         let foundX = 0;
         let foundY = maxY;
         const COLS = 12;
 
-        // Petite boucle de sécurité pour trouver la première colonne libre à partir de maxY
-        // Même si maxY est le bas, certains widgets asymétriques pourraient dépasser
         let isOccupied = true;
         while (isOccupied) {
             isOccupied = pageWidgets.some(widget => {
@@ -375,6 +372,34 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
         }
     };
 
+    /**
+     * Met à jour la configuration (config) d'un widget spécifique.
+     * Utile pour sauver les réglages de tableaux (alias, ordre des colonnes) sur le serveur.
+     */
+    const updateWidgetConfig = (
+        pageId: string,
+        widgetId: string,
+        newConfig: Record<string, any>
+    ) => {
+        setLayouts(prev => {
+            const updated = (prev[pageId] || []).map(widget =>
+                widget.id === widgetId
+                    ? { ...widget, config: { ...widget.config, ...newConfig } }
+                    : widget
+            );
+            return { ...prev, [pageId]: updated };
+        });
+
+        if (apiReady.current && !widgetId.startsWith('local-')) {
+            const dashboardId = dashboardIds.current[pageId];
+            if (dashboardId) {
+                dashboardsApi.updateWidget(dashboardId, widgetId, { 
+                    config: newConfig 
+                }).catch(() => {});
+            }
+        }
+    };
+
     return (
         <PersonalizationContext.Provider value={{
             layouts,
@@ -382,6 +407,7 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
             setPageLayout,
             removeWidgetFromPage,
             updateLayoutForPage,
+            updateWidgetConfig,
         }}>
             {children}
         </PersonalizationContext.Provider>

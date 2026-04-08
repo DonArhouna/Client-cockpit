@@ -128,6 +128,7 @@ export function TreasuryPage() {
                     )}
 
                     <DashboardGrid
+                        pageId="finance"
                         widgets={widgets}
                         isEditing={isEditing}
                         onLayoutChangeAction={handleLayoutChange}

@@ -221,6 +221,7 @@ export function CollaboratorsTab() {
                 </CardHeader>
                 <CardContent className="px-0 pt-0">
                     <DataTable
+                        tableId="admin-collaborators"
                         columns={columns}
                         data={filteredUsers}
                         isLoading={isLoading}

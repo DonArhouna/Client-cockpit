@@ -144,7 +144,7 @@ export function KpiDefinitionsTab() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <DataTable columns={columns} data={kpis ?? []} searchKey="name" />
+        <DataTable tableId="admin-kpi-definitions" columns={columns} data={kpis ?? []} searchKey="name" />
       )}
 
       <CreateKpiDefinitionModal open={isCreateOpen} onOpenChange={setIsCreateOpen} />
