@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useTranslation } from 'react-i18next';
-import { Bug as BugIcon, ChevronRight, Upload, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { Bug as BugIcon, ChevronRight, Upload, X, Loader2, CheckCircle2, Crosshair } from 'lucide-react';
+import { ScreenshotPicker } from './ScreenshotPicker';
 import { 
   Dialog, 
   DialogContent, 
@@ -69,6 +70,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
   const techContext = useTechnicalContext();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [attachments, setAttachments] = React.useState<File[]>([]);
+  const [isCapturing, setIsCapturing] = React.useState(false);
 
   const form = useForm<BugFormValues>({
     resolver: zodResolver(bugSchema),
@@ -95,6 +97,24 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
 
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCaptureZone = () => {
+    // Ferme le modal pour laisser la place au picker
+    onOpenChange?.(false);
+    // Petit délai pour laisser le modal se fermer avant de monter le picker
+    setTimeout(() => setIsCapturing(true), 200);
+  };
+
+  const handleCaptureComplete = (file: File) => {
+    setAttachments(prev => [...prev, file]);
+    setIsCapturing(false);
+    onOpenChange?.(true);
+  };
+
+  const handleCaptureCancel = () => {
+    setIsCapturing(false);
+    onOpenChange?.(true);
   };
 
   const onSubmit = async (values: BugFormValues) => {
@@ -137,7 +157,15 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
   };
 
   return (
+    <>
+      {isCapturing && (
+        <ScreenshotPicker
+          onCapture={handleCaptureComplete}
+          onCancel={handleCaptureCancel}
+        />
+      )}
     <Dialog open={open} onOpenChange={onOpenChange}>
+
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[700px] overflow-y-auto max-h-[95vh] p-0 border-none bg-transparent shadow-none">
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-white/20 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full">
@@ -324,8 +352,16 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                     <div className="grid grid-cols-3 gap-2">
                       {attachments.map((file, i) => (
                         <div key={i} className="group relative aspect-square rounded-xl border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 overflow-hidden">
-                          <span className="text-[10px] text-slate-400 truncate px-1">{file.name}</span>
-                          <button 
+                          {file.type.startsWith('image/') ? (
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="absolute inset-0 w-full h-full object-cover rounded-xl"
+                            />
+                          ) : (
+                            <span className="text-[10px] text-slate-400 truncate px-1">{file.name}</span>
+                          )}
+                          <button
                             type="button"
                             onClick={() => removeAttachment(i)}
                             className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -334,6 +370,15 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                           </button>
                         </div>
                       ))}
+                      <button
+                        type="button"
+                        onClick={handleCaptureZone}
+                        className="aspect-square rounded-xl border-2 border-dashed border-primary/40 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary hover:bg-primary/5 transition-all text-primary/60 hover:text-primary"
+                        title="Capturer une zone de l'écran"
+                      >
+                        <Crosshair className="h-4 w-4" />
+                        <span className="text-[10px] font-bold">Zone</span>
+                      </button>
                       <label className="aspect-square rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all text-slate-400 hover:text-primary">
                         <Upload className="h-4 w-4" />
                         <span className="text-[10px] font-bold">Ajouter</span>
@@ -400,5 +445,6 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
