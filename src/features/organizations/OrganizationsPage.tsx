@@ -223,7 +223,12 @@ export function OrganizationsPage() {
               Erreur lors du chargement des organisations
             </div>
           ) : (
-            <DataTable columns={columns} data={filteredOrganizations} searchKey="name" />
+            <DataTable 
+              tableId="organizations"
+              columns={columns} 
+              data={filteredOrganizations} 
+              searchKey="name" 
+            />
           )}
         </CardContent>
       </Card>

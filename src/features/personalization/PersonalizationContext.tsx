@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Widget } from '@/types';
 import { dashboardsApi, kpiDefinitionsApi } from '@/api';
+import { useAuth } from '@/features/auth/AuthContext';
 import { PAGE_DEFAULT_WIDGETS } from './DefaultLayouts';
 
 /**
  * Interface pour le contexte de personnalisation.
- * Gère les agencements (layouts) de widgets pour différentes pages.
+ * Gère les agencements (layouts) de widgets de manière isolée par utilisateur.
  */
 interface PersonalizationContextType {
     layouts: Record<string, Widget[]>;
@@ -17,8 +18,6 @@ interface PersonalizationContextType {
 
 const PersonalizationContext = createContext<PersonalizationContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'cockpit_personalized_layouts';
-
 /** Convertit un widget DB (champ `exposure`) en widget local (champ `kpiKey`). */
 const dbToLocal = (w: any): Widget => ({
     ...w,
@@ -27,9 +26,14 @@ const dbToLocal = (w: any): Widget => ({
 });
 
 export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // État local initialisé depuis le localStorage (cache offline)
+    const { user } = useAuth();
+    
+    // Clé de stockage unique par utilisateur pour éviter les conflits sur PC partagé
+    const getStorageKey = () => user ? `cockpit_layouts_${user.id}` : 'cockpit_layouts_guest';
+
+    // État local initialisé depuis le localStorage (cache spécifique à l'utilisateur)
     const [layouts, setLayouts] = useState<Record<string, Widget[]>>(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(getStorageKey());
         if (saved) {
             try { return JSON.parse(saved); } catch {}
         }
@@ -45,31 +49,44 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
     // L'API est disponible et l'utilisateur est connecté
     const apiReady = useRef(false);
 
-    // Persistance automatique dans le localStorage à chaque changement (cache offline)
+    // Persistance automatique dans le localStorage à chaque changement de layout
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(layouts));
-    }, [layouts]);
+        if (user) {
+            localStorage.setItem(getStorageKey(), JSON.stringify(layouts));
+        }
+    }, [layouts, user]);
 
     /**
-     * Au montage : charge tous les dashboards depuis l'API.
-     * L'API prend le dessus sur le localStorage pour les pages qui ont des données en base.
-     * Fallback silencieux sur localStorage si l'API est inaccessible (offline, non connecté).
+     * Calcule le nom unique du dashboard pour l'API (Format: pageId-userId)
+     * Cela garantit l'isolation même si le backend est partagé par l'organisation.
+     */
+    const getApiDashboardName = (pageId: string) => user ? `${pageId}-${user.id}` : pageId;
+
+    /**
+     * Au montage : charge tous les dashboards de l'utilisateur depuis l'API.
      */
     useEffect(() => {
+        if (!user || !localStorage.getItem('accessToken')) return;
+
         (async () => {
-            if (!localStorage.getItem('accessToken')) return;
             try {
                 const resp = await dashboardsApi.getAll();
                 const dashboards: any[] = resp.data;
 
                 const ids: Record<string, string> = {};
                 const fromApi: Record<string, Widget[]> = {};
+                
+                const userSuffix = `-${user.id}`;
 
                 for (const db of dashboards) {
-                    ids[db.name] = db.id;
-                    const widgets: any[] = db.widgets ?? [];
-                    if (widgets.length > 0) {
-                        fromApi[db.name] = widgets.map(dbToLocal);
+                    // On ne traite que les dashboards appartenant à l'utilisateur (nom se termine par -ID)
+                    if (db.name.endsWith(userSuffix)) {
+                        const pageId = db.name.replace(userSuffix, '');
+                        ids[pageId] = db.id;
+                        const widgets: any[] = db.widgets ?? [];
+                        if (widgets.length > 0) {
+                            fromApi[pageId] = widgets.map(dbToLocal);
+                        }
                     }
                 }
 
@@ -81,31 +98,36 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                     setLayouts(prev => ({ ...prev, ...fromApi }));
                 }
 
-                // Sync initiale : pages qui ont des widgets en localStorage mais rien en DB
-                // (cas des widgets créés avant l'activation de la sync API)
+                // Sync initiale : pages qui ont des widgets locaux mais rien en DB (nouveaux widgets)
+                const currentStorageKey = getStorageKey();
                 const localLayouts = (() => {
-                    const saved = localStorage.getItem('cockpit_personalized_layouts');
+                    const saved = localStorage.getItem(currentStorageKey);
                     if (saved) { try { return JSON.parse(saved) as Record<string, Widget[]>; } catch {} }
                     return {} as Record<string, Widget[]>;
                 })();
 
                 for (const [pageId, localWidgets] of Object.entries(localLayouts)) {
-                    // Sauter si l'API a déjà des widgets pour cette page, ou si le localStorage est vide
                     if (fromApi[pageId] || !localWidgets.length) continue;
-                    // Sauter les widgets déjà en DB (id ne commence pas par 'local-')
-                    const unsynced = localWidgets.filter(w => w.id.startsWith('local-') || !w.dashboardId || w.dashboardId === 'local-personalization');
+                    
+                    const unsynced = localWidgets.filter(w => 
+                        w.id.startsWith('local-') || !w.dashboardId || w.dashboardId === 'local-personalization'
+                    );
                     if (!unsynced.length) continue;
 
-                    // Créer le dashboard et pousser les widgets
                     (async () => {
                         const dashboardId = await (async () => {
                             if (ids[pageId]) return ids[pageId];
                             try {
-                                const r = await dashboardsApi.create({ name: pageId, isDefault: pageId === 'dashboard' });
+                                const apiName = getApiDashboardName(pageId);
+                                const r = await dashboardsApi.create({ 
+                                    name: apiName, 
+                                    isDefault: pageId === 'dashboard' 
+                                });
                                 dashboardIds.current = { ...dashboardIds.current, [pageId]: r.data.id };
                                 return r.data.id;
                             } catch { return null; }
                         })();
+                        
                         if (!dashboardId) return;
 
                         const synced: Widget[] = [];
@@ -129,7 +151,8 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                         }
                     })();
                 }
-                // Population automatique des layouts par défaut pour les pages vides
+
+                // Population automatique des layouts par défaut pour les pages totalement vides
                 if (apiReady.current) {
                     try {
                         const kpisResp = await kpiDefinitionsApi.getAll();
@@ -142,7 +165,6 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                         ];
 
                         for (const pageId of pages) {
-                            // Si la page n'a pas de widgets (ni API, ni local)
                             if (!fromApi[pageId] && (!localLayouts[pageId] || localLayouts[pageId].length === 0)) {
                                 const defaultGenerator = PAGE_DEFAULT_WIDGETS[pageId];
                                 if (defaultGenerator) {
@@ -150,14 +172,13 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                                         ...dw,
                                         id: `local-def-${pageId}-${Math.random().toString(36).substr(2, 9)}`,
                                         isActive: true,
-                                        userId: 'default',
-                                        organizationId: 'default',
+                                        userId: user.id,
+                                        organizationId: user.organizationId || 'default',
                                         createdAt: new Date().toISOString(),
                                         updatedAt: new Date().toISOString(),
                                         dashboardId: 'local-personalization',
                                     } as Widget));
                                     
-                                    // Utiliser setPageLayout pour synchroniser avec la DB en arrière-plan
                                     setPageLayout(pageId, defaultWidgets);
                                 }
                             }
@@ -166,21 +187,23 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                         console.error("Failed to populate default layouts", e);
                     }
                 }
-            } catch {
-                // API indisponible ou non connecté → conserver le localStorage
+            } catch (e) {
+                console.error("Personalization load failure", e);
             }
         })();
-    }, []);
+    }, [user]);
 
     /**
-     * Récupère l'id du dashboard DB pour une page.
-     * Le crée s'il n'existe pas encore.
+     * Récupère ou crée l'id du dashboard DB (isolé par utilisateur).
      */
     const getOrCreateDashboard = async (pageId: string): Promise<string | null> => {
+        if (!user) return null;
         if (dashboardIds.current[pageId]) return dashboardIds.current[pageId];
+        
         try {
+            const apiName = getApiDashboardName(pageId);
             const resp = await dashboardsApi.create({
-                name: pageId,
+                name: apiName,
                 isDefault: pageId === 'dashboard',
             });
             dashboardIds.current = { ...dashboardIds.current, [pageId]: resp.data.id };
@@ -191,72 +214,60 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
     };
 
     /**
-     * Ajoute un widget à une page.
-     * Mise à jour locale immédiate (optimiste) + sync API en arrière-plan.
-     * L'id temporaire local est remplacé par l'id DB une fois le widget créé.
+     * Ajoute un widget à une page. Isolation par utilisateur active.
      */
     const addWidgetToPage = (
         pageId: string,
         widgetData: Partial<Omit<Widget, 'id' | 'dashboardId'>> & { name: string; type: string },
     ) => {
-        const tempId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        if (!user) return;
         
+        const tempId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const pageWidgets = (layouts[pageId] || []).filter(w => w.isActive);
         const w = widgetData.position?.w || 4;
         const h = widgetData.position?.h || 3;
         
-        // Find bottom position (maxY)
         const maxY = pageWidgets.length > 0 
             ? Math.max(...pageWidgets.map(widget => (widget.position?.y || 0) + (widget.position?.h || 0)))
             : 0;
 
         let foundX = 0;
         let foundY = maxY;
-        
-        if (w < 12) {
-            // Try to find a spot on the current last row if there's space
-            const COLS = 12;
+        const COLS = 12;
+
+        let isOccupied = true;
+        while (isOccupied) {
+            isOccupied = pageWidgets.some(widget => {
+                const wp = widget.position;
+                if (!wp) return false;
+                return (
+                    foundX < wp.x + wp.w &&
+                    foundX + w > wp.x &&
+                    foundY < wp.y + wp.h &&
+                    foundY + h > wp.y
+                );
+            });
             
-            // Check if there's space on the row before just appending at the very bottom
-            // Actually, to be safe and follow the request "always at the bottom", 
-            // we check if we can fit it at foundY without overlap, or increment foundY.
-            
-            let isOccupied = true;
-            while (isOccupied) {
-                isOccupied = pageWidgets.some(widget => {
-                    const wp = widget.position;
-                    if (!wp) return false;
-                    return (
-                        foundX < wp.x + wp.w &&
-                        foundX + w > wp.x &&
-                        foundY < wp.y + wp.h &&
-                        foundY + h > wp.y
-                    );
-                });
-                
-                if (isOccupied) {
-                    foundX += 1;
-                    if (foundX + w > COLS) {
-                        foundX = 0;
-                        foundY += 1;
-                    }
+            if (isOccupied) {
+                foundX += 1;
+                if (foundX + w > COLS) {
+                    foundX = 0;
+                    foundY += 1;
                 }
-                
-                if (foundY > maxY + 50) break; // Safety
             }
         }
 
         const newWidget: Widget = {
-            config: {}, // Default config
+            config: {},
             isActive: true,
-            userId: 'local-user',
-            organizationId: 'local-org',
+            userId: user.id,
+            organizationId: user.organizationId || 'local-org',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            ...widgetData, // Overwrite defaults with provided widgetData
-            id: tempId, // Use the generated tempId
+            ...widgetData,
+            id: tempId,
             dashboardId: 'local-personalization',
-            position: { x: foundX, y: foundY, w, h }, // Calculated position
+            position: { x: foundX, y: foundY, w, h },
         };
 
         setLayouts(prev => ({ ...prev, [pageId]: [...(prev[pageId] || []), newWidget] }));
@@ -272,29 +283,26 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                         exposure: newWidget.kpiKey || undefined,
                         vizType: newWidget.vizType || undefined,
                         config: { ...(newWidget.config || {}), kpiKey: newWidget.kpiKey },
-                        position: newWidget.position || { x: 0, y: 100, w: 4, h: 3 },
+                        position: newWidget.position,
                     });
-                    // Remplace l'id temporaire par l'id DB
                     setLayouts(prev => ({
                         ...prev,
                         [pageId]: (prev[pageId] || []).map(w =>
                             w.id === tempId ? { ...w, id: resp.data.id, dashboardId } : w
                         ),
                     }));
-                } catch { /* Garde l'id temporaire si l'API échoue */ }
+                } catch {}
             })();
         }
     };
 
     /**
-     * Remplace entièrement les widgets d'une page (utilisé pour l'auto-population initiale).
-     * Mise à jour locale immédiate + sync API séquentielle en arrière-plan.
-     * Chaque id temporaire est remplacé par son id DB une fois créé.
+     * Remplace les widgets d'une page. Isolation par utilisateur active.
      */
     const setPageLayout = (pageId: string, widgets: Widget[]) => {
         setLayouts(prev => ({ ...prev, [pageId]: widgets }));
 
-        if (apiReady.current) {
+        if (apiReady.current && user) {
             (async () => {
                 const dashboardId = await getOrCreateDashboard(pageId);
                 if (!dashboardId) return;
@@ -307,11 +315,11 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                             exposure: w.kpiKey || undefined,
                             vizType: w.vizType || undefined,
                             config: { ...(w.config || {}), kpiKey: w.kpiKey },
-                            position: w.position || { x: 0, y: 0, w: 4, h: 3 },
+                            position: w.position,
                         });
                         synced.push({ ...w, id: resp.data.id, dashboardId });
                     } catch {
-                        synced.push(w); // Garde l'id local si la création échoue
+                        synced.push(w);
                     }
                 }
                 setLayouts(prev => ({ ...prev, [pageId]: synced }));
@@ -320,8 +328,7 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
     };
 
     /**
-     * Supprime un widget d'une page.
-     * Mise à jour locale immédiate + suppression DB en arrière-plan.
+     * Supprime un widget. Isolation par utilisateur active.
      */
     const removeWidgetFromPage = (pageId: string, widgetId: string) => {
         setLayouts(prev => ({
@@ -338,8 +345,7 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
     };
 
     /**
-     * Met à jour les positions des widgets (drag & drop).
-     * Mise à jour locale immédiate + PATCH DB en arrière-plan pour chaque widget déplacé.
+     * Met à jour les positions. Isolation par utilisateur active.
      */
     const updateLayoutForPage = (
         pageId: string,
@@ -378,9 +384,6 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
     );
 };
 
-/**
- * Hook personnalisé pour accéder aux fonctions de personnalisation.
- */
 export const usePersonalization = () => {
     const context = useContext(PersonalizationContext);
     if (context === undefined) {
