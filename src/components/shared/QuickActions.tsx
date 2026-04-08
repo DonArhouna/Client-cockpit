@@ -1,4 +1,4 @@
-import { Download, Settings, Share2, FileSpreadsheet, FileText, Presentation, Bug, Sparkles } from 'lucide-react';
+import { Download, Settings, Share2, FileSpreadsheet, FileText, Presentation, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 import {
@@ -11,12 +11,9 @@ import { exportToCsv, exportToExcel, exportToPptx } from '@/lib/export';
 import { BugReportModal } from '@/features/support/components/BugReportModal';
 import * as React from 'react';
 
-interface QuickActionsProps {
-  isChatOpen: boolean;
-  onChatToggle: () => void;
-}
+interface QuickActionsProps {}
 
-export function QuickActions({ isChatOpen, onChatToggle }: QuickActionsProps) {
+export function QuickActions({}: QuickActionsProps) {
   const { toggleEditMode } = useDashboardEdit();
   const [bugModalOpen, setBugModalOpen] = React.useState(false);
 
@@ -46,22 +43,22 @@ export function QuickActions({ isChatOpen, onChatToggle }: QuickActionsProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button 
-                variant="ghost" 
-                size="sm" 
+            <Button
+                variant="ghost"
+                size="sm"
                 className="gap-2 text-white/90 hover:bg-white/10 dark:text-slate-400 dark:hover:bg-slate-800 h-9 px-3 rounded-xl transition-all hover:scale-105 active:scale-95"
                 onClick={toggleEditMode}
             >
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Personnaliser</span>
             </Button>
-            
+
             <div className="h-6 w-[1px] bg-white/20 dark:bg-slate-600 mx-1" />
 
             <BugReportModal open={bugModalOpen} onOpenChange={setBugModalOpen}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="gap-2 text-white/90 hover:bg-white/10 dark:text-slate-400 dark:hover:bg-slate-800 h-9 px-3 rounded-xl transition-all hover:scale-105 active:scale-95"
               >
                 <Bug className="h-4 w-4 text-red-300 dark:text-red-400" />
@@ -72,19 +69,6 @@ export function QuickActions({ isChatOpen, onChatToggle }: QuickActionsProps) {
             <Button variant="ghost" size="sm" className="gap-2 text-white/90 hover:bg-white/10 dark:text-slate-400 dark:hover:bg-slate-800 h-9 px-3 rounded-xl transition-all hover:scale-105 active:scale-95">
               <Share2 className="h-4 w-4" />
               <span className="hidden sm:inline">Partager</span>
-            </Button>
-
-            <div className="h-6 w-[1px] bg-white/20 dark:bg-slate-600 mx-1" />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`gap-2 h-9 px-3 rounded-xl transition-all hover:scale-105 active:scale-95 ${isChatOpen ? 'bg-white/20 text-white' : 'text-white/90 hover:bg-white/10 dark:text-slate-400 dark:hover:bg-slate-800'}`}
-              onClick={onChatToggle}
-              title="Assistant Zuri"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span className="hidden sm:inline">Zuri</span>
             </Button>
       </div>
     </div>
