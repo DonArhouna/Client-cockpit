@@ -163,7 +163,7 @@ export function DataTable<TData, TValue>({
     const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(() => {
         if (externalConfig?.columnOrder) return externalConfig.columnOrder
         const saved = localStorage.getItem(`${storageKey}_order`)
-        return saved ? JSON.parse(saved) : columns.map((c) => c.id!)
+        return saved ? JSON.parse(saved) : columns.map((c) => (c.id || (c as any).accessorKey) as string)
     })
 
     const [columnAliases, setColumnAliases] = React.useState<Record<string, string>>(() => {
@@ -314,7 +314,8 @@ export function DataTable<TData, TValue>({
                                         strategy={horizontalListSortingStrategy}
                                     >
                                         {headerGroup.headers.map((header) => {
-                                            const originalTitle = (header.column.columnDef as any).header || header.id
+                                            const rawHeader = (header.column.columnDef as any).header
+                                            const originalTitle = typeof rawHeader === 'string' ? rawHeader : header.id
                                             const displayTitle = columnAliases[header.id] || originalTitle
                                             
                                             return (

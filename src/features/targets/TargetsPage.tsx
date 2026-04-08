@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
-import { Plus, MoreHorizontal, Loader2, Target, Search } from 'lucide-react';
+import { Plus, MoreHorizontal, Loader2, Target, Search, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DataTable } from '@/components/shared/DataTable';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import {
@@ -71,10 +69,9 @@ const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 1 + i);
 export function TargetsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-
   const navigate = useNavigate();
-  const [globalSearch, setGlobalSearch] = useState('');
 
+  const [globalSearch, setGlobalSearch] = useState('');
   const [filterYear, setFilterYear] = useState<number | undefined>(currentYear);
   const [filterScenario, setFilterScenario] = useState<string | undefined>(undefined);
 
@@ -82,12 +79,15 @@ export function TargetsPage() {
   const [editTarget, setEditTarget] = useState<TargetType | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TargetType | null>(null);
 
-  const { data: targets, isLoading } = useTargets({
-    year: filterYear,
-    scenario: filterScenario,
-  });
+  const [expandedKpis, setExpandedKpis] = useState<Set<string>>(new Set());
+  const [allExpanded, setAllExpanded] = useState(true);
+
+  const { data: targets, isLoading } = useTargets({ year: filterYear, scenario: filterScenario });
   const { data: kpiDefinitions } = useKpiDefinitions();
-  const kpiNameMap = Object.fromEntries((kpiDefinitions ?? []).map((k) => [k.key, k.name]));
+  const kpiNameMap = useMemo(
+    () => Object.fromEntries((kpiDefinitions ?? []).map((k) => [k.key, k.name])),
+    [kpiDefinitions],
+  );
 
   const filteredTargets = useMemo(() => {
     if (!globalSearch.trim()) return targets ?? [];
@@ -105,6 +105,35 @@ export function TargetsPage() {
     });
   }, [targets, globalSearch, kpiNameMap]);
 
+  // Group by kpiKey, ordered by first appearance
+  const groupedTargets = useMemo(() => {
+    const groups = new Map<string, TargetType[]>();
+    for (const t of filteredTargets) {
+      if (!groups.has(t.kpiKey)) groups.set(t.kpiKey, []);
+      groups.get(t.kpiKey)!.push(t);
+    }
+    return groups;
+  }, [filteredTargets]);
+
+  const kpiKeys = useMemo(() => [...groupedTargets.keys()], [groupedTargets]);
+
+  // Sync expandedKpis when groups change (auto-expand new keys)
+  const isExpanded = (key: string) => allExpanded ? !expandedKpis.has(key) : expandedKpis.has(key);
+
+  const toggleKpi = (key: string) => {
+    setExpandedKpis((prev) => {
+      const next = new Set(prev);
+      if (isExpanded(key)) next.add(key); // mark as "override collapsed"
+      else next.delete(key);              // remove override
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    setAllExpanded((prev) => !prev);
+    setExpandedKpis(new Set()); // reset overrides
+  };
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => targetsApi.delete(id),
     onSuccess: () => {
@@ -120,114 +149,6 @@ export function TargetsPage() {
       });
     },
   });
-
-  const columns: ColumnDef<TargetType>[] = [
-    {
-      accessorKey: 'kpiKey',
-      header: 'KPI',
-      cell: ({ row }) => {
-        const key = row.getValue('kpiKey') as string;
-        const name = kpiNameMap[key];
-        return (
-          <div>
-            <span className="font-medium text-sm">{name ?? key}</span>
-            {name && <code className="block text-xs text-muted-foreground">{key}</code>}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'value',
-      header: 'Valeur cible',
-      cell: ({ row }) => {
-        const target = row.original;
-        const suffix =
-          target.valueType === 'PERCENTAGE' ? ' %'
-          : target.valueType === 'DELTA_PERCENT' ? ' Δ%'
-          : '';
-        return (
-          <span className="font-medium tabular-nums">
-            {Number(row.getValue('value')).toLocaleString('fr-FR')}{suffix}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'valueType',
-      header: 'Type',
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
-          {VALUE_TYPE_LABELS[row.getValue('valueType') as string] ?? row.getValue('valueType')}
-        </span>
-      ),
-    },
-    {
-      id: 'period',
-      header: 'Période',
-      cell: ({ row }) => {
-        const target = row.original;
-        const short = PERIOD_SHORT_LABELS[target.periodType]?.[target.periodIndex - 1] ?? `P${target.periodIndex}`;
-        return (
-          <span className="text-sm">
-            {short} {target.year}
-            <span className="ml-1 text-xs text-muted-foreground">
-              ({PERIOD_TYPE_LABELS[target.periodType] ?? target.periodType})
-            </span>
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'scenario',
-      header: 'Scénario',
-      cell: ({ row }) => {
-        const scenario = row.getValue('scenario') as string;
-        return (
-          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${SCENARIO_COLORS[scenario] ?? ''}`}>
-            {SCENARIO_LABELS[scenario] ?? scenario}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'label',
-      header: 'Libellé',
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.getValue('label') || '—'}</span>
-      ),
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const target = row.original;
-        return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Ouvrir menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setEditTarget(target)}>
-                  Modifier
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => setDeleteTarget(target)}
-                >
-                  Supprimer
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      },
-    },
-  ];
 
   return (
     <div className="px-6 pt-6 space-y-6">
@@ -246,11 +167,11 @@ export function TargetsPage() {
             Objectifs définis
           </CardTitle>
           <CardDescription>
-            {targets?.length ?? 0} objectif(s) — filtrez par année et scénario
+            {filteredTargets.length} objectif(s) — {kpiKeys.length} KPI(s)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filters + Create button */}
+          {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[220px] max-w-sm">
               <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
@@ -292,6 +213,18 @@ export function TargetsPage() {
               </SelectContent>
             </Select>
 
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleAll}
+              className="h-8 px-2 text-muted-foreground hidden sm:flex items-center gap-1"
+              title={allExpanded ? 'Tout replier' : 'Tout déplier'}
+            >
+              {allExpanded
+                ? <><ChevronsDownUp className="h-4 w-4" /> Replier</>
+                : <><ChevronsUpDown className="h-4 w-4" /> Déplier</>}
+            </Button>
+
             <div className="ml-auto">
               <Button onClick={() => setIsCreateOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -300,22 +233,135 @@ export function TargetsPage() {
             </div>
           </div>
 
-          {/* Table */}
+          {/* Grouped table */}
           {isLoading ? (
             <div className="h-[300px] flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : kpiKeys.length === 0 ? (
+            <div className="h-24 flex items-center justify-center text-muted-foreground text-sm">
+              Aucun objectif trouvé.
+            </div>
           ) : (
-            <DataTable tableId="admin-targets" columns={columns} data={filteredTargets} onRowClick={(t) => navigate(`/targets/${t.id}`)} />
+            <div className="rounded-md border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left px-4 py-2 text-[11px] font-bold uppercase text-muted-foreground w-8" />
+                    <th className="text-left px-4 py-2 text-[11px] font-bold uppercase text-muted-foreground">Valeur cible</th>
+                    <th className="text-left px-4 py-2 text-[11px] font-bold uppercase text-muted-foreground">Type</th>
+                    <th className="text-left px-4 py-2 text-[11px] font-bold uppercase text-muted-foreground">Période</th>
+                    <th className="text-left px-4 py-2 text-[11px] font-bold uppercase text-muted-foreground">Scénario</th>
+                    <th className="text-left px-4 py-2 text-[11px] font-bold uppercase text-muted-foreground">Libellé</th>
+                    <th className="w-12" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {kpiKeys.map((kpiKey) => {
+                    const rows = groupedTargets.get(kpiKey)!;
+                    const kpiName = kpiNameMap[kpiKey];
+                    const expanded = isExpanded(kpiKey);
+
+                    return (
+                      <>
+                        {/* KPI group header */}
+                        <tr
+                          key={`group-${kpiKey}`}
+                          className="bg-slate-50 dark:bg-slate-900/60 border-b cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                          onClick={() => toggleKpi(kpiKey)}
+                        >
+                          <td className="px-4 py-2.5">
+                            {expanded
+                              ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          </td>
+                          <td colSpan={5} className="px-4 py-2.5">
+                            <div className="flex items-center gap-3">
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-sm">{kpiName ?? kpiKey}</span>
+                                {kpiName && (
+                                  <code className="text-xs text-muted-foreground">{kpiKey}</code>
+                                )}
+                              </div>
+                              <span className="inline-flex items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium h-5 min-w-5 px-1.5">
+                                {rows.length}
+                              </span>
+                            </div>
+                          </td>
+                          <td />
+                        </tr>
+
+                        {/* Target rows */}
+                        {expanded && rows.map((target) => {
+                          const short = PERIOD_SHORT_LABELS[target.periodType]?.[target.periodIndex - 1] ?? `P${target.periodIndex}`;
+                          const suffix = target.valueType === 'PERCENTAGE' ? ' %'
+                            : target.valueType === 'DELTA_PERCENT' ? ' Δ%' : '';
+
+                          return (
+                            <tr
+                              key={target.id}
+                              className="border-b last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-900/40 cursor-pointer transition-colors group"
+                              onClick={() => navigate(`/targets/${target.id}`)}
+                            >
+                              <td className="px-4 py-2.5 w-8" />
+                              <td className="px-4 py-2.5 font-medium tabular-nums">
+                                {Number(target.value).toLocaleString('fr-FR')}{suffix}
+                              </td>
+                              <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                                {VALUE_TYPE_LABELS[target.valueType] ?? target.valueType}
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <span className="text-sm">{short} {target.year}</span>
+                                <span className="ml-1 text-xs text-muted-foreground">
+                                  ({PERIOD_TYPE_LABELS[target.periodType] ?? target.periodType})
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${SCENARIO_COLORS[target.scenario] ?? ''}`}>
+                                  {SCENARIO_LABELS[target.scenario] ?? target.scenario}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5 text-muted-foreground">
+                                {target.label || '—'}
+                              </td>
+                              <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <span className="sr-only">Ouvrir menu</span>
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem onClick={() => setEditTarget(target)}>
+                                      Modifier
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      onClick={() => setDeleteTarget(target)}
+                                    >
+                                      Supprimer
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Create modal */}
-      <TargetFormModal
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-      />
+      <TargetFormModal open={isCreateOpen} onOpenChange={setIsCreateOpen} />
 
       {/* Edit modal */}
       <TargetFormModal
