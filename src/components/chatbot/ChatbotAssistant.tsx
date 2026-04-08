@@ -1,47 +1,102 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChatWindow } from './ChatWindow';
-import { MessageSquare, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDashboardEdit } from '@/context/DashboardEditContext';
 
 export function ChatbotAssistant() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showLabel, setShowLabel] = useState(false);
+  const { isSidebarOpen } = useDashboardEdit();
+
+  // Affiche le label périodiquement : visible 4s toutes les 12s
+  useEffect(() => {
+    if (isOpen) return;
+
+    // Premier affichage après 3s
+    const initialDelay = setTimeout(() => setShowLabel(true), 3000);
+
+    const interval = setInterval(() => {
+      setShowLabel(true);
+      setTimeout(() => setShowLabel(false), 4000);
+    }, 12000);
+
+    // Cache le label après 4s au premier affichage
+    const firstHide = setTimeout(() => setShowLabel(false), 7000);
+
+    return () => {
+      clearTimeout(initialDelay);
+      clearTimeout(firstHide);
+      clearInterval(interval);
+    };
+  }, [isOpen]);
+
+  if (isSidebarOpen) return null;
 
   return (
     <div className="fixed bottom-24 right-6 z-[100] flex flex-col items-end gap-4">
       {isOpen && (
         <ChatWindow onClose={() => setIsOpen(false)} />
       )}
-      
-      <Button
-        size="icon"
-        className={cn(
-          "h-14 w-14 rounded-2xl shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 group overflow-hidden",
-          isOpen 
-            ? "bg-slate-900 border border-slate-700 text-white rotate-90" 
-            : "bg-blue-600 hover:bg-blue-700 text-white"
-        )}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div className="relative h-full w-full flex items-center justify-center">
-            {/* Animated background glow */}
-            <div className="absolute inset-0 bg-white/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            
-            {isOpen ? (
-              <Sparkles className="h-6 w-6 animate-pulse" />
-            ) : (
-              <MessageSquare className="h-6 w-6" />
+
+      <div className="relative flex items-center">
+        {/* Label périodique */}
+        {!isOpen && (
+          <div
+            className={cn(
+              'absolute right-16 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg whitespace-nowrap pointer-events-none hidden md:block transition-all duration-500',
+              showLabel ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
             )}
-        </div>
-      </Button>
-      
-      {!isOpen && (
-        <div className="absolute right-16 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl shadow-lg whitespace-nowrap animate-in fade-in slide-in-from-right-3 duration-500 pointer-events-none hidden md:block">
-           <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-             Besoin d'aide ? <span className="text-blue-500">Demandez à Zuri</span>
-           </span>
-        </div>
-      )}
+          >
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              Besoin d'aide ? <span className="text-blue-500">Demandez à Zuri</span>
+            </span>
+          </div>
+        )}
+
+        {/* Chat button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            'relative h-14 w-14 rounded-full shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none',
+            isOpen ? 'scale-95' : ''
+          )}
+          aria-label="Ouvrir l'assistant Zuri"
+        >
+          {/* Fond dégradé bleu */}
+          <span className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 shadow-lg" />
+
+          {/* Halo animé */}
+          {!isOpen && (
+            <span className="absolute inset-0 rounded-full animate-ping bg-blue-400/30 pointer-events-none" />
+          )}
+
+          {/* Visage robot SVG */}
+          <span className="relative z-10 flex items-center justify-center w-full h-full">
+            {isOpen ? (
+              <Sparkles className="h-6 w-6 text-white animate-pulse" />
+            ) : (
+              <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-10 w-10">
+                {/* Casque / corps robot */}
+                <rect x="12" y="18" width="32" height="24" rx="8" fill="white" fillOpacity="0.95" />
+                {/* Antenne */}
+                <line x1="28" y1="18" x2="28" y2="11" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                <circle cx="28" cy="9" r="3" fill="white" />
+                {/* Oreilles / boutons latéraux */}
+                <rect x="9" y="26" width="4" height="8" rx="2" fill="white" fillOpacity="0.7" />
+                <rect x="43" y="26" width="4" height="8" rx="2" fill="white" fillOpacity="0.7" />
+                {/* Yeux */}
+                <circle cx="22" cy="29" r="4" fill="#3b82f6" />
+                <circle cx="34" cy="29" r="4" fill="#3b82f6" />
+                <circle cx="23.5" cy="27.5" r="1.2" fill="white" />
+                <circle cx="35.5" cy="27.5" r="1.2" fill="white" />
+                {/* Bouche */}
+                <path d="M22 36 Q28 40 34 36" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" fill="none" />
+              </svg>
+            )}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, Calendar, ChevronDown } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useMyDashboard, useUpdateWidget } from '@/hooks/use-dashboards';
 import { DashboardGrid } from './components/DashboardGrid';
 import { WidgetSidebar } from './components/WidgetSidebar';
+import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { useKpiDefinitions } from '@/hooks/use-api';
 import { PAGE_DEFAULT_WIDGETS } from '@/features/personalization/DefaultLayouts';
 import { cn } from '@/lib/utils';
@@ -12,49 +13,36 @@ import { usePersonalization } from '@/features/personalization/PersonalizationCo
 import { getLastUpdate, forceRefresh } from '@/lib/cache';
 import { useFilters } from '@/context/FilterContext';
 import { useAuth } from '@/features/auth/AuthContext';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { InsightBanner } from '@/components/shared/InsightBanner';
 import { PageInsight } from '@/components/shared/PageInsight';
 import { useKpiData } from '@/hooks/use-kpi-data';
-import { useMemo } from 'react';
 
 // ── Welcome Banner ───────────────────────────────────────────────
-function WelcomeBanner({ lastUpdate, onRefresh, isLoading }: {
-  lastUpdate: string | null;
-  onRefresh: () => void;
-  isLoading: boolean;
-}) {
+function DashboardHeader() {
   const { user } = useAuth();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
   const firstName = user?.firstName ?? '';
+  
+  const today = new Intl.DateTimeFormat('fr-FR', { 
+    weekday: 'long', 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  }).format(new Date());
 
   return (
-    <div className="px-6 pt-6 pb-2 flex items-start justify-between gap-4 flex-shrink-0 animate-fade-up">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-            {greeting}{firstName ? `, ${firstName}` : ''} 👋
-          </span>
+    <div className="px-6 pt-4 pb-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            Tableau de Bord Exécutif
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium transition-all">
+            {greeting}{firstName ? `, ${firstName}` : ''}. Voici le point sur votre activité ce <span className="text-primary font-bold">{today}</span>.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Voici une synthèse de votre tableau de bord exécutif.
-        </p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0 pt-1">
-        <button
-          onClick={onRefresh}
-          className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
-          <span>Mis à jour : {lastUpdate ?? '--:--'}</span>
-        </button>
       </div>
     </div>
   );
@@ -74,6 +62,18 @@ export function DashboardPage() {
   // Widgets unifiés
   const personalizedWidgets = layouts['dashboard'] || [];
   
+  // Gestion de la touche Echap pour quitter le mode édition
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isEditing) {
+        setIsEditing(false);
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isEditing, setIsEditing, setIsSidebarOpen]);
+
   // Peupler par défaut s'il n'y a rien
   useEffect(() => {
     if (!isKpisLoading && kpiDefinitions && personalizedWidgets.length === 0 && !isInitialized) {
@@ -95,7 +95,7 @@ export function DashboardPage() {
 
   const widgets = personalizedWidgets.length > 0 ? personalizedWidgets : (dashboard?.widgets || []);
 
-  const { period, setPeriod, currency, setCurrency } = useFilters();
+  const { currency } = useFilters();
   const { data: caData } = useKpiData('ca');
 
   const dashboardInsight = useMemo(() => {
@@ -150,60 +150,18 @@ export function DashboardPage() {
   };
 
   if (isBackendLoading && widgets.length === 0) {
-    return (
-      <div className="h-[400px] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
     <div className="flex w-full overflow-x-hidden relative bg-slate-50/20 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'pr-80' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'pr-[332px]' : ''}`}>
 
-        {/* ── Welcome banner ────────────────────────────────── */}
-        <WelcomeBanner lastUpdate={lastUpdate} onRefresh={handleRefresh} isLoading={isBackendLoading} />
+        {/* ── Dashboard Header ────────────────────────────────── */}
+        <DashboardHeader />
 
-        {/* Barre d'outils unifiée (Filtres) */}
+        {/* Barre d'outils */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4 px-6 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center justify-between gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm min-w-[160px]">
-                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span>{period === 'current_quarter' ? 'Ce trimestre' : period === 'current_month' ? 'Ce mois' : 'Cette année'}</span>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[160px]">
-                <DropdownMenuItem onClick={() => setPeriod('current_month')}>Ce mois</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setPeriod('current_quarter')}>Ce trimestre</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setPeriod('current_year')}>Cette année</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center justify-between gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm w-[110px]">
-                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                    <span className="text-primary text-xs font-bold">
-                      {currency === 'EUR' ? '€' : currency === 'USD' ? '$' : 'FCFA'}
-                    </span>
-                    <span className="text-xs">{currency}</span>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[110px]">
-                <DropdownMenuItem onClick={() => setCurrency('XOF')}>XOF</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setCurrency('EUR')}>EUR</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setCurrency('USD')}>USD</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
           <div className="flex-1 flex justify-center">
             <KpiSearchBar placeholder="Posez votre question sur le tableau de bord Exécutif" />
           </div>
@@ -213,26 +171,25 @@ export function DashboardPage() {
               <Button
                 variant="default"
                 size="sm"
-                className="gap-2 bg-[#3b66ac] hover:bg-[#2d5089] text-white"
-                onClick={() => setIsEditing(false)}
+                className="gap-2 bg-[#3b66ac] hover:bg-[#2d5089] text-white font-bold h-9 shadow-md"
+                onClick={() => { setIsEditing(false); setIsSidebarOpen(false); }}
               >
                 Terminer
               </Button>
             )}
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2"
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm">
+               <button 
                 onClick={handleRefresh}
-              >
-                <RefreshCw className={cn("h-4 w-4", isBackendLoading && "animate-spin")} />
-              </Button>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Mis à jour: {lastUpdate || '--:--'}
+                className="hover:rotate-180 transition-transform duration-500 p-1"
+               >
+                 <RefreshCw className={cn("h-3.5 w-3.5 text-slate-500", isBackendLoading && "animate-spin")} />
+               </button>
+               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 border-l pl-2 border-slate-200 dark:border-slate-800">
+                Maj: {lastUpdate || '--:--'}
               </span>
             </div>
+
           </div>
         </div>
 
@@ -262,7 +219,7 @@ export function DashboardPage() {
 
       {/* Sidebar de widgets */}
       <div
-        className={`absolute top-0 right-0 bottom-0 h-full z-20 transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-4 top-6 bottom-6 z-50 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0 opacity-100' : 'translate-x-[calc(100%+1.5rem)] opacity-0 pointer-events-none'}`}
       >
         <WidgetSidebar
             onClose={() => setIsSidebarOpen(false)}

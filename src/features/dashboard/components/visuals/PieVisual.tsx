@@ -2,9 +2,10 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recha
 import { useKpiData } from '@/hooks/use-kpi-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFilters } from '@/context/FilterContext';
+import { useTheme } from '@/components/shared/ThemeProvider';
 
-// Palette de couleurs pour les segments du graphique à secteurs
-const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#f97316'];
+// Palette monochrome brand — dégradé du bleu foncé au gris
+const COLORS = ['#3b66ac', '#5a85cb', '#7aa4ea', '#94a3b8', '#cbd5e1', '#1e3a6e', '#2d4f8a', '#4970b0'];
 
 interface PieVisualProps {
     kpiKey: string;
@@ -13,8 +14,11 @@ interface PieVisualProps {
 
 export function PieVisual({ kpiKey, isCompact }: PieVisualProps) {
     const { currency } = useFilters();
+    const { theme } = useTheme();
     const { data: kpiData, isLoading } = useKpiData(kpiKey);
     const currencySymbol = currency === 'XOF' ? 'F' : currency === 'EUR' ? '€' : '$';
+
+    const isDark = theme === 'dark';
 
     if (isLoading) {
         return (
@@ -48,7 +52,13 @@ export function PieVisual({ kpiKey, isCompact }: PieVisualProps) {
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                            contentStyle={{ 
+                                backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                                borderRadius: '8px', 
+                                border: isDark ? '1px solid #1e293b' : 'none'
+                            }}
+                        />
                     </PieChart>
                 </ResponsiveContainer>
             </div>
@@ -77,12 +87,18 @@ export function PieVisual({ kpiKey, isCompact }: PieVisualProps) {
                             </Pie>
                             <Tooltip
                                 formatter={(value: number) => [`${value.toLocaleString()} ${currencySymbol}`, '']}
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                contentStyle={{ 
+                                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                                    borderRadius: '8px', 
+                                    border: isDark ? '1px solid #1e293b' : 'none', 
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                                }}
+                                itemStyle={{ color: isDark ? '#f1f5f9' : '#0f172a' }}
                             />
                             <Legend
                                 iconType="circle"
                                 iconSize={8}
-                                formatter={(value) => <span className="text-xs text-slate-600">{value}</span>}
+                                formatter={(value) => <span className="text-xs text-slate-600 dark:text-slate-400">{value}</span>}
                             />
                         </PieChart>
                     </ResponsiveContainer>
@@ -93,11 +109,11 @@ export function PieVisual({ kpiKey, isCompact }: PieVisualProps) {
                         <div key={index} className="flex justify-between items-center text-xs">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                                <span className="text-slate-600 truncate max-w-[80px]">{item.name}</span>
+                                <span className="text-slate-600 dark:text-slate-400 truncate max-w-[80px]">{item.name}</span>
                             </div>
                             <div className="flex flex-col items-end">
-                                <span className="font-semibold text-slate-800">{item.value.toLocaleString()} {currencySymbol}</span>
-                                <span className="text-[10px] text-slate-400">
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">{item.value.toLocaleString()} {currencySymbol}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
                                     {total > 0 ? Math.round((item.value / total) * 100) : 0}%
                                 </span>
                             </div>
@@ -106,9 +122,9 @@ export function PieVisual({ kpiKey, isCompact }: PieVisualProps) {
                 </div>
             </div>
 
-            <div className="pt-3 border-t mt-3 text-xs text-slate-500 flex justify-between">
+            <div className="pt-3 border-t dark:border-slate-800 mt-3 text-xs text-slate-500 flex justify-between">
                 <span>Total</span>
-                <span className="font-semibold text-slate-800">{total.toLocaleString()} {currencySymbol}</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{total.toLocaleString()} {currencySymbol}</span>
             </div>
         </div>
     );

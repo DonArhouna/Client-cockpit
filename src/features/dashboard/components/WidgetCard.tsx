@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Trash2, GripHorizontal, Sparkles } from 'lucide-react';
+import { MoreVertical, Trash2, GripHorizontal, Sparkles, Filter } from 'lucide-react';
 import { Widget } from '@/types';
 import {
     DropdownMenu,
@@ -97,45 +97,46 @@ export function WidgetCard({ widget, isEditing, onRemove, h, className, style }:
                     <Trash2 className="h-3.5 w-3.5" />
                 </Button>
             ) : (
-                !isKpi && (
-                    <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5">
-                        {/* Live indicator */}
-                        <span className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse-dot" />
-                            <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wide">Live</span>
-                        </span>
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-border/70">
-                                <DropdownMenuItem className="text-[13px]">
-                                    {t('dashboard.export', 'Exporter les données')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-[13px]">
-                                    {t('dashboard.analyze', 'Analyse détaillée')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                )
+                <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 text-right justify-end">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                                <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-border/70">
+                            <DropdownMenuItem className="text-[13px]">
+                                {t('dashboard.export', 'Exporter les données')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-[13px]">
+                                {t('dashboard.analyze', 'Analyse détaillée')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             )}
 
-            {/* ── Chart / graph header (non-KPI widgets) ── */}
-            {!isKpi && (
+            {/* ── Chart / graph header (Widgets showing title) ── */}
+            {widget.vizType !== 'card' && (
                 <div className={cn(
                     'flex items-center justify-between px-5 pt-4 pb-2 flex-none',
                     isEditing && 'pt-8'
                 )}>
-                    <div className="flex items-center gap-2">
+                    {/* Left side: Title */}
+                    <div className="flex items-center gap-2 overflow-hidden">
                         {/* Colored accent bar */}
-                        <div className="w-1 h-5 rounded-full bg-primary/70" />
-                        <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
+                        <div className="w-1 h-5 rounded-full bg-primary/70 shrink-0" />
+                        <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">
                             {widget.name}
                         </h3>
+                    </div>
+
+                    {/* Right side: Quick Action (Filter) */}
+                    <div className="flex items-center gap-2 mr-6">
+                        <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-[11px] font-bold">
+                            <span className="opacity-50"><Filter className="h-3.5 w-3.5" /></span>
+                            Filtrer
+                        </Button>
                     </div>
                 </div>
             )}
@@ -143,14 +144,14 @@ export function WidgetCard({ widget, isEditing, onRemove, h, className, style }:
             {/* ── Content ── */}
             <div className={cn(
                 'flex-1 overflow-hidden',
-                isKpi ? (isEditing ? 'p-5 pt-8' : 'p-5') : 'px-5 pb-5 pt-1'
+                isKpi ? (isEditing ? 'p-5 pt-8' : (isCompact ? 'p-4 pb-2' : 'p-5')) : 'px-5 pb-5 pt-1'
             )}>
                 {renderContent()}
             </div>
 
             {/* ── Bottom: Zuri button for KPI cards only ──────── */}
-            {isKpi && !isCompact && (
-                <div className="px-5 pb-4 flex justify-end">
+            {isKpi && (
+                <div className={cn("px-5 pb-4 flex justify-end", isCompact && "px-4 pb-3")}>
                     <button className={cn(
                         'flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all',
                         'bg-[#3b66ac]/10 hover:bg-[#3b66ac]/20 text-[#3b66ac] dark:bg-blue-500/10 dark:hover:bg-blue-500/20 dark:text-blue-400'

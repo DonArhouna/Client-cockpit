@@ -31,7 +31,6 @@ import { usePersonalization } from '@/features/personalization/PersonalizationCo
 import { useKpiDefinitions, useNLQQuery, useJobStatus } from '@/hooks/use-api';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { cn } from '@/lib/utils';
-import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { PageInsight } from '@/components/shared/PageInsight';
 
 const PAGE_ID = 'smart-queries';
@@ -125,24 +124,22 @@ export function IntelligentQueriesPage() {
             <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isEditing ? 'mr-80' : ''}`}>
                 <div className="flex flex-col h-full overflow-y-auto">
                     {/* Header */}
-                    <div className="px-6 pt-6 pb-4 space-y-4">
-                        <Breadcrumbs currentPage="Requêtes Intelligentes" PageIcon={MessageSquare} />
-
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                                    Interface de Requêtes Intelligentes
+                    <div className="px-6 pt-6 pb-4">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div className="space-y-1">
+                                <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                                    Requêtes Intelligentes
                                 </h1>
-                                <p className="text-sm text-muted-foreground mt-1">
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                                     Posez vos questions en langage naturel et obtenez des visualisations instantanées
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+                                <Button variant="ghost" size="sm" className="gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 font-bold">
                                     <History className="h-4 w-4" />
                                     Historique
                                 </Button>
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
                                     <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
                                     Données synchronisées
                                 </div>

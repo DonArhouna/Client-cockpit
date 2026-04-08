@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 
 /**
  * Interface pour les filtres globaux du cockpit.
@@ -23,8 +23,13 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [currency, setCurrency] = useState('XOF');
     const [scope, setScope] = useState('all');
 
+    const value = useMemo(
+        () => ({ period, setPeriod, currency, setCurrency, scope, setScope }),
+        [period, currency, scope]
+    );
+
     return (
-        <FilterContext.Provider value={{ period, setPeriod, currency, setCurrency, scope, setScope }}>
+        <FilterContext.Provider value={value}>
             {children}
         </FilterContext.Provider>
     );

@@ -1,18 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Plus, Layout, Calendar, ChevronDown, X } from 'lucide-react';
+import { Plus, Layout, X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 import { DashboardGrid } from './components/DashboardGrid';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { cn } from '@/lib/utils';
-import { useFilters } from '@/context/FilterContext';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface GenericDashboardPageProps {
     pageId: string;
@@ -27,7 +20,6 @@ interface GenericDashboardPageProps {
 export function GenericDashboardPage({ pageId, titleKey, subtitle }: GenericDashboardPageProps) {
     const { t } = useTranslation();
     const { layouts, removeWidgetFromPage, updateLayoutForPage } = usePersonalization();
-    const { period, setPeriod, currency, setCurrency } = useFilters();
     const { isEditing, setIsEditing, isSidebarOpen } = useDashboardEdit();
 
     const widgets = layouts[pageId] || [];
@@ -50,45 +42,6 @@ export function GenericDashboardPage({ pageId, titleKey, subtitle }: GenericDash
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
-                    {/* Filtres Globaux */}
-                    <div className="flex items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex items-center justify-between gap-2 px-3 py-1.5 border rounded-md text-sm font-medium bg-white hover:bg-slate-50 transition-colors cursor-pointer shadow-sm min-w-[160px]">
-                                    <div className="flex items-center gap-2 text-slate-700">
-                                        <Calendar className="h-4 w-4 text-primary/70" />
-                                        <span>{period === 'current_quarter' ? 'Trimestre actuel' : period === 'current_month' ? 'Mois actuel' : 'Année en cours'}</span>
-                                    </div>
-                                    <ChevronDown className="h-4 w-4 text-slate-400" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[180px]">
-                                <DropdownMenuItem onClick={() => setPeriod('current_month')}>Mois actuel</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setPeriod('current_quarter')}>Trimestre actuel</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setPeriod('current_year')}>Année en cours</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex items-center justify-between gap-2 px-3 py-1.5 border rounded-md text-sm font-medium bg-white hover:bg-slate-50 transition-colors cursor-pointer shadow-sm w-[90px]">
-                                    <div className="flex items-center gap-2 text-slate-700">
-                                        <span className="text-primary/70 text-[10px] font-black uppercase tracking-tighter">
-                                            {currency === 'EUR' ? '€' : currency === 'USD' ? '$' : 'F'}
-                                        </span>
-                                        <span>{currency}</span>
-                                    </div>
-                                    <ChevronDown className="h-4 w-4 text-slate-400" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[100px]">
-                                <DropdownMenuItem onClick={() => setCurrency('XOF')}>XOF (F CFA)</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setCurrency('EUR')}>EUR (€)</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setCurrency('USD')}>USD ($)</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-
                     {isEditing && (
                         <>
                             <div className="h-8 w-[1px] bg-slate-200 mx-2 hidden sm:block"></div>

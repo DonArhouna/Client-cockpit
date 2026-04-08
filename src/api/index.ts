@@ -40,6 +40,9 @@ export const authApi = {
   updateMe: (data: { firstName?: string; lastName?: string }) =>
     api.patch<User>('/users/me', data),
 
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.post('/auth/change-password', data),
+
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
 

@@ -1,22 +1,7 @@
-import { Filter, RotateCcw, ChevronDown, Calendar } from 'lucide-react';
+import { Filter, RotateCcw, ChevronDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useFilters } from '@/context/FilterContext';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-const periodLabels: Record<string, string> = {
-    current_month: 'Ce mois',
-    current_quarter: 'Ce trimestre',
-    current_year: 'Cette année'
-};
 
 export function OperationalFilters() {
-    const { period, setPeriod } = useFilters();
-
     return (
         <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-visible bg-white dark:bg-slate-900 transition-colors">
             <CardContent className="p-6">
@@ -38,27 +23,7 @@ export function OperationalFilters() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-left block">Période</label>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button className="flex items-center justify-between w-full px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all shadow-sm group">
-                                        <div className="flex items-center gap-2 truncate">
-                                            <Calendar className="h-3.5 w-3.5 text-primary/70 group-hover:text-primary transition-colors" />
-                                            <span className="truncate">{periodLabels[period] || period}</span>
-                                        </div>
-                                        <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500 ml-2 flex-shrink-0" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start" className="w-[200px]">
-                                    <DropdownMenuItem onClick={() => setPeriod('current_month')}>Ce mois</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setPeriod('current_quarter')}>Ce trimestre</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setPeriod('current_year')}>Cette année</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <FilterSelect label="Catégorie d'achat" value="Toutes les catégories" />
                         <FilterSelect label="Fournisseur" value="Tous les fournisseurs" />
                         <FilterSelect label="Site" value="Tous les sites" />

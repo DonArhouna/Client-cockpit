@@ -1,7 +1,6 @@
-import { DollarSign, Download, Settings2, RefreshCw } from 'lucide-react';
+import { Download, Settings2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { exportToCsv } from '@/lib/export';
 
 interface TreasuryHeaderProps {
@@ -20,8 +19,7 @@ export function TreasuryHeader({ isEditing, onToggleEdit }: TreasuryHeaderProps)
     };
 
     return (
-        <div className="flex flex-col gap-6">
-            <Breadcrumbs currentPage="Finance & Trésorerie" PageIcon={DollarSign} />
+        <div className="flex flex-col gap-0">
 
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-1">
