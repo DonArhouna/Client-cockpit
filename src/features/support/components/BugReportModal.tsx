@@ -396,7 +396,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                         <FormControl>
                           <Textarea 
                             placeholder="Copiez les erreurs techniques ici..."
-                            className="min-h-[60px] font-mono text-[10px] rounded-xl border-slate-200 dark:border-slate-800 bg-slate-950 text-red-400"
+                            className="min-h-[60px] font-mono text-[10px] rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-red-600 dark:text-red-400"
                             {...field}
                           />
                         </FormControl>
