@@ -9,7 +9,7 @@ export const supportApi = {
   
   uploadAttachment: async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', file, file.name);
     const response = await api.post<{ url: string }>('/v1/bugs/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

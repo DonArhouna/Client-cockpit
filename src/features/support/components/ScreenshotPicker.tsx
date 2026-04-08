@@ -75,16 +75,15 @@ export function ScreenshotPicker({ onCapture, onCancel }: ScreenshotPickerProps)
     try {
       const canvas = await html2canvas(document.body, {
         useCORS: true,
-        allowTaint: true,
         scale: 1,
         width: w,
         height: h,
         x: x + window.scrollX,
         y: y + window.scrollY,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
+        scrollX: 0,
+        scrollY: 0,
+        backgroundColor: null,
+        logging: false,
       });
 
       canvas.toBlob((blob) => {
@@ -111,6 +110,7 @@ export function ScreenshotPicker({ onCapture, onCancel }: ScreenshotPickerProps)
 
   return ReactDOM.createPortal(
     <div
+      data-html2canvas-ignore="true"
       style={{
         position: 'fixed',
         inset: 0,
