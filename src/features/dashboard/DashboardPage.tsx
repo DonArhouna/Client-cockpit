@@ -96,10 +96,17 @@ export function DashboardPage() {
   const widgets = personalizedWidgets.length > 0 ? personalizedWidgets : (dashboard?.widgets || []);
 
   const { currency } = useFilters();
-  const { data: caData } = useKpiData('ca');
+
+  // Trouve la clé CA depuis les widgets chargés (f01_ca_ht, f02_ca_ttc, etc.)
+  const caKpiKey = useMemo(() => {
+    const caWidget = widgets.find(w => w.kpiKey && /ca/.test(w.kpiKey));
+    return caWidget?.kpiKey ?? null;
+  }, [widgets]);
+
+  const { data: caData } = useKpiData(caKpiKey);
 
   const dashboardInsight = useMemo(() => {
-    if (!caData) return null;
+    if (!caData || !caData.current) return null;
     const formatter = new Intl.NumberFormat('fr-FR', { 
       style: 'currency', 
       currency: currency, 

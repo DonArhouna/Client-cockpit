@@ -25,7 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { targetsApi } from '@/api';
@@ -246,7 +247,7 @@ export function TargetFormModal({ open, onOpenChange, target }: Props) {
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[480px] p-0" align="start">
+                      <PopoverPrimitive.Content className="z-50 w-[480px] p-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none" align="start" sideOffset={4}>
                         <div className="p-2 border-b">
                           <Input
                             placeholder="Rechercher un KPI..."
@@ -281,7 +282,7 @@ export function TargetFormModal({ open, onOpenChange, target }: Props) {
                             ))
                           )}
                         </div>
-                      </PopoverContent>
+                      </PopoverPrimitive.Content>
                     </Popover>
                     <FormMessage />
                   </FormItem>
