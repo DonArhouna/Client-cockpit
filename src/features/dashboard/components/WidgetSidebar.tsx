@@ -81,6 +81,23 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
         })).filter(cat => cat.items.length > 0);
     }, [categories, searchQuery]);
 
+    const filteredTemplates = useMemo(() => {
+        const base = (widgetTemplates || []).filter(tpl => tpl.isActive);
+        if (!searchQuery) return base;
+        return base.filter(tpl => 
+            tpl.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [widgetTemplates, searchQuery]);
+
+    const filteredPacks = useMemo(() => {
+        const base = (kpiPacks || []).filter(pack => pack.isActive);
+        if (!searchQuery) return base;
+        return base.filter(pack => 
+            pack.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            pack.label?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [kpiPacks, searchQuery]);
+
     // ── Étape 2 : sélection KPI pour un template ──────────────────
     if (pendingTemplate) {
         const VIZ_COMPAT: Record<string, string[]> = {
@@ -217,12 +234,13 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
             <div className="flex-1 overflow-y-auto px-4 pt-2 pb-6 space-y-6 no-scrollbar">
 
                 {/* Modèles de widgets */}
+                {filteredTemplates.length > 0 && (
                 <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-1">Modèles</p>
+                    {!searchQuery && <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-1">Modèles</p>}
                     {isLoadingTemplates ? (
                         <Skeleton className="h-10 w-full rounded-xl" />
                     ) : (
-                        widgetTemplates?.filter(tpl => tpl.isActive).map((tpl) => (
+                        filteredTemplates.map((tpl) => (
                             <div
                                 key={tpl.id}
                                 className={cn(
@@ -240,16 +258,16 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
                         ))
                     )}
                 </div>
+                )}
 
                 {/* Packs KPI */}
+                {filteredPacks.length > 0 && (
                 <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-1">Packs KPI</p>
+                    {!searchQuery && <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-1">Packs KPI</p>}
                     {isLoadingPacks ? (
                         <Skeleton className="h-10 w-full rounded-xl" />
-                    ) : kpiPacks?.filter(pack => pack.isActive).length === 0 ? (
-                        <p className="text-xs text-slate-400 px-1">Aucun pack disponible</p>
                     ) : (
-                        kpiPacks?.filter(pack => pack.isActive).map((pack) => (
+                        filteredPacks.map((pack) => (
                             <div
                                 key={pack.id}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/5 transition-all cursor-pointer group"
@@ -281,10 +299,11 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
                         ))
                     )}
                 </div>
+                )}
 
                 {/* Indicateurs par catégorie */}
                 <div className="space-y-4">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-1">Indicateurs Sage 100</p>
+                    {!searchQuery && <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-1">Indicateurs Sage 100</p>}
 
                     {isLoading ? (
                         <div className="space-y-3">
@@ -301,7 +320,7 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
                     ) : (
                         filteredCategories.map((category) => (
                             <div key={category.name} className="space-y-1">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 mb-2">{category.name}</p>
+                                {!searchQuery && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 mb-2">{category.name}</p>}
                                 {category.items.map((item) => (
                                     <div
                                         key={item.id}
