@@ -49,13 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const response = await authApi.me();
+        // Keep isLoading=true while fetching onboarding so the guard waits
         setState({
           user: response.data,
           accessToken: token,
-          isAuthenticated: true,
-          isLoading: false,
+          isAuthenticated: false,
+          isLoading: true,
         });
         await fetchOnboardingStatus();
+        // Both auth + onboarding are now settled — release the guard
+        setState(prev => ({ ...prev, isAuthenticated: true, isLoading: false }));
       } catch {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
@@ -73,13 +76,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authApi.login(credentials);
-    const { accessToken, refreshToken, user } = response.data;
+    const { accessToken, refreshToken } = response.data;
 
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
 
-    setState({ user, accessToken, isAuthenticated: true, isLoading: false });
+    // The login response only returns tokens — fetch the full user profile
+    // so the guard has organizationId and userRoles before evaluating
+    const meResponse = await authApi.me();
+
+    // Keep isAuthenticated=false while onboarding loads so the guard waits
+    setState({ user: meResponse.data, accessToken, isAuthenticated: false, isLoading: true });
     await fetchOnboardingStatus();
+    // Both auth + onboarding settled — release the guard
+    setState(prev => ({ ...prev, isAuthenticated: true, isLoading: false }));
   };
 
   // Used after registration — tokens already in hand, no second API call needed
@@ -87,8 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
 
-    setState({ user, accessToken, isAuthenticated: true, isLoading: false });
+    setState({ user, accessToken, isAuthenticated: false, isLoading: true });
     await fetchOnboardingStatus();
+    setState(prev => ({ ...prev, isAuthenticated: true, isLoading: false }));
   };
 
   const logout = async () => {

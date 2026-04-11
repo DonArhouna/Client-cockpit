@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import {
-  Key, Copy, Check, Zap, Loader2, RefreshCw, Wifi, WifiOff, ChevronRight,
+  Key, Copy, Check, Zap, Loader2, RefreshCw, Wifi, WifiOff,
 } from 'lucide-react';
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -179,11 +179,11 @@ export function AgentSetupPanel({ onAgentLinked }: AgentSetupPanelProps) {
               </div>
 
               {/* Instructions */}
-              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 space-y-2">
-                <p className="text-[11px] font-semibold text-blue-800">Instructions d'installation</p>
-                <ol className="text-[11px] text-blue-700 space-y-1 list-decimal list-inside">
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-3 space-y-2">
+                <p className="text-[11px] font-semibold text-blue-800 dark:text-blue-300">Instructions d'installation</p>
+                <ol className="text-[11px] text-blue-700 dark:text-blue-400 space-y-1 list-decimal list-inside">
                   <li>Téléchargez l'agent Cockpit sur votre serveur Sage</li>
-                  <li>Copiez le token ci-dessus dans le fichier <code className="bg-blue-100 px-1 rounded">.env</code> de l'agent</li>
+                  <li>Copiez le token ci-dessus dans le fichier <code className="bg-blue-100 dark:bg-blue-900/60 px-1 rounded">.env</code> de l'agent</li>
                   <li>Démarrez l'agent — il se connecte automatiquement</li>
                 </ol>
               </div>
@@ -210,9 +210,9 @@ export function AgentSetupPanel({ onAgentLinked }: AgentSetupPanelProps) {
       {activeToken && (
         <div className={cn(
           'flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium border transition-all duration-500',
-          agentStatus === 'online' && 'bg-emerald-50 border-emerald-200 text-emerald-700',
-          agentStatus === 'pending' && 'bg-amber-50 border-amber-200 text-amber-700',
-          agentStatus === 'error' || agentStatus === 'offline' ? 'bg-red-50 border-red-200 text-red-700' : '',
+          agentStatus === 'online' && 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400',
+          agentStatus === 'pending' && 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400',
+          agentStatus === 'error' || agentStatus === 'offline' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400' : '',
           agentStatus === 'idle' && 'bg-muted border-border text-muted-foreground',
         )}>
           {agentStatus === 'online' && <><Wifi className="w-3.5 h-3.5" /> Agent en ligne</>}
@@ -226,9 +226,9 @@ export function AgentSetupPanel({ onAgentLinked }: AgentSetupPanelProps) {
       {testResult && (
         <div className={cn(
           'rounded-lg px-3 py-2 text-[11px] border',
-          testResult.status === 'OK' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
-          testResult.status === 'WARNING' ? 'bg-amber-50 border-amber-200 text-amber-700' :
-          'bg-red-50 border-red-200 text-red-700',
+          testResult.status === 'OK' ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400' :
+          testResult.status === 'WARNING' ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400' :
+          'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400',
         )}>
           {testResult.message}
         </div>
@@ -273,14 +273,6 @@ export function AgentSetupPanel({ onAgentLinked }: AgentSetupPanelProps) {
         </div>
       )}
 
-      {/* Skip link */}
-      <button
-        type="button"
-        onClick={onAgentLinked}
-        className="text-xs text-muted-foreground hover:text-foreground transition-colors text-center underline-offset-2 hover:underline"
-      >
-        Configurer l'agent plus tard <ChevronRight className="w-3 h-3 inline" />
-      </button>
     </div>
   );
 }

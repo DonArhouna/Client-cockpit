@@ -1,5 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './features/auth/AuthContext';
 import { MainLayout } from './components/layout/MainLayout';
 import { LoginPage } from './features/auth/LoginPage';
@@ -59,26 +58,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
  */
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { user, onboardingStatus, onboardingLoading, isLoading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isLoading || onboardingLoading) return;
-
-    // Check if user is a SuperAdmin
-    const isSuperAdmin = user?.userRoles?.some(ur => ur.role.name === 'superadmin');
-
-    // Superadmins bypass onboarding guard
-    if (isSuperAdmin) return;
-
-    // Others with no org (shouldn't happen for regular users) also skip
-    if (!user?.organizationId) return;
-
-    if (onboardingStatus && !onboardingStatus.isComplete) {
-      navigate('/onboarding', { replace: true });
-    }
-  }, [onboardingStatus, onboardingLoading, isLoading, user, navigate]);
 
   if (isLoading || onboardingLoading) return <LoadingSpinner fullScreen />;
+
+  const isSuperAdmin = user?.userRoles?.some(ur => ur.role.name === 'superadmin');
+
+  // Superadmins et users sans org (cas admin) passent directement
+  if (isSuperAdmin || !user?.organizationId) return <>{children}</>;
+
+  // Onboarding non terminé ou statut inconnu → redirection
+  if (!onboardingStatus || !onboardingStatus.isComplete) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return <>{children}</>;
 }

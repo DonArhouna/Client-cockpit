@@ -51,10 +51,10 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
 };
 
 const PLAN_COLORS: Record<string, string> = {
-  startup: 'border-slate-300 bg-slate-50',
+  startup: 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40',
   pme: 'border-primary/60 bg-primary/5',
-  business: 'border-violet-300 bg-violet-50',
-  enterprise: 'border-amber-300 bg-amber-50',
+  business: 'border-violet-300 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30',
+  enterprise: 'border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30',
 };
 
 const PLAN_RECOMMENDED = 'pme';

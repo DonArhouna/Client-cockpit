@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { onboardingApi } from '@/api';
 import { useAuth } from '../auth/AuthContext';
@@ -96,16 +96,17 @@ export function OnboardingPage() {
   const status = data?.status ?? authOnboardingStatus;
   const organization = data?.organization ?? null;
 
+  // Onboarding complet sans retour de paiement → dashboard
+  if (status?.isComplete && !paymentSuccess) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   // Determine which step to show
   let initialStep = status?.currentStep ?? 1;
 
   // Retour Flutterwave avec status=successful → afficher le succès
   if (paymentSuccess) {
     initialStep = 7; // StepSuccess
-  }
-  // Onboarding complet sans retour de paiement → reprendre au paiement (step 6)
-  else if (status?.isComplete) {
-    initialStep = 6;
   }
 
   return (

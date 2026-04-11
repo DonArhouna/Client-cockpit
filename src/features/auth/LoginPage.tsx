@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate, Link } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 
 export function LoginPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   
   const [email, setEmail] = useState('');
@@ -38,7 +37,8 @@ export function LoginPage() {
 
     try {
       await login({ email, password });
-      navigate('/dashboard');
+      // Navigation is handled by the LoginPage's isAuthenticated redirect below
+      // (onboarding status is already known at this point, so the guard evaluates correctly)
     } catch (err: unknown) {
       const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(errorMessage || t('auth.invalidCredentials'));

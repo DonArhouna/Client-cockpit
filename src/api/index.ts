@@ -388,11 +388,17 @@ export const onboardingApi = {
   step2: (data: { name?: string; sector?: string; size?: string; country?: string }) =>
     api.post('/onboarding/step2', data),
 
-  step3: (data: { sageType: string; sageMode: string; sageHost?: string; sagePort?: number }) =>
-    api.post('/onboarding/step3', data),
+  step3: () =>
+    api.post('/onboarding/step3'),
+
+  getAgentReleases: () =>
+    api.get<{ platform: string; arch: string; version: string; fileName: string; fileUrl: string; checksum: string | null }[]>('/onboarding/agent-releases'),
 
   linkAgent: (agentToken: string) =>
     api.post('/onboarding/agent-link', { agentToken }),
+
+  skipAgentConfig: () =>
+    api.post('/onboarding/agent-link', { skipLater: true }),
 
   getProfiles: () =>
     api.get<{ name: string; label: string; description: string }[]>('/onboarding/profiles'),

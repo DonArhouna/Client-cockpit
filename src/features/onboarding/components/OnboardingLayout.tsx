@@ -2,7 +2,9 @@ import { ReactNode } from 'react';
 import { StepIndicator } from './StepIndicator';
 import { BiPreviewPanel } from './BiPreviewPanel';
 import { useOnboarding } from '../OnboardingContext';
-import { BarChart3 } from 'lucide-react';
+import { useAuth } from '@/features/auth/AuthContext';
+import { BarChart3, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface OnboardingLayoutProps {
   children: ReactNode;
@@ -10,6 +12,7 @@ interface OnboardingLayoutProps {
 
 export function OnboardingLayout({ children }: OnboardingLayoutProps) {
   const { currentStep, onboardingStatus } = useOnboarding();
+  const { logout } = useAuth();
   // Sur la page de succès (step 7), tous les steps sont forcément complétés
   // indépendamment du webhook Flutterwave (qui peut arriver après la redirection)
   const completedSteps = currentStep === 7
@@ -22,11 +25,22 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
       <div className="w-full lg:w-[42%] flex flex-col min-h-screen">
         {/* Logo */}
         <header className="flex-shrink-0 px-8 py-6 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md">
-              <BarChart3 className="w-4.5 h-4.5 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md">
+                <BarChart3 className="w-4.5 h-4.5 text-white" />
+              </div>
+              <span className="text-lg font-bold tracking-tight">Cockpit</span>
             </div>
-            <span className="text-lg font-bold tracking-tight">Cockpit</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={logout}
+              className="text-muted-foreground hover:text-foreground gap-1.5"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="text-xs">Continuer plus tard</span>
+            </Button>
           </div>
         </header>
 

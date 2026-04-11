@@ -20,37 +20,37 @@ const PROFILE_VISUAL: Record<string, {
 }> = {
   daf: {
     icon: Shield,
-    color: 'text-blue-600',
+    color: 'text-blue-600 dark:text-blue-400',
     borderActive: 'border-blue-500',
-    bgActive: 'bg-blue-50',
+    bgActive: 'bg-blue-50 dark:bg-blue-950/40',
     description2: 'Vue 360° · Trésorerie · Marges · Risques',
   },
   dg: {
     icon: Zap,
-    color: 'text-violet-600',
+    color: 'text-violet-600 dark:text-violet-400',
     borderActive: 'border-violet-500',
-    bgActive: 'bg-violet-50',
+    bgActive: 'bg-violet-50 dark:bg-violet-950/40',
     description2: 'Performance globale · KPIs stratégiques',
   },
   controller: {
     icon: BarChart2,
-    color: 'text-amber-600',
+    color: 'text-amber-600 dark:text-amber-400',
     borderActive: 'border-amber-500',
-    bgActive: 'bg-amber-50',
+    bgActive: 'bg-amber-50 dark:bg-amber-950/40',
     description2: 'Budgets · Écarts · Reporting analytique',
   },
   manager: {
     icon: Users,
-    color: 'text-emerald-600',
+    color: 'text-emerald-600 dark:text-emerald-400',
     borderActive: 'border-emerald-500',
-    bgActive: 'bg-emerald-50',
+    bgActive: 'bg-emerald-50 dark:bg-emerald-950/40',
     description2: 'Suivi opérationnel · Objectifs équipe',
   },
   analyst: {
     icon: LineChart,
-    color: 'text-cyan-600',
+    color: 'text-cyan-600 dark:text-cyan-400',
     borderActive: 'border-cyan-500',
-    bgActive: 'bg-cyan-50',
+    bgActive: 'bg-cyan-50 dark:bg-cyan-950/40',
     description2: 'Exploration données · Requêtes intelligentes',
   },
 };
@@ -122,7 +122,7 @@ export function Step4Profiles() {
               icon: BarChart2,
               color: 'text-slate-600',
               borderActive: 'border-slate-500',
-              bgActive: 'bg-slate-50',
+              bgActive: 'bg-slate-50 dark:bg-slate-900/40',
               description2: '',
             };
             const Icon = visual.icon;
