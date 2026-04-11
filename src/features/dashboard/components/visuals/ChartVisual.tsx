@@ -1,7 +1,7 @@
 import {
     ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-    CartesianGrid, Tooltip, Legend, TooltipProps
+    CartesianGrid, Tooltip, Legend
 } from 'recharts';
 import { useFilters } from '@/context/FilterContext';
 import { useKpiData } from '@/hooks/use-kpi-data';
