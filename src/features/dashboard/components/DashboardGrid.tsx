@@ -39,34 +39,14 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
     }, [widgets]);
 
     const onLayoutChange = (layout: Layout) => {
-        setCurrentLayout([...layout]); // Clone to mutable array for state
-
-        // Convert array format to dictionary to send back to parent
-        if (onLayoutChangeAction) {
-            const layoutUpdates: { [widgetId: string]: { x: number, y: number, w: number, h: number } } = {};
-            let hasChanges = false;
-
-            layout.forEach((l) => {
-                const correspondingWidget = widgets.find(w => w.id === l.i);
-                if (correspondingWidget) {
-                    const pos = correspondingWidget.position;
-                    // Check if position actually changed to avoid unnecessary API calls
-                    if (!pos || pos.x !== l.x || pos.y !== l.y || pos.w !== l.w || pos.h !== l.h) {
-                        layoutUpdates[l.i] = { x: l.x, y: l.y, w: l.w, h: l.h };
-                        hasChanges = true;
-                    }
-                }
-            });
-
-            if (hasChanges && !isEditing) {
-                // Only trigger programmatic layout saves when NOT dragging (we'll capture drag stop later)
-                // Wait, actually, react-grid-layout calls onLayoutChange on every mouse move while dragging
-                // We probably only want to call API on drag/resize STOP.
-            }
-        }
+        // We only want to keep the local state updated for the UI, 
+        // but react-grid-layout handles its own internal layout state during drag.
+        // Syncing it back to React state too frequently can cause jitters.
+        setCurrentLayout([...layout]);
     };
 
     const onDragStop = (layout: Layout) => {
+        setCurrentLayout([...layout]);
         if (onLayoutChangeAction) {
             const layoutUpdates: { [widgetId: string]: { x: number, y: number, w: number, h: number } } = {};
             layout.forEach((l) => {
@@ -77,6 +57,7 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
     };
 
     const onResizeStop = (layout: Layout) => {
+        setCurrentLayout([...layout]);
         if (onLayoutChangeAction) {
             const layoutUpdates: { [widgetId: string]: { x: number, y: number, w: number, h: number } } = {};
             layout.forEach((l) => {
@@ -114,32 +95,22 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
                 isDraggable={isEditing}
                 isResizable={isEditing}
                 draggableHandle=".drag-handle"
-                margin={[20, 20]} // Improved spacing
+                margin={[20, 20]}
                 compactType="vertical"
                 useCSSTransforms={true}
                 measureBeforeMount={false}
                 transformScale={1}
             >
-                {widgets.map((widget) => {
-                    // Find the current layout for this widget to keep it synced
-                    const l = currentLayout.find(item => item.i === widget.id);
-                    const dataGrid = l
-                        ? { x: l.x, y: l.y, w: l.w, h: l.h }
-                        : { x: widget.position?.x ?? 0, y: widget.position?.y ?? 0, w: widget.position?.w ?? 4, h: widget.position?.h ?? 3 };
-
-                    return (
-                        <div key={widget.id} data-grid={dataGrid} className="h-full">
-                            <WidgetCard
-                                pageId={pageId}
-                                widget={widget}
-                                isEditing={isEditing}
-                                onRemove={onRemoveWidget}
-                                w={dataGrid.w}
-                                h={dataGrid.h}
-                            />
-                        </div>
-                    );
-                })}
+                {widgets.map((widget) => (
+                    <div key={widget.id} className="h-full group">
+                        <WidgetCard
+                            pageId={pageId}
+                            widget={widget}
+                            isEditing={isEditing}
+                            onRemove={onRemoveWidget}
+                        />
+                    </div>
+                ))}
             </ResponsiveGridLayout>
         </div>
     );

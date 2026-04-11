@@ -109,7 +109,7 @@ export function TableVisual({ pageId, widget, isCompact }: TableVisualProps) {
     const tableConfig = widget.config?.tableSettings as any || {};
 
     return (
-        <div className="w-full h-full overflow-hidden flex flex-col pt-2">
+        <div className="w-full h-full flex flex-col pt-2">
             <DataTable 
                 tableId={widget.id}
                 columns={columns}

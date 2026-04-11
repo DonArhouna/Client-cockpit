@@ -11,12 +11,11 @@ import {
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { KpiVisual } from './visuals/KpiVisual';
-import { RevenueEvolutionVisual } from './visuals/RevenueEvolutionVisual';
+import { TableVisual } from './visuals/TableVisual';
+import { ChartVisual } from './visuals/ChartVisual';
+import { VarianceVisual } from './visuals/VarianceVisual';
 import { ReceivablesVisual } from './visuals/ReceivablesVisual';
 import { TopClientsVisual } from './visuals/TopClientsVisual';
-import { VarianceVisual } from './visuals/VarianceVisual';
-import { TableVisual } from './visuals/TableVisual';
-import { PieVisual } from './visuals/PieVisual';
 
 interface WidgetCardProps {
     pageId: string;
@@ -45,8 +44,17 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, h, className, 
             return <VarianceVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
         }
         if (widget.type === 'graph' || widget.vizType === 'area' || widget.vizType === 'line'
-            || widget.kpiKey?.includes('evolution') || widget.kpiKey?.includes('prevision')) {
-            return <RevenueEvolutionVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
+            || widget.kpiKey?.includes('evolution') || widget.kpiKey?.includes('prevision')
+            || widget.vizType === 'bar' || widget.vizType === 'pie' || widget.vizType === 'donut') {
+            
+            // Standard chart mapping
+            const chartType = (widget.vizType === 'pie' || widget.vizType === 'donut') 
+                ? widget.vizType 
+                : (widget.vizType === 'area' || widget.vizType === 'line' || widget.vizType === 'bar')
+                    ? widget.vizType
+                    : 'area'; // default
+
+            return <ChartVisual kpiKey={widget.kpiKey || ''} vizType={chartType} isCompact={isCompact} />;
         }
         if (widget.kpiKey === 'balance_agee_clients' || widget.kpiKey === 'accounts_receivable_age'
             || (widget.vizType === 'bar' && widget.name.includes('Créances'))) {
@@ -61,12 +69,6 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, h, className, 
                 widget={widget} 
                 isCompact={isCompact} 
             />;
-        }
-        if (widget.vizType === 'pie' || widget.vizType === 'donut') {
-            return <PieVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
-        }
-        if (widget.vizType === 'bar') {
-            return <RevenueEvolutionVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
         }
         return (
             <div className="flex items-center justify-center h-full text-muted-foreground bg-slate-50 dark:bg-slate-800/30 border border-dashed rounded-md m-2 text-[10px] p-2 text-center">

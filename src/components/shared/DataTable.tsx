@@ -235,7 +235,7 @@ export function DataTable<TData, TValue>({
     }
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col h-full space-y-4">
             <div className="flex items-center justify-between px-6 pt-4">
                 <div className="flex flex-1 items-center space-x-2">
                     {searchKey && (
@@ -298,7 +298,7 @@ export function DataTable<TData, TValue>({
                 </div>
             </div>
             
-            <div className={cn("mx-6 rounded-md border overflow-hidden", className)}>
+            <div className={cn("mx-6 rounded-md border flex-1 overflow-auto", className)}>
                 <DndContext
                     collisionDetection={closestCenter}
                     modifiers={[restrictToHorizontalAxis]}
