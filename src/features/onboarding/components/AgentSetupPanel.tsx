@@ -35,7 +35,7 @@ export function AgentSetupPanel({ onAgentLinked }: AgentSetupPanelProps) {
   // ── Generate token ────────────────────────────────────────────────────────
 
   const generateMutation = useMutation({
-    mutationFn: () => agentsApi.generateToken({ name: 'Agent Sage Principal', force: false }),
+    mutationFn: () => agentsApi.generateToken({ name: 'Agent Sage Principal', force: true }),
     onSuccess: (res) => {
       const token = res.data.token ?? res.data.agent?.token;
       if (token) {
