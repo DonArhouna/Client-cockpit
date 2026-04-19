@@ -7,10 +7,8 @@ import {
     auditLogsApi,
     adminApi,
     subscriptionPlansApi,
-    kpiDefinitionsApi,
-    widgetTemplatesApi,
-    kpiPacksApi,
     kpiPacksClientApi,
+    widgetStoreApi,
     nlqApi,
     jobsApi,
     targetsApi,
@@ -200,58 +198,43 @@ export function useSubscriptionPlan(id: string) {
     });
 }
 
-// Hooks du KPI Store
-export function useKpiDefinitions() {
+// ── Widget Store (endpoint client non-admin) ──────────────────────────────────
+// Un seul appel GET /widget-store → { kpiPacks, kpiDefinitions, widgetTemplates }
+// Les hooks individuels utilisent select pour extraire leur partie.
+
+function useWidgetStore() {
     return useQuery({
-        queryKey: ['kpi-definitions'],
+        queryKey: ['widget-store'],
         queryFn: async () => {
-            const cached = getCache<any[]>('kpi-definitions');
-            if (cached) return cached;
-            const resp = await kpiDefinitionsApi.getAll();
-            setCache('kpi-definitions', resp.data);
+            const resp = await widgetStoreApi.getStore();
             return resp.data;
         },
         staleTime: 5 * 60 * 1000,
     });
+}
+
+export function useKpiDefinitions() {
+    const { data, isLoading, error } = useWidgetStore();
+    return { data: data?.kpiDefinitions, isLoading, error };
 }
 
 export function useWidgetTemplates() {
-    return useQuery({
-        queryKey: ['widget-templates'],
-        queryFn: async () => {
-            const cached = getCache<any[]>('widget-templates');
-            if (cached) return cached;
-            const resp = await widgetTemplatesApi.getAll();
-            setCache('widget-templates', resp.data);
-            return resp.data;
-        },
-        staleTime: 5 * 60 * 1000,
-    });
+    const { data, isLoading, error } = useWidgetStore();
+    return { data: data?.widgetTemplates, isLoading, error };
 }
 
 export function useWidgetTemplate(id: string) {
-    return useQuery({
-        queryKey: ['widget-templates', id],
-        queryFn: async () => {
-            const resp = await widgetTemplatesApi.getById(id);
-            return resp.data;
-        },
-        enabled: !!id,
-    });
+    const { data, isLoading, error } = useWidgetStore();
+    return {
+        data: data?.widgetTemplates?.find((t: any) => t.id === id),
+        isLoading,
+        error,
+    };
 }
 
 export function useKpiPacks() {
-    return useQuery({
-        queryKey: ['kpi-packs'],
-        queryFn: async () => {
-            const cached = getCache<any[]>('kpi-packs');
-            if (cached) return cached;
-            const resp = await kpiPacksApi.getAll();
-            setCache('kpi-packs', resp.data);
-            return resp.data;
-        },
-        staleTime: 5 * 60 * 1000,
-    });
+    const { data, isLoading, error } = useWidgetStore();
+    return { data: data?.kpiPacks, isLoading, error };
 }
 
 // Packs KPI destinés aux clients (non-admin, authentifié)

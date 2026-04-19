@@ -256,6 +256,15 @@ export const kpiPacksClientApi = {
     ),
 };
 
+// Widget Store - endpoint client (non-admin) — retourne { kpiPacks, kpiDefinitions, widgetTemplates }
+export const widgetStoreApi = {
+  getStore: (profile?: string) =>
+    api.get<{ kpiPacks: KpiPack[]; kpiDefinitions: KpiDefinition[]; widgetTemplates: WidgetTemplate[] }>(
+      '/widget-store',
+      { params: profile ? { profile } : undefined }
+    ),
+};
+
 // Audit Logs
 export const auditLogsApi = {
   getAll: (params?: {

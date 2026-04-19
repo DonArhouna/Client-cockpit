@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Widget } from '@/types';
-import { dashboardsApi, kpiDefinitionsApi } from '@/api';
+import { dashboardsApi, widgetStoreApi } from '@/api';
 import { useAuth } from '@/features/auth/AuthContext';
 import { PAGE_DEFAULT_WIDGETS } from './DefaultLayouts';
 
@@ -156,8 +156,8 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                 // Population automatique des layouts par défaut pour les pages totalement vides
                 if (apiReady.current) {
                     try {
-                        const kpisResp = await kpiDefinitionsApi.getAll();
-                        const allKpis = kpisResp.data;
+                        const kpisResp = await widgetStoreApi.getStore();
+                        const allKpis = kpisResp.data.kpiDefinitions;
 
                         const pages = [
                             'dashboard', 'finance', 'revenue', 'purchases', 
