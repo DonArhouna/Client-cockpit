@@ -263,6 +263,36 @@ export const widgetStoreApi = {
       '/widget-store',
       { params: profile ? { profile } : undefined }
     ),
+
+  // KPI Definitions
+  createKpiDefinition: (data: Omit<KpiDefinition, 'id' | 'isActive' | 'createdAt'>) =>
+    api.post<KpiDefinition>('/widget-store/kpi-definitions', data),
+
+  updateKpiDefinition: (id: string, data: Partial<Omit<KpiDefinition, 'id' | 'createdAt'>>) =>
+    api.patch<KpiDefinition>(`/widget-store/kpi-definitions/${id}`, data),
+
+  toggleKpiDefinition: (id: string) =>
+    api.delete<KpiDefinition>(`/widget-store/kpi-definitions/${id}`),
+
+  // Widget Templates
+  createWidgetTemplate: (data: Omit<WidgetTemplate, 'id' | 'isActive' | 'createdAt'>) =>
+    api.post<WidgetTemplate>('/widget-store/widget-templates', data),
+
+  updateWidgetTemplate: (id: string, data: Partial<Omit<WidgetTemplate, 'id' | 'createdAt'>>) =>
+    api.patch<WidgetTemplate>(`/widget-store/widget-templates/${id}`, data),
+
+  toggleWidgetTemplate: (id: string) =>
+    api.delete<WidgetTemplate>(`/widget-store/widget-templates/${id}`),
+
+  // KPI Packs
+  createKpiPack: (data: Omit<KpiPack, 'id' | 'isActive' | 'createdAt'>) =>
+    api.post<KpiPack>('/widget-store/kpi-packs', data),
+
+  updateKpiPack: (id: string, data: Partial<Omit<KpiPack, 'id' | 'createdAt'>>) =>
+    api.patch<KpiPack>(`/widget-store/kpi-packs/${id}`, data),
+
+  toggleKpiPack: (id: string) =>
+    api.delete<KpiPack>(`/widget-store/kpi-packs/${id}`),
 };
 
 // Audit Logs

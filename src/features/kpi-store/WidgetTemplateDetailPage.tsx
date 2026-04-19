@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useWidgetTemplate } from '@/hooks/use-api';
-import { widgetTemplatesApi } from '@/api';
+import { widgetStoreApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { EditWidgetTemplateModal } from './EditWidgetTemplateModal';
 
@@ -33,10 +33,9 @@ export function WidgetTemplateDetailPage() {
   const { data: template, isLoading, error } = useWidgetTemplate(id!);
 
   const toggleMutation = useMutation({
-    mutationFn: (templateId: string) => widgetTemplatesApi.toggle(templateId),
+    mutationFn: (templateId: string) => widgetStoreApi.toggleWidgetTemplate(templateId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['widget-templates'] });
-      queryClient.invalidateQueries({ queryKey: ['widget-templates', id] });
+      queryClient.invalidateQueries({ queryKey: ['widget-store'] });
       toast({ title: t('common.success'), description: t('kpiStore.templateToggleSuccess') });
       setIsToggleOpen(false);
     },

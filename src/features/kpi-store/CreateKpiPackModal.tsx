@@ -27,7 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { kpiPacksApi } from '@/api';
+import { widgetStoreApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
@@ -66,9 +66,9 @@ export function CreateKpiPackModal({ open, onOpenChange }: Props) {
   });
 
   const mutation = useMutation({
-    mutationFn: (values: FormValues) => kpiPacksApi.create(values),
+    mutationFn: (values: FormValues) => widgetStoreApi.createKpiPack(values),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kpi-packs'] });
+      queryClient.invalidateQueries({ queryKey: ['widget-store'] });
       toast({ title: t('common.success'), description: t('kpiStore.packCreateSuccess') });
       form.reset();
       onOpenChange(false);

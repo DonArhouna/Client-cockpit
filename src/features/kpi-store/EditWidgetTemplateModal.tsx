@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { widgetTemplatesApi } from '@/api';
+import { widgetStoreApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
@@ -64,13 +64,13 @@ export function EditWidgetTemplateModal({ open, onOpenChange, template }: Props)
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) =>
-      widgetTemplatesApi.update(template!.id, {
+      widgetStoreApi.updateWidgetTemplate(template!.id, {
         name: values.name,
         description: values.description,
         defaultConfig: JSON.parse(values.defaultConfig),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['widget-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['widget-store'] });
       toast({ title: t('common.success'), description: t('kpiStore.templateUpdateSuccess') });
       onOpenChange(false);
     },

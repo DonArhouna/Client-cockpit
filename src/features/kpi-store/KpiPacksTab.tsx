@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { kpiPacksApi } from '@/api';
+import { widgetStoreApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { useKpiPacks } from '@/hooks/use-api';
 import type { KpiPack } from '@/types';
@@ -32,9 +32,9 @@ export function KpiPacksTab() {
   const { data: packs, isLoading } = useKpiPacks();
 
   const toggleMutation = useMutation({
-    mutationFn: (id: string) => kpiPacksApi.toggle(id),
+    mutationFn: (id: string) => widgetStoreApi.toggleKpiPack(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kpi-packs'] });
+      queryClient.invalidateQueries({ queryKey: ['widget-store'] });
       toast({ title: t('common.success'), description: t('kpiStore.packToggleSuccess') });
       setTogglePack(null);
     },

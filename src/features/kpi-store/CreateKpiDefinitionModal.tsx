@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { kpiDefinitionsApi } from '@/api';
+import { widgetStoreApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
@@ -65,9 +65,9 @@ export function CreateKpiDefinitionModal({ open, onOpenChange }: Props) {
   });
 
   const mutation = useMutation({
-    mutationFn: (values: FormValues) => kpiDefinitionsApi.create(values),
+    mutationFn: (values: FormValues) => widgetStoreApi.createKpiDefinition(values),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kpi-definitions'] });
+      queryClient.invalidateQueries({ queryKey: ['widget-store'] });
       toast({ title: t('common.success'), description: t('kpiStore.kpiCreateSuccess') });
       form.reset();
       onOpenChange(false);

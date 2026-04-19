@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { widgetTemplatesApi } from '@/api';
+import { widgetStoreApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
@@ -65,14 +65,14 @@ export function CreateWidgetTemplateModal({ open, onOpenChange }: Props) {
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) =>
-      widgetTemplatesApi.create({
+      widgetStoreApi.createWidgetTemplate({
         name: values.name,
         vizType: values.vizType,
         description: values.description,
         defaultConfig: JSON.parse(values.defaultConfig),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['widget-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['widget-store'] });
       toast({ title: t('common.success'), description: t('kpiStore.templateCreateSuccess') });
       form.reset();
       onOpenChange(false);

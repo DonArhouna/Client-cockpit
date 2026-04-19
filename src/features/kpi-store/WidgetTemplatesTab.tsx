@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { widgetTemplatesApi } from '@/api';
+import { widgetStoreApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
 import { useWidgetTemplates } from '@/hooks/use-api';
 import type { WidgetTemplate } from '@/types';
@@ -34,9 +34,9 @@ export function WidgetTemplatesTab() {
   const { data: templates, isLoading } = useWidgetTemplates();
 
   const toggleMutation = useMutation({
-    mutationFn: (id: string) => widgetTemplatesApi.toggle(id),
+    mutationFn: (id: string) => widgetStoreApi.toggleWidgetTemplate(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['widget-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['widget-store'] });
       toast({ title: t('common.success'), description: t('kpiStore.templateToggleSuccess') });
       setToggleTemplate(null);
     },
