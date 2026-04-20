@@ -1,0 +1,20 @@
+name: Deploy Client
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Pull latest code
+        run: git -C C:\Cockpit\repos\Client-cockpit pull origin main
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: C:\Cockpit\repos\Client-cockpit
+
+      - name: Build
+        run: npx vite build
+        working-directory: C:\Cockpit\repos\Client-cockpit
