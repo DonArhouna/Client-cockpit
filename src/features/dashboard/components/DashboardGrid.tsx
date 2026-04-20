@@ -39,14 +39,14 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
     }, [widgets]);
 
     const onLayoutChange = (layout: Layout) => {
-        // We only want to keep the local state updated for the UI, 
-        // but react-grid-layout handles its own internal layout state during drag.
-        // Syncing it back to React state too frequently can cause jitters.
-        setCurrentLayout([...layout]);
+        // react-grid-layout gère son propre état interne pendant le drag.
+        // Mettre à jour l'état React ici provoque des lags et des sauts (jitters).
+        // On ne fait rien ici, on attend onDragStop ou onResizeStop pour persister.
     };
 
     const onDragStop = (layout: Layout) => {
-        setCurrentLayout([...layout]);
+        const newLayout = [...layout];
+        setCurrentLayout(newLayout);
         if (onLayoutChangeAction) {
             const layoutUpdates: { [widgetId: string]: { x: number, y: number, w: number, h: number } } = {};
             layout.forEach((l) => {
@@ -57,7 +57,8 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
     };
 
     const onResizeStop = (layout: Layout) => {
-        setCurrentLayout([...layout]);
+        const newLayout = [...layout];
+        setCurrentLayout(newLayout);
         if (onLayoutChangeAction) {
             const layoutUpdates: { [widgetId: string]: { x: number, y: number, w: number, h: number } } = {};
             layout.forEach((l) => {

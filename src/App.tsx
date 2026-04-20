@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './features/auth/AuthContext';
-import { MainLayout } from './components/layout/MainLayout';
+
 import { LoginPage } from './features/auth/LoginPage';
 import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './features/auth/ResetPasswordPage';
@@ -22,11 +21,7 @@ import { SubscriptionPlanDetailPage } from './features/subscriptions/Subscriptio
 import { ClientPlansPage } from '@/features/subscriptions/ClientPlansPage';
 import { KpiStorePage } from './features/kpi-store/KpiStorePage';
 import { WidgetTemplateDetailPage } from './features/kpi-store/WidgetTemplateDetailPage';
-import { LoadingSpinner } from './components/shared/LoadingSpinner';
-import { DashboardEditProvider } from './context/DashboardEditContext';
 import { PersonalizationPage } from './features/personalization/PersonalizationPage';
-import { PersonalizationProvider } from './features/personalization/PersonalizationContext';
-import { FilterProvider } from './context/FilterContext';
 import { IntelligentQueriesPage } from './features/queries/IntelligentQueriesPage';
 import { TreasuryPage } from './features/cashflow/TreasuryPage';
 import { RevenueAnalysisPage } from './features/revenue/RevenueAnalysisPage';
@@ -40,39 +35,7 @@ import { TargetDetailPage } from './features/targets/TargetDetailPage';
 import { OnboardingPage } from './features/onboarding';
 import { AcceptInvitationPage } from './features/auth/AcceptInvitationPage';
 import { RegisterPage } from './features/auth/RegisterPage';
-
-// ─── Guards ──────────────────────────────────────────────────────────────────
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) return <LoadingSpinner fullScreen />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-
-  return <>{children}</>;
-}
-
-/**
- * OnboardingGuard — blocks access to the main app until onboarding is complete.
- * Superadmins (no organizationId) bypass the guard.
- */
-function OnboardingGuard({ children }: { children: React.ReactNode }) {
-  const { user, onboardingStatus, onboardingLoading, isLoading } = useAuth();
-
-  if (isLoading || onboardingLoading) return <LoadingSpinner fullScreen />;
-
-  const isSuperAdmin = user?.userRoles?.some(ur => ur.role.name === 'superadmin');
-
-  // Superadmins et users sans org (cas admin) passent directement
-  if (isSuperAdmin || !user?.organizationId) return <>{children}</>;
-
-  // Onboarding non terminé ou statut inconnu → redirection
-  if (!onboardingStatus || !onboardingStatus.isComplete) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  return <>{children}</>;
-}
+import { AppLayout, ProtectedRoute } from './components/layout/AppLayout';
 
 // ─── App ─────────────────────────────────────────────────────────────────────
 
@@ -97,56 +60,39 @@ export default function App() {
       />
 
       {/* Main app — requires auth + completed onboarding */}
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <OnboardingGuard>
-              <DashboardEditProvider>
-                <PersonalizationProvider>
-                  <FilterProvider>
-                    <MainLayout>
-                      <Routes>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/dashboard" element={<DashboardPage />} />
-                        <Route path="/finance" element={<TreasuryPage />} />
-                        <Route path="/revenue-analysis" element={<Navigate to="/sales" replace />} />
-                        <Route path="/sales" element={<RevenueAnalysisPage />} />
-                        <Route path="/purchases" element={<OperationalPerformancePage />} />
-                        <Route path="/stocks" element={<InventoryPage />} />
-                        <Route path="/accounting" element={<AccountingPage />} />
-                        <Route path="/risks" element={<RisksPage />} />
-                        <Route path="/smart-queries" element={<IntelligentQueriesPage />} />
-                        <Route path="/personalization" element={<PersonalizationPage />} />
-                        <Route path="/organizations" element={<OrganizationsPage />} />
-                        <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
-                        <Route path="/users" element={<UsersPage />} />
-                        <Route path="/users/:id" element={<UserDetailPage />} />
-                        <Route path="/invitations" element={<InvitationsPage />} />
-                        <Route path="/roles" element={<RolesPage />} />
-                        <Route path="/roles/:id" element={<RoleDetailPage />} />
-                        <Route path="/agents" element={<AgentsPage />} />
-                        <Route path="/agents/:id" element={<AgentDetailPage />} />
-                        <Route path="/audit-logs" element={<AuditLogsPage />} />
-                        <Route path="/health" element={<HealthPage />} />
-                        <Route path="/profile" element={<div className="p-6"><ProfilePage /></div>} />
-                        <Route path="/subscription-plans" element={<SubscriptionPlansPage />} />
-                        <Route path="/subscription-plans/:id" element={<SubscriptionPlanDetailPage />} />
-                        <Route path="/client-plans" element={<ClientPlansPage />} />
-                        <Route path="/kpi-store" element={<KpiStorePage />} />
-                        <Route path="/kpi-store/widget-templates/:id" element={<WidgetTemplateDetailPage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route path="/targets" element={<TargetsPage />} />
-                        <Route path="/targets/:id" element={<TargetDetailPage />} />
-                      </Routes>
-                    </MainLayout>
-                  </FilterProvider>
-                </PersonalizationProvider>
-              </DashboardEditProvider>
-            </OnboardingGuard>
-          </ProtectedRoute>
-        }
-      />
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="finance" element={<TreasuryPage />} />
+        <Route path="revenue-analysis" element={<Navigate to="/sales" replace />} />
+        <Route path="sales" element={<RevenueAnalysisPage />} />
+        <Route path="purchases" element={<OperationalPerformancePage />} />
+        <Route path="stocks" element={<InventoryPage />} />
+        <Route path="accounting" element={<AccountingPage />} />
+        <Route path="risks" element={<RisksPage />} />
+        <Route path="smart-queries" element={<IntelligentQueriesPage />} />
+        <Route path="personalization" element={<PersonalizationPage />} />
+        <Route path="organizations" element={<OrganizationsPage />} />
+        <Route path="organizations/:id" element={<OrganizationDetailPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="users/:id" element={<UserDetailPage />} />
+        <Route path="invitations" element={<InvitationsPage />} />
+        <Route path="roles" element={<RolesPage />} />
+        <Route path="roles/:id" element={<RoleDetailPage />} />
+        <Route path="agents" element={<AgentsPage />} />
+        <Route path="agents/:id" element={<AgentDetailPage />} />
+        <Route path="audit-logs" element={<AuditLogsPage />} />
+        <Route path="health" element={<HealthPage />} />
+        <Route path="profile" element={<div className="p-6"><ProfilePage /></div>} />
+        <Route path="subscription-plans" element={<SubscriptionPlansPage />} />
+        <Route path="subscription-plans/:id" element={<SubscriptionPlanDetailPage />} />
+        <Route path="client-plans" element={<ClientPlansPage />} />
+        <Route path="kpi-store" element={<KpiStorePage />} />
+        <Route path="kpi-store/widget-templates/:id" element={<WidgetTemplateDetailPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="targets" element={<TargetsPage />} />
+        <Route path="targets/:id" element={<TargetDetailPage />} />
+      </Route>
     </Routes>
   );
 }

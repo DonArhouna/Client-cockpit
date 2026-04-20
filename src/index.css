@@ -178,13 +178,15 @@
 /* React Grid Layout Stability */
 
 .react-grid-item:not(.react-draggable-dragging):not(.resizing) {
-  transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease !important;
+  /* Supprimer les transitions automatiques qui causent des erreurs de calcul lors du compactage */
+  transition: none !important;
 }
 
 .react-grid-item.react-draggable-dragging,
 .react-grid-item.resizing {
   transition: none !important;
   z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 /* Suppression des animations chaotiques lors de l'ajout */

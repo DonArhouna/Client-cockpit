@@ -42,6 +42,7 @@ export function DashboardKpis() {
       {widgets.map((widget) => (
         <WidgetCard
           key={widget.id}
+          pageId="dashboard"
           widget={widget}
           isEditing={false}
           onRemove={() => {}}

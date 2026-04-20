@@ -55,6 +55,7 @@ export function TreasuryKpiGrid() {
             {widgets.map((widget) => (
                 <WidgetCard
                     key={widget.id}
+                    pageId="treasury"
                     widget={widget}
                     isEditing={false}
                     onRemove={() => { }}

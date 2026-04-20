@@ -80,7 +80,7 @@ interface DataTableProps<TData, TValue> {
 /**
  * Composant de cellule d'en-tête draggable
  */
-function DraggableTableHeader({ header, table, onRename, displayTitle }: any) {
+function DraggableTableHeader({ header, onRename, displayTitle }: any) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
         useSortable({
             id: header.id,

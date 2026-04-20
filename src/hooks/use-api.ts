@@ -13,7 +13,6 @@ import {
     jobsApi,
     targetsApi,
 } from '@/api';
-import { getCache, setCache } from '@/lib/cache';
 import { Agent } from '@/types';
 
 export function useOrganizations() {

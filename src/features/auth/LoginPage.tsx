@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -14,6 +14,7 @@ export function LoginPage() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -156,17 +157,31 @@ export function LoginPage() {
                     Mot de passe oublié ?
                   </Link>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  data-testid="login-password-input"
-                  className="h-12 bg-muted/30 border-transparent focus:border-primary/30 focus:ring-primary/20 transition-all rounded-xl"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    data-testid="login-password-input"
+                    className="h-12 bg-muted/30 border-transparent focus:border-primary/30 focus:ring-primary/20 transition-all rounded-xl pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-primary transition-all"
+                    title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 

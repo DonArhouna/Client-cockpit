@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { agentsApi, onboardingApi } from '@/api';
 import { useOnboarding } from '../OnboardingContext';
 import { useToast } from '@/hooks/use-toast';

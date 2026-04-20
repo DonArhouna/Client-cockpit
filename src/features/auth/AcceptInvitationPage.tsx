@@ -121,8 +121,8 @@ export function AcceptInvitationPage() {
   const password = watch('password', '');
 
   useEffect(() => {
-    if (inviteInfo?.firstName) setValue('firstName', inviteInfo.firstName);
-    if (inviteInfo?.lastName) setValue('lastName', inviteInfo.lastName);
+    if ((inviteInfo as any)?.firstName) setValue('firstName', (inviteInfo as any).firstName);
+    if ((inviteInfo as any)?.lastName) setValue('lastName', (inviteInfo as any).lastName);
   }, [inviteInfo, setValue]);
 
   if (!token) {

@@ -225,8 +225,33 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
         
         const tempId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const pageWidgets = (layouts[pageId] || []).filter(w => w.isActive);
-        const w = widgetData.position?.w || 4;
-        const h = widgetData.position?.h || 3;
+        const vizType = widgetData.vizType || 'card';
+        
+        // Tailles par défaut intelligentes basées sur le type de visualisation
+        let w = widgetData.position?.w;
+        let h = widgetData.position?.h;
+
+        if (!w || !h) {
+            switch (vizType) {
+                case 'table':
+                    w = 12; h = 6;
+                    break;
+                case 'bar':
+                case 'line':
+                case 'area':
+                case 'pie':
+                case 'donut':
+                    w = 6; h = 4;
+                    break;
+                case 'list':
+                    w = 6; h = 6;
+                    break;
+                case 'card':
+                default:
+                    w = 4; h = 3;
+                    break;
+            }
+        }
         
         const maxY = pageWidgets.length > 0 
             ? Math.max(...pageWidgets.map(widget => (widget.position?.y || 0) + (widget.position?.h || 0)))

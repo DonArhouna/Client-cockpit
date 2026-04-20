@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Toaster } from '@/components/ui/toaster';
@@ -7,13 +7,8 @@ import { QuickActions } from '@/components/shared/QuickActions';
 import { ChatbotAssistant } from '@/components/chatbot/ChatbotAssistant';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 
-interface MainLayoutProps {
-  children: React.ReactNode;
-}
-
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout() {
   const { navCollapsed: sidebarCollapsed, setNavCollapsed: setSidebarCollapsed } = useDashboardEdit();
-  const location = useLocation();
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   return (
@@ -27,11 +22,8 @@ export function MainLayout({ children }: MainLayoutProps) {
           }`}
       >
         <Header onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-        <main
-          key={location.pathname}
-          className="w-full pt-4 animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out"
-        >
-          {children}
+        <main className="w-full pt-4">
+          <Outlet />
         </main>
         <div className="fixed bottom-0 left-0 right-0 z-40">
           <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-[108px]' : 'lg:pl-[296px]'}`}>
