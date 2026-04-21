@@ -49,6 +49,9 @@ export const authApi = {
   resetPassword: (data: any) =>
     api.post('/auth/reset-password', data),
 
+  verifyResetToken: (token: string) =>
+    api.get('/auth/verify-reset-token', { params: { token } }),
+
   getInvitationInfo: (token: string) =>
     api.get<{ email: string; organizationName: string; role: string }>(`/auth/invitation-info?token=${encodeURIComponent(token)}`),
 
