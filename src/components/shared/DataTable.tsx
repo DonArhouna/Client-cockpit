@@ -89,9 +89,8 @@ function DraggableTableHeader({ header, onRename, displayTitle }: any) {
     const style: React.CSSProperties = {
         transform: CSS.Translate.toString(transform),
         transition,
-        cursor: isDragging ? 'grabbing' : 'auto',
-        zIndex: isDragging ? 20 : 0,
-        opacity: isDragging ? 0.8 : 1,
+        zIndex: isDragging ? 100 : 0,
+        opacity: isDragging ? 0.6 : 1,
         position: 'relative',
     }
 
@@ -100,22 +99,15 @@ function DraggableTableHeader({ header, onRename, displayTitle }: any) {
             ref={setNodeRef}
             style={style}
             key={header.id}
-            className="p-0"
+            className="p-0 border-r last:border-r-0 border-border/50"
         >
-            <div className="flex items-center">
-                {/* Poignée de drag invisible mais activable par tout l'en-tête sauf le menu */}
-                <div {...attributes} {...listeners} className="absolute inset-0 z-0" />
-                
-                <div className="relative z-10 w-full px-4 py-1">
-                    {header.isPlaceholder
-                        ? null
-                        : <DataTableColumnHeader 
-                            column={header.column} 
-                            title={displayTitle} 
-                            onRename={onRename}
-                          />
-                    }
-                </div>
+            <div className="relative flex items-center h-full">
+                <DataTableColumnHeader 
+                    column={header.column} 
+                    title={displayTitle} 
+                    onRename={onRename}
+                    dragHandleProps={{ ...attributes, ...listeners }}
+                />
             </div>
         </TableHead>
     )

@@ -28,12 +28,13 @@ interface WidgetCardProps {
     style?: CSSProperties;
 }
 
-export function WidgetCard({ pageId, widget, isEditing, onRemove, h, className, style }: WidgetCardProps) {
+export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, className, style }: WidgetCardProps) {
     const { t } = useTranslation();
 
     const isMainKpi = widget.id?.startsWith('main-kpi-');
     const isKpi = widget.type === 'kpi';
     const isCompact = isMainKpi ? false : !!(h && h <= 2);
+    const showFullButton = !isCompact && (!w || w >= 4);
 
     // ── Visual renderer ──────────────────────────────────────────
     const renderContent = () => {
@@ -160,11 +161,12 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, h, className, 
             {isKpi && (
                 <div className={cn("px-5 pb-4 flex justify-end", isCompact && "px-4 pb-3")}>
                     <button className={cn(
-                        'flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all',
-                        'bg-[#3b66ac]/10 hover:bg-[#3b66ac]/20 text-[#3b66ac] dark:bg-blue-500/10 dark:hover:bg-blue-500/20 dark:text-blue-400'
-                    )}>
-                        <Sparkles style={{ width: 12, height: 12 }} />
-                        Demander à Zuri
+                        'flex items-center gap-1.5 text-[11px] font-bold transition-all',
+                        'bg-[#3b66ac]/10 hover:bg-[#3b66ac]/20 text-[#3b66ac] dark:bg-blue-500/10 dark:hover:bg-blue-500/20 dark:text-blue-400',
+                        showFullButton ? "px-3 py-1.5 rounded-lg" : "p-2 rounded-full shadow-sm"
+                    )} title={!showFullButton ? "Demander à Zuri" : ""}>
+                        <Sparkles style={{ width: 14, height: 14 }} />
+                        {showFullButton && <span>Demander à Zuri</span>}
                     </button>
                 </div>
             )}

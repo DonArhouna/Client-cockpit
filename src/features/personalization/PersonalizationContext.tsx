@@ -248,7 +248,7 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                     break;
                 case 'card':
                 default:
-                    w = 4; h = 3;
+                    w = 3; h = 2;
                     break;
             }
         }

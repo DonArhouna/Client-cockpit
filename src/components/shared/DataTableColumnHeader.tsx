@@ -1,5 +1,5 @@
 import { Column } from "@tanstack/react-table"
-import { MoreVertical, ArrowDown, ArrowUp, ChevronsUpDown, EyeOff, Edit2, Check, X } from "lucide-react"
+import { MoreVertical, ArrowDown, ArrowUp, ChevronsUpDown, EyeOff, Edit2, GripVertical } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +17,7 @@ interface DataTableColumnHeaderProps<TData, TValue>
     column: Column<TData, TValue>
     title: string
     onRename?: (newTitle: string) => void
+    dragHandleProps?: any
 }
 
 /**
@@ -25,12 +26,14 @@ interface DataTableColumnHeaderProps<TData, TValue>
  * - Masquage
  * - Renommage Inline
  * - Menu d'options (3 points)
+ * - Poignée de drag & drop
  */
 export function DataTableColumnHeader<TData, TValue>({
     column,
     title,
     className,
     onRename,
+    dragHandleProps,
 }: DataTableColumnHeaderProps<TData, TValue>) {
     const [isEditing, setIsEditing] = useState(false)
     const [value, setValue] = useState(title)
@@ -40,7 +43,16 @@ export function DataTableColumnHeader<TData, TValue>({
     }, [title])
 
     if (!column.getCanSort() && !column.getCanHide() && !onRename) {
-        return <div className={cn(className)}>{title}</div>
+        return (
+            <div className={cn("flex items-center gap-2", className)}>
+                {dragHandleProps && (
+                    <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing p-1">
+                        <GripVertical className="h-3.5 w-3.5 text-slate-400" />
+                    </div>
+                )}
+                {title}
+            </div>
+        )
     }
 
     const handleSave = (e?: React.FormEvent) => {
@@ -61,7 +73,7 @@ export function DataTableColumnHeader<TData, TValue>({
 
     if (isEditing) {
         return (
-            <div className="flex items-center space-x-2 min-w-[120px]">
+            <div className="flex items-center space-x-2 min-w-[120px] px-4">
                 <Input
                     autoFocus
                     value={value}
@@ -70,36 +82,27 @@ export function DataTableColumnHeader<TData, TValue>({
                     onBlur={() => handleSave()}
                     className="h-7 px-2 text-[11px] font-bold uppercase"
                 />
-                <div className="flex items-center gap-1">
-                    <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-6 w-6 text-green-600"
-                        onClick={handleSave}
-                    >
-                        <Check className="h-3 w-3" />
-                    </Button>
-                    <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-6 w-6 text-red-600"
-                        onClick={() => { setValue(title); setIsEditing(false); }}
-                    >
-                        <X className="h-3 w-3" />
-                    </Button>
-                </div>
             </div>
         )
     }
 
     return (
-        <div className={cn("flex items-center space-x-2 group/header", className)}>
+        <div className={cn("flex items-center space-x-1 group/header pl-2", className)}>
+            {/* Poignée de drag visible */}
+            <div 
+                {...dragHandleProps} 
+                className="p-1 cursor-grab active:cursor-grabbing hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors opacity-0 group-hover/header:opacity-100"
+                title="Déplacer la colonne"
+            >
+                <GripVertical className="h-3.5 w-3.5 text-slate-400 group-hover/header:text-slate-600" />
+            </div>
+
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="-ml-3 h-8 data-[state=open]:bg-accent hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className="-ml-1 h-8 data-[state=open]:bg-accent hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
                         <span className="text-[11px] font-bold uppercase truncate max-w-[150px]">{title}</span>
                         {column.getCanSort() && (

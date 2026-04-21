@@ -38,7 +38,7 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
         setCurrentLayout(generateLayout(widgets));
     }, [widgets]);
 
-    const onLayoutChange = (layout: Layout) => {
+    const onLayoutChange = (_layout: Layout) => {
         // react-grid-layout gère son propre état interne pendant le drag.
         // Mettre à jour l'état React ici provoque des lags et des sauts (jitters).
         // On ne fait rien ici, on attend onDragStop ou onResizeStop pour persister.
