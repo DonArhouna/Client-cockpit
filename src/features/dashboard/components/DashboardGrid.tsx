@@ -102,16 +102,21 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
                 measureBeforeMount={false}
                 transformScale={1}
             >
-                {widgets.map((widget) => (
-                    <div key={widget.id} className="h-full group">
-                        <WidgetCard
-                            pageId={pageId}
-                            widget={widget}
-                            isEditing={isEditing}
-                            onRemove={onRemoveWidget}
-                        />
-                    </div>
-                ))}
+                {widgets.map((widget) => {
+                    const layoutItem = currentLayout.find(l => l.i === widget.id);
+                    return (
+                        <div key={widget.id} className="h-full group">
+                            <WidgetCard
+                                pageId={pageId}
+                                widget={widget}
+                                isEditing={isEditing}
+                                onRemove={onRemoveWidget}
+                                w={layoutItem?.w}
+                                h={layoutItem?.h}
+                            />
+                        </div>
+                    );
+                })}
             </ResponsiveGridLayout>
         </div>
     );
