@@ -83,7 +83,7 @@ interface DataTableProps<TData, TValue> {
 function DraggableTableHeader({ header, onRename, displayTitle }: any) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
         useSortable({
-            id: header.id,
+            id: header.column.id,
         })
 
     const style: React.CSSProperties = {
@@ -198,24 +198,28 @@ export function DataTable<TData, TValue>({
 
     // Capteurs pour le DnD
     const sensors = useSensors(
-        useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(MouseSensor, { activationConstraint: { distance: 3 } }),
         useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
         useSensor(KeyboardSensor)
     )
 
     const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event
+        const { active, over } = event;
         if (active && over && active.id !== over.id) {
             setColumnOrder((prev) => {
-                const oldIndex = prev.indexOf(active.id as string)
-                const newIndex = prev.indexOf(over.id as string)
-                const newOrder = [...prev]
-                newOrder.splice(oldIndex, 1)
-                newOrder.splice(newIndex, 0, active.id as string)
-                return newOrder
-            })
+                const oldIndex = prev.indexOf(active.id as string);
+                const newIndex = prev.indexOf(over.id as string);
+                
+                if (oldIndex !== -1 && newIndex !== -1) {
+                    const newOrder = [...prev];
+                    newOrder.splice(oldIndex, 1);
+                    newOrder.splice(newIndex, 0, active.id as string);
+                    return newOrder;
+                }
+                return prev;
+            });
         }
-    }
+    };
 
     const resetLayout = () => {
         setColumnOrder(columns.map((c) => (c.id || (c as any).accessorKey) as string))
@@ -308,7 +312,7 @@ export function DataTable<TData, TValue>({
                                         {headerGroup.headers.map((header) => {
                                             const rawHeader = (header.column.columnDef as any).header
                                             const originalTitle = typeof rawHeader === 'string' ? rawHeader : header.id
-                                            const displayTitle = columnAliases[header.id] || originalTitle
+                                            const displayTitle = columnAliases[header.column.id] || originalTitle
                                             
                                             return (
                                                 <DraggableTableHeader 
@@ -317,7 +321,7 @@ export function DataTable<TData, TValue>({
                                                     table={table}
                                                     displayTitle={displayTitle}
                                                     onRename={(newTitle: string) => {
-                                                        setColumnAliases(prev => ({ ...prev, [header.id]: newTitle }))
+                                                        setColumnAliases(prev => ({ ...prev, [header.column.id]: newTitle }))
                                                     }}
                                                 />
                                             )

@@ -91,7 +91,7 @@ export function DataTableColumnHeader<TData, TValue>({
             {/* Poignée de drag visible */}
             <div 
                 {...dragHandleProps} 
-                className="p-1 cursor-grab active:cursor-grabbing hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors opacity-0 group-hover/header:opacity-100"
+                className="p-1 cursor-grab active:cursor-grabbing hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
                 title="Déplacer la colonne"
             >
                 <GripVertical className="h-3.5 w-3.5 text-slate-400 group-hover/header:text-slate-600" />
