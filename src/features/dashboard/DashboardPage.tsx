@@ -33,7 +33,7 @@ function DashboardHeader() {
   }).format(new Date());
 
   return (
-    <div className="px-6 pt-4 pb-4">
+    <div className="px-6 pt-2 pb-2">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -168,7 +168,7 @@ export function DashboardPage() {
         <DashboardHeader />
 
         {/* Barre d'outils */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4 px-6 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-2 px-6 flex-shrink-0">
           <div className="flex-1 flex justify-center">
             <KpiSearchBar placeholder="Posez votre question sur le tableau de bord Exécutif" />
           </div>

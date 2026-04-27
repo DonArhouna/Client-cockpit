@@ -89,14 +89,14 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
                 layouts={{ lg: currentLayout }}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                 cols={{ lg: 12, md: 12, sm: 12, xs: 4, xxs: 2 }}
-                rowHeight={100}
+                rowHeight={90}
                 onLayoutChange={onLayoutChange}
                 onDragStop={onDragStop}
                 onResizeStop={onResizeStop}
                 isDraggable={isEditing}
                 isResizable={isEditing}
                 draggableHandle=".drag-handle"
-                margin={[20, 20]}
+                margin={[16, 16]}
                 compactType="vertical"
                 useCSSTransforms={true}
                 measureBeforeMount={false}

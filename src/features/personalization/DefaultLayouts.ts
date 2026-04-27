@@ -29,7 +29,7 @@ export const PAGE_DEFAULT_WIDGETS: Record<string, (kpis: any[]) => DefaultWidget
             vizType: 'card',
             kpiKey: kpi.key,
             config: { unit: kpi.unit ?? '', description: kpi.description ?? '' },
-            position: { x: index * 3, y: 0, w: 3, h: 3 },
+            position: { x: index * 3, y: 0, w: 3, h: 2 },
         }));
 
         widgets.push(
@@ -63,7 +63,7 @@ export const PAGE_DEFAULT_WIDGETS: Record<string, (kpis: any[]) => DefaultWidget
             vizType: 'card',
             kpiKey: kpi.key,
             config: { unit: kpi.unit ?? '', description: kpi.description ?? '' },
-            position: { x: index * 3, y: 0, w: 3, h: 3 },
+            position: { x: index * 3, y: 0, w: 3, h: 2 },
         }));
 
         widgets.push(
@@ -105,7 +105,7 @@ export const PAGE_DEFAULT_WIDGETS: Record<string, (kpis: any[]) => DefaultWidget
             vizType: 'card',
             kpiKey: kpi.key,
             config: { unit: kpi.unit ?? '', description: kpi.description ?? '' },
-            position: { x: index * 3, y: 0, w: 3, h: 3 },
+            position: { x: index * 3, y: 0, w: 3, h: 2 },
         }));
 
         widgets.push(
@@ -147,7 +147,7 @@ export const PAGE_DEFAULT_WIDGETS: Record<string, (kpis: any[]) => DefaultWidget
             vizType: 'card',
             kpiKey: kpi.key,
             config: { unit: kpi.unit ?? '', description: kpi.description ?? '' },
-            position: { x: index * 3, y: 0, w: 3, h: 3 },
+            position: { x: index * 3, y: 0, w: 3, h: 2 },
         }));
 
         widgets.push(
@@ -189,7 +189,7 @@ export const PAGE_DEFAULT_WIDGETS: Record<string, (kpis: any[]) => DefaultWidget
             kpiKey: kpi.key,
             vizType: 'card',
             config: { unit: kpi.unit ?? '', description: kpi.description ?? '' },
-            position: { x: index * 3, y: 0, w: 3, h: 3 },
+            position: { x: index * 3, y: 0, w: 3, h: 2 },
         }));
 
         widgets.push(
@@ -223,7 +223,7 @@ export const PAGE_DEFAULT_WIDGETS: Record<string, (kpis: any[]) => DefaultWidget
             kpiKey: kpi.key,
             vizType: 'card',
             config: { unit: kpi.unit ?? '', description: kpi.description ?? '' },
-            position: { x: index * 3, y: 0, w: 3, h: 3 },
+            position: { x: index * 3, y: 0, w: 3, h: 2 },
         }));
 
         widgets.push(

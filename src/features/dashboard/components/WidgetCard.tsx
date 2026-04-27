@@ -34,7 +34,7 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
     const isMainKpi = widget.id?.startsWith('main-kpi-');
     const isKpi = widget.type === 'kpi';
     const isCompact = isMainKpi ? false : !!(h && h <= 1);
-    const showFullButton = !isCompact && (!w || w >= 3);
+    const showFullButton = !isCompact && (h ? h >= 3 : true) && (!w || w >= 3);
 
     // ── Visual renderer ──────────────────────────────────────────
     const renderContent = () => {

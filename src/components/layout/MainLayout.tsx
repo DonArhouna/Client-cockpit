@@ -18,15 +18,15 @@ export function MainLayout() {
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
       <div
-        className={`transition-all duration-300 w-full min-w-0 flex flex-col ${sidebarCollapsed ? 'lg:pl-[108px]' : 'lg:pl-[296px]'
+        className={`transition-all duration-300 w-full min-w-0 flex flex-col ${sidebarCollapsed ? 'lg:pl-[96px]' : 'lg:pl-[286px]'
           }`}
       >
         <Header onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-        <main className="w-full pt-4">
+        <main className="w-full pt-2">
           <Outlet />
         </main>
         <div className="fixed bottom-0 left-0 right-0 z-40">
-          <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-[108px]' : 'lg:pl-[296px]'}`}>
+          <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-[96px]' : 'lg:pl-[286px]'}`}>
             <QuickActions />
           </div>
           <div className="absolute bottom-4 right-6 animate-in fade-in slide-in-from-bottom-4 duration-700">

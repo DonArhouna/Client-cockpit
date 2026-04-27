@@ -99,7 +99,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-4 z-30 h-16 mx-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-lg shadow-slate-200/40 dark:shadow-none transition-all">
+    <header className="sticky top-2 z-30 h-12 mx-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-lg shadow-slate-200/40 dark:shadow-none transition-all">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
         {/* Left side - Mobile menu */}
         <Button
