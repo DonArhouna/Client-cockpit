@@ -105,7 +105,7 @@ export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction
                 {widgets.map((widget) => {
                     const layoutItem = currentLayout.find(l => l.i === widget.id);
                     return (
-                        <div key={widget.id} className="h-full group">
+                        <div key={widget.id} className="h-full group" data-export-id={widget.id}>
                             <WidgetCard
                                 pageId={pageId}
                                 widget={widget}

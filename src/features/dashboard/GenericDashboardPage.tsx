@@ -6,6 +6,7 @@ import { usePersonalization } from '@/features/personalization/PersonalizationCo
 import { DashboardGrid } from './components/DashboardGrid';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 import { cn } from '@/lib/utils';
+import { ExportButton } from './export/ExportButton';
 
 interface GenericDashboardPageProps {
     pageId: string;
@@ -66,6 +67,11 @@ export function GenericDashboardPage({ pageId, titleKey, subtitle }: GenericDash
                             </div>
                         </>
                     )}
+
+                    <ExportButton
+                        widgets={widgets}
+                        pageId={pageId}
+                    />
                 </div>
             </div>
 

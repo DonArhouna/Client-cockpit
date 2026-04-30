@@ -17,6 +17,7 @@ import { KpiSearchBar } from '@/components/shared/KpiSearchBar';
 import { InsightBanner } from '@/components/shared/InsightBanner';
 import { PageInsight } from '@/components/shared/PageInsight';
 import { useKpiData } from '@/hooks/use-kpi-data';
+import { ExportButton } from './export/ExportButton';
 
 // ── Welcome Banner ───────────────────────────────────────────────
 function DashboardHeader() {
@@ -184,6 +185,11 @@ export function DashboardPage() {
                 Terminer
               </Button>
             )}
+
+            <ExportButton
+              widgets={widgets}
+              pageId="dashboard"
+            />
 
             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm">
                <button 
