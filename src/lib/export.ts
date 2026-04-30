@@ -28,9 +28,3 @@ export function exportToExcel(filename: string, _data: any[]) {
     alert(`Export Excel (${filename}.xlsx) en cours de préparation...`);
 }
 
-/**
- * Exporte les données au format PowerPoint (.pptx) - Stub
- */
-export function exportToPptx(filename: string, _data: any[]) {
-    alert(`Export PowerPoint (${filename}.pptx) en cours de préparation...`);
-}

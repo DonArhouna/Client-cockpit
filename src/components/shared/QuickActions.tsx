@@ -7,15 +7,45 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { exportToCsv, exportToExcel, exportToPptx } from '@/lib/export';
+import { exportToCsv, exportToExcel } from '@/lib/export';
 import { BugReportModal } from '@/features/support/components/BugReportModal';
 import * as React from 'react';
+import { useLocation } from 'react-router-dom';
+import { usePersonalization } from '@/features/personalization/PersonalizationContext';
+import { usePptxExport } from '@/features/dashboard/export/usePptxExport';
 
 interface QuickActionsProps {}
 
 export function QuickActions({}: QuickActionsProps) {
   const { toggleEditMode } = useDashboardEdit();
   const [bugModalOpen, setBugModalOpen] = React.useState(false);
+  const location = useLocation();
+  const { layouts } = usePersonalization();
+  const { isExporting, exportToPptx } = usePptxExport();
+
+  // Déterminer le pageId à partir de la route pour savoir quels widgets exporter
+  const getPageIdFromPath = (path: string) => {
+      const p = path.replace('/', '');
+      if (p === 'sales') return 'revenue';
+      if (p === 'finance') return 'finance';
+      if (p === 'purchases') return 'purchases';
+      if (p === 'stocks') return 'stocks';
+      if (p === 'accounting') return 'accounting';
+      if (p === 'risks') return 'risks';
+      if (p === 'smart-queries') return 'smart-queries';
+      if (p === 'dashboard' || p === '') return 'dashboard';
+      return null;
+  };
+
+  const pageId = getPageIdFromPath(location.pathname);
+  const widgets = pageId ? layouts[pageId] || [] : [];
+  const canExport = widgets.length > 0;
+
+  const handlePptxExport = () => {
+    if (pageId && canExport) {
+        exportToPptx(widgets, pageId);
+    }
+  };
 
   return (
     <div className="max-w-fit mx-auto mb-6 px-1 py-1.5 bg-[#3b66ac] dark:bg-slate-800/95 backdrop-blur-xl border border-white/10 dark:border-slate-700/50 rounded-2xl shadow-2xl shadow-blue-500/30 dark:shadow-none animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -36,7 +66,11 @@ export function QuickActions({}: QuickActionsProps) {
                   <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
                   <span>Exporter en Excel (.xlsx)</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => exportToPptx('cockpit-export', [])}>
+                <DropdownMenuItem 
+                    className={`gap-2 cursor-pointer ${(!canExport || isExporting) ? 'opacity-50 grayscale cursor-not-allowed' : ''}`} 
+                    onClick={handlePptxExport}
+                    disabled={!canExport || isExporting}
+                >
                   <Presentation className="h-4 w-4 text-orange-600" />
                   <span>Exporter en PowerPoint (.pptx)</span>
                 </DropdownMenuItem>
