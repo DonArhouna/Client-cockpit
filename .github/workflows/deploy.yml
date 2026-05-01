@@ -9,7 +9,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Pull latest code
-        run: git -C C:\Cockpit\repos\Client-cockpit pull origin main
+        run: |
+          git -C C:\Cockpit\repos\Client-cockpit fetch origin main
+          git -C C:\Cockpit\repos\Client-cockpit reset --hard origin/main
 
       - name: Install dependencies
         run: npm install
