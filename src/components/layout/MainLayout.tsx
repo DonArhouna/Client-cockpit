@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -7,9 +7,32 @@ import { QuickActions } from '@/components/shared/QuickActions';
 import { ChatbotAssistant } from '@/components/chatbot/ChatbotAssistant';
 import { useDashboardEdit } from '@/context/DashboardEditContext';
 
+const LG_BREAKPOINT = 1024;
+
 export function MainLayout() {
   const { navCollapsed: sidebarCollapsed, setNavCollapsed: setSidebarCollapsed } = useDashboardEdit();
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const wasCollapsedBeforeSmall = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < LG_BREAKPOINT) {
+        if (wasCollapsedBeforeSmall.current === null) {
+          wasCollapsedBeforeSmall.current = sidebarCollapsed;
+        }
+        setSidebarCollapsed(true);
+      } else {
+        if (wasCollapsedBeforeSmall.current !== null) {
+          setSidebarCollapsed(wasCollapsedBeforeSmall.current);
+          wasCollapsedBeforeSmall.current = null;
+        }
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setSidebarCollapsed]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 pb-20">

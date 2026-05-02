@@ -385,7 +385,7 @@ export function DataTable<TData, TValue>({
                         "Aucun résultat"
                     )}
                 </div>
-                <div className="space-x-2 px-6">
+                <div className="flex items-center space-x-2 px-6">
                     <Button
                         variant="outline"
                         size="sm"
