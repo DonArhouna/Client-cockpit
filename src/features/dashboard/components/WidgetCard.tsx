@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Trash2, GripHorizontal, Sparkles, Filter } from 'lucide-react';
+import { MoreVertical, Trash2, GripHorizontal, Sparkles, Filter, PowerOff } from 'lucide-react';
 import { Widget } from '@/types';
 import {
     DropdownMenu,
@@ -16,6 +16,7 @@ import { ChartVisual } from './visuals/ChartVisual';
 import { VarianceVisual } from './visuals/VarianceVisual';
 import { ReceivablesVisual } from './visuals/ReceivablesVisual';
 import { TopClientsVisual } from './visuals/TopClientsVisual';
+import { useKpiData } from '@/hooks/use-kpi-data';
 
 interface WidgetCardProps {
     pageId: string;
@@ -30,6 +31,7 @@ interface WidgetCardProps {
 
 export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, className, style }: WidgetCardProps) {
     const { t } = useTranslation();
+    const { isDisabled } = useKpiData(widget.kpiKey || null);
 
     const isMainKpi = widget.id?.startsWith('main-kpi-');
     const isKpi = widget.type === 'kpi';
@@ -154,7 +156,13 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                 'flex-1 overflow-hidden',
                 isKpi ? (isEditing ? 'p-5 pt-8' : (isCompact ? 'p-4 pb-2' : 'p-5')) : 'px-5 pb-5 pt-1'
             )}>
-                {renderContent()}
+                {isDisabled ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400 select-none">
+                        <PowerOff className="h-5 w-5 opacity-40" />
+                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">KPI indisponible</span>
+                        <span className="text-[10px] text-slate-300 dark:text-slate-600 text-center px-4">Ce KPI a été temporairement désactivé par l'administrateur.</span>
+                    </div>
+                ) : renderContent()}
             </div>
 
             {/* ── Bottom: Zuri button for KPI cards only ──────── */}

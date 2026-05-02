@@ -16,6 +16,7 @@ interface KpiDataResult {
     trend: number;
     period: string;
     details?: Record<string, any>;
+    __disabled?: boolean;
 }
 
 // Fonction de données de secours - Modifiée pour retourner un état vide/chargement au lieu de valeurs hardcodées
@@ -35,6 +36,7 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
     const [data, setData] = useState<KpiDataResult | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isDisabled, setIsDisabled] = useState(false);
     const { toast } = useToast();
     const { period, currency } = useFilters();
 
@@ -47,20 +49,30 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
             const cached = getCache<KpiDataResult>(cacheKey);
             if (cached) {
                 setData(cached);
+                setIsDisabled(cached.__disabled === true);
                 return;
             }
         }
 
         setIsLoading(true);
         setError(null);
+        setIsDisabled(false);
 
         try {
-            // Construire la requête avec le contexte de période et devise
             const query = `${kpiKey} pour ${period} en ${currency}`;
 
             // 1. Soumettre la requête NLQ
             const queryResp = await nlqApi.query(query);
             const { jobId, status } = queryResp.data;
+
+            if (status === 'TEMPLATE_DISABLED') {
+                const disabledResult: KpiDataResult = { current: 0, previous: 0, target: null, trend: 0, period, __disabled: true };
+                setIsDisabled(true);
+                setData(disabledResult);
+                setCache(cacheKey, disabledResult);
+                setIsLoading(false);
+                return;
+            }
 
             if (!jobId || status === 'no_intent') {
                 // Si le NLQ ne renvoie pas de job, fournir des données de secours riches
@@ -145,6 +157,7 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
     return {
         data,
         isLoading,
+        isDisabled,
         error,
         refetch: fetchData
     };
