@@ -1,22 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import { AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Loader2, Eye, EyeOff, Lock } from 'lucide-react';
+
+const LOGIN_LOCKOUT_TTL = 15 * 60;
 
 export function LoginPage() {
   const { t } = useTranslation();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
-  
+  const { toast } = useToast();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lockoutSeconds, setLockoutSeconds] = useState<number | null>(null);
+  const lockoutIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (lockoutIntervalRef.current) clearInterval(lockoutIntervalRef.current);
+    };
+  }, []);
 
   // Redirect if already authenticated
   if (authLoading) {
@@ -31,6 +43,21 @@ export function LoginPage() {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const startLockoutCountdown = (seconds: number) => {
+    if (lockoutIntervalRef.current) clearInterval(lockoutIntervalRef.current);
+    setLockoutSeconds(seconds);
+    lockoutIntervalRef.current = setInterval(() => {
+      setLockoutSeconds((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(lockoutIntervalRef.current!);
+          lockoutIntervalRef.current = null;
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -41,11 +68,32 @@ export function LoginPage() {
       // Navigation is handled by the LoginPage's isAuthenticated redirect below
       // (onboarding status is already known at this point, so the guard evaluates correctly)
     } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
       const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(errorMessage || t('auth.invalidCredentials'));
+
+      if (status === 429 && errorMessage?.includes('verrouillé')) {
+        const lockoutRemainingSeconds = (err as { response?: { data?: { lockoutRemainingSeconds?: number } } })?.response?.data?.lockoutRemainingSeconds;
+        startLockoutCountdown(lockoutRemainingSeconds ?? LOGIN_LOCKOUT_TTL);
+      } else {
+        const remainingAttempts = (err as { response?: { data?: { remainingAttempts?: number } } })?.response?.data?.remainingAttempts;
+        if (remainingAttempts !== undefined && remainingAttempts > 0) {
+          toast({
+            title: 'Tentative échouée',
+            description: `Il vous reste ${remainingAttempts} tentative${remainingAttempts > 1 ? 's' : ''} avant le verrouillage du compte.`,
+            variant: 'destructive',
+          });
+        }
+        setError(errorMessage || t('auth.invalidCredentials'));
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const formatCountdown = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = String(seconds % 60).padStart(2, '0');
+    return `${m}:${s}`;
   };
 
   return (
@@ -53,20 +101,20 @@ export function LoginPage() {
       {/* Left side: Branding & Visual */}
       <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-muted/30">
         {/* Background Decorative Image */}
-        <div 
+        <div
           className="absolute inset-0 z-0 opacity-40 bg-cover bg-center mix-blend-overlay"
           style={{ backgroundImage: 'url("/login-bg.png")' }}
         />
         <div className="absolute inset-0 z-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80" />
-        
+
         {/* Animated Background Elements */}
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse delay-1000" />
 
         <div className="relative z-10 flex items-center gap-3">
-          <img 
-            src="/Logo-cockpit.jpeg" 
-            alt="Cockpit Logo" 
+          <img
+            src="/Logo-cockpit.jpeg"
+            alt="Cockpit Logo"
             className="h-12 w-auto object-contain rounded-md shadow-lg border border-white/10"
           />
           <div>
@@ -80,10 +128,10 @@ export function LoginPage() {
             Pilotez votre <span className="text-primary italic">donnée</span> en toute simplicité.
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            Une interface intuitive et puissante pour centraliser la gestion de vos organisations, 
+            Une interface intuitive et puissante pour centraliser la gestion de vos organisations,
             utilisateurs et agents Sage. Prenez de la hauteur sur votre business.
           </p>
-          
+
           <div className="flex items-center gap-8 pt-4">
             <div className="space-y-1">
               <p className="text-2xl font-bold text-foreground">99.9%</p>
@@ -106,9 +154,9 @@ export function LoginPage() {
       <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 bg-background relative">
         {/* Mobile Logo Only */}
         <div className="lg:hidden flex flex-col items-center gap-4 mb-10 text-center">
-          <img 
-            src="/Logo-cockpit.jpeg" 
-            alt="Cockpit Logo" 
+          <img
+            src="/Logo-cockpit.jpeg"
+            alt="Cockpit Logo"
             className="h-16 w-auto object-contain rounded-lg shadow-md"
           />
           <div>
@@ -124,8 +172,18 @@ export function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div 
+            {lockoutSeconds !== null && (
+              <div className="flex items-center gap-3 p-4 text-sm text-orange-600 bg-orange-500/10 rounded-xl border border-orange-500/20 animate-in fade-in zoom-in duration-200">
+                <Lock className="h-5 w-5 shrink-0" />
+                <span>
+                  Compte verrouillé — réessayez dans{' '}
+                  <span className="font-bold tabular-nums">{formatCountdown(lockoutSeconds)}</span>
+                </span>
+              </div>
+            )}
+
+            {error && !lockoutSeconds && (
+              <div
                 className="flex items-center gap-3 p-4 text-sm text-destructive bg-destructive/5 rounded-xl border border-destructive/10 animate-in fade-in zoom-in duration-200"
                 data-testid="login-error"
               >
@@ -146,6 +204,7 @@ export function LoginPage() {
                   required
                   autoComplete="email"
                   data-testid="login-email-input"
+                  disabled={lockoutSeconds !== null}
                   className="h-12 bg-muted/30 border-transparent focus:border-primary/30 focus:ring-primary/20 transition-all rounded-xl"
                 />
               </div>
@@ -167,11 +226,13 @@ export function LoginPage() {
                     required
                     autoComplete="current-password"
                     data-testid="login-password-input"
+                    disabled={lockoutSeconds !== null}
                     className="h-12 bg-muted/30 border-transparent focus:border-primary/30 focus:ring-primary/20 transition-all rounded-xl pr-12"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={lockoutSeconds !== null}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-primary transition-all"
                     title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
@@ -188,13 +249,18 @@ export function LoginPage() {
             <Button
               type="submit"
               className="w-full h-12 font-bold text-base rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
-              disabled={isLoading}
+              disabled={isLoading || lockoutSeconds !== null}
               data-testid="login-submit-btn"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   {t('common.loading')}
+                </>
+              ) : lockoutSeconds !== null ? (
+                <>
+                  <Lock className="mr-2 h-5 w-5" />
+                  Compte verrouillé
                 </>
               ) : (
                 t('auth.signIn')
