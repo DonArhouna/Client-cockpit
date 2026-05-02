@@ -9,8 +9,6 @@ import { Label } from '@/components/ui/label';
 
 import { AlertCircle, Loader2, Eye, EyeOff, Lock } from 'lucide-react';
 
-const LOGIN_LOCKOUT_TTL = 15 * 60;
-
 export function LoginPage() {
   const { t } = useTranslation();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
