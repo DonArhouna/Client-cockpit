@@ -84,12 +84,14 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
                 const job = jobResp.data;
 
                 if (job.status === 'COMPLETED') {
-                    // Normaliser les données reçues en préservant target et details
                     const result = job.result;
 
-                    // L'agent renvoie { result: [{ col: value, ... }], metadata: {...} }
-                    // On extrait la première valeur numérique de la première ligne si besoin
-                    const agentRow = result?.result?.[0];
+                    // Backend transformResult() stores multi-row as { data: [...], count: N }
+                    // and scalar as { value: N, raw: [...] } — read 'data', not 'result'
+                    const agentRows = result?.data || result?.result;
+                    const agentRow = Array.isArray(agentRows)
+                        ? agentRows[0]
+                        : (result?.raw?.[0] ?? null);
                     const agentScalar = agentRow
                         ? parseFloat(Object.values(agentRow).find((v) => v !== null && !isNaN(parseFloat(v as string))) as string)
                         : NaN;
@@ -100,7 +102,7 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
                         target: result?.target || null,
                         trend: result?.trend || 0,
                         period: period,
-                        details: result?.details || result?.result || agentRow || undefined
+                        details: result?.details || agentRows || agentRow || undefined
                     };
 
                     // Calculer le trend si non fourni

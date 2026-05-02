@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Users, Bell, Lock } from 'lucide-react';
+import { User, Users, Bell, Lock, Server } from 'lucide-react';
 import { ProfilePage } from '../profile/ProfilePage';
 import { CollaboratorsTab } from './CollaboratorsTab';
 import { SecurityTab } from './SecurityTab';
 import { NotificationsTab } from './NotificationsTab';
+import { AgentTab } from './AgentTab';
 
 export function SettingsPage() {
     const { t } = useTranslation();
@@ -38,6 +39,10 @@ export function SettingsPage() {
                         <Bell className="h-4 w-4" />
                         Notifications
                     </TabsTrigger>
+                    <TabsTrigger value="agent" className="rounded-lg gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 shadow-none border-none">
+                        <Server className="h-4 w-4" />
+                        Agent Sage
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="profile" className="mt-0 focus-visible:outline-none">
@@ -54,6 +59,10 @@ export function SettingsPage() {
 
                 <TabsContent value="notifications" className="mt-0 focus-visible:outline-none">
                     <NotificationsTab />
+                </TabsContent>
+
+                <TabsContent value="agent" className="mt-0 focus-visible:outline-none">
+                    <AgentTab />
                 </TabsContent>
             </Tabs>
         </div>
