@@ -71,9 +71,9 @@ export function LoginPage() {
       const status = (err as { response?: { status?: number } })?.response?.status;
       const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
-      if (status === 429 && errorMessage?.includes('verrouillé')) {
+      if (status === 429) {
         const lockoutRemainingSeconds = (err as { response?: { data?: { lockoutRemainingSeconds?: number } } })?.response?.data?.lockoutRemainingSeconds;
-        startLockoutCountdown(lockoutRemainingSeconds ?? LOGIN_LOCKOUT_TTL);
+        startLockoutCountdown(lockoutRemainingSeconds ?? 60);
       } else {
         const remainingAttempts = (err as { response?: { data?: { remainingAttempts?: number } } })?.response?.data?.remainingAttempts;
         if (remainingAttempts !== undefined && remainingAttempts > 0) {
