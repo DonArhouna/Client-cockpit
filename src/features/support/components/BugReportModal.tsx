@@ -71,6 +71,8 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [attachments, setAttachments] = React.useState<File[]>([]);
   const [isCapturing, setIsCapturing] = React.useState(false);
+  const [bugTypeOther, setBugTypeOther] = React.useState('');
+  const [moduleOther, setModuleOther] = React.useState('');
 
   const form = useForm<BugFormValues>({
     resolver: zodResolver(bugSchema),
@@ -129,6 +131,8 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
 
       const bugData = {
         ...values,
+        bug_type: values.bug_type.map(t => t === 'autre' && bugTypeOther.trim() ? bugTypeOther.trim() : t),
+        module: values.module === 'other' && moduleOther.trim() ? moduleOther.trim() : values.module,
         steps_to_reproduce: values.steps_to_reproduce ? values.steps_to_reproduce.split('\n') : [],
         attachments: attachmentUrls,
         ...techContext,
@@ -144,6 +148,8 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
 
       form.reset();
       setAttachments([]);
+      setBugTypeOther('');
+      setModuleOther('');
       onOpenChange?.(false);
     } catch (error) {
       toast({
@@ -194,7 +200,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                     name="title"
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Titre du problème</FormLabel>
+                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Titre du problème<span className="text-red-500 ml-0.5">*</span></FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="Ex: Erreur lors de l'affichage du graphique de revenus" 
@@ -212,7 +218,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                     name="bug_type"
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Type de bug</FormLabel>
+                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Type de bug<span className="text-red-500 ml-0.5">*</span></FormLabel>
                         <div className="flex flex-wrap gap-2">
                           {BUG_TYPES.map((type) => (
                             <button
@@ -224,6 +230,9 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                                   ? current.filter((v) => v !== type.id)
                                   : [...current, type.id];
                                 field.onChange(next);
+                                if (type.id === 'autre' && current.includes('autre')) {
+                                  setBugTypeOther('');
+                                }
                               }}
                               className={cn(
                                 "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
@@ -236,6 +245,14 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                             </button>
                           ))}
                         </div>
+                        {field.value?.includes('autre') && (
+                          <Input
+                            value={bugTypeOther}
+                            onChange={(e) => setBugTypeOther(e.target.value)}
+                            placeholder="Précisez le type de bug..."
+                            className="mt-1 rounded-xl border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50"
+                          />
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -246,8 +263,8 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                     name="module"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('support.fieldModule')}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('support.fieldModule')}<span className="text-red-500 ml-0.5">*</span></FormLabel>
+                        <Select onValueChange={(v) => { field.onChange(v); if (v !== 'other') setModuleOther(''); }} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50">
                               <SelectValue placeholder={t('support.fieldModulePlaceholder')} />
@@ -263,6 +280,14 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                             <SelectItem value="other">Autre</SelectItem>
                           </SelectContent>
                         </Select>
+                        {field.value === 'other' && (
+                          <Input
+                            value={moduleOther}
+                            onChange={(e) => setModuleOther(e.target.value)}
+                            placeholder="Précisez le module concerné..."
+                            className="mt-1 rounded-xl border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50"
+                          />
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -298,7 +323,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('support.fieldDescription')}</FormLabel>
+                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('support.fieldDescription')}<span className="text-red-500 ml-0.5">*</span></FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Décrivez précisément ce qui ne fonctionne pas..."
@@ -317,7 +342,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                     name="expected_behavior"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Résultat attendu</FormLabel>
+                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Résultat attendu<span className="text-slate-400 font-normal normal-case tracking-normal text-[10px] ml-1.5">(optionnel)</span></FormLabel>
                         <FormControl>
                           <Textarea 
                             placeholder="Ce qui aurait dû se passer..."
@@ -333,7 +358,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                     name="actual_behavior"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Résultat observé</FormLabel>
+                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Résultat observé<span className="text-slate-400 font-normal normal-case tracking-normal text-[10px] ml-1.5">(optionnel)</span></FormLabel>
                         <FormControl>
                           <Textarea 
                             placeholder="Ce qui s'est réellement passé..."
@@ -348,7 +373,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('support.fieldAttachments')}</FormLabel>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('support.fieldAttachments')}<span className="text-slate-400 font-normal normal-case tracking-normal text-[10px] ml-1.5">(optionnel)</span></FormLabel>
                     <div className="grid grid-cols-3 gap-2">
                       {attachments.map((file, i) => (
                         <div key={i} className="group relative aspect-square rounded-xl border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 overflow-hidden">
@@ -392,7 +417,7 @@ export function BugReportModal({ children, open, onOpenChange }: BugReportModalP
                     name="console_errors"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Logs / Erreurs console</FormLabel>
+                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-slate-500">Logs / Erreurs console<span className="text-slate-400 font-normal normal-case tracking-normal text-[10px] ml-1.5">(optionnel)</span></FormLabel>
                         <FormControl>
                           <Textarea 
                             placeholder="Copiez les erreurs techniques ici..."
