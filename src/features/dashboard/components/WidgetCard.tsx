@@ -19,6 +19,7 @@ import { TopClientsVisual } from './visuals/TopClientsVisual';
 import { ChartConfigDialog, type ChartAxisConfig } from './visuals/ChartConfigDialog';
 import { MapVisual } from './visuals/MapVisual';
 import { GaugeVisual } from './visuals/GaugeVisual';
+import { NlqVisual } from './visuals/NlqVisual';
 import { useKpiData } from '@/hooks/use-kpi-data';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 
@@ -41,7 +42,9 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
     const kpiKey = widget.kpiKey || (widget.config?.kpiKey as string) || widget.exposure || '';
     const normalizedWidget = { ...widget, kpiKey: kpiKey || null };
 
-    const { isDisabled, data: kpiData } = useKpiData(kpiKey || null);
+    // text/NLQ widgets are interactive interfaces — do not trigger the KPI data pipeline
+    const isNlqWidget = widget.vizType === 'text';
+    const { isDisabled, data: kpiData } = useKpiData(isNlqWidget ? null : (kpiKey || null));
 
     const isMainKpi = widget.id?.startsWith('main-kpi-');
     const isKpi = widget.type === 'kpi';
@@ -92,6 +95,9 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                     : 'area';
 
             return <ChartVisual kpiKey={kpiKey} vizType={chartType} isCompact={isCompact} chartConfig={storedChartConfig} />;
+        }
+        if (widget.vizType === 'text') {
+            return <NlqVisual isCompact={isCompact} dashboardId={widget.dashboardId} pageId={pageId} widgetId={widget.id} />;
         }
         if (widget.vizType === 'gauge') {
             return <GaugeVisual kpiKey={kpiKey} isCompact={isCompact} />;
@@ -191,13 +197,15 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                         )}
                     </div>
 
-                    {/* Right side: Quick Action (Filter) */}
-                    <div className="flex items-center gap-2 mr-6">
-                        <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-[11px] font-bold">
-                            <span className="opacity-50"><Filter className="h-3.5 w-3.5" /></span>
-                            Filtrer
-                        </Button>
-                    </div>
+                    {/* Right side: Quick Action (Filter) — hidden for NLQ widgets */}
+                    {!isNlqWidget && (
+                        <div className="flex items-center gap-2 mr-6">
+                            <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-[11px] font-bold">
+                                <span className="opacity-50"><Filter className="h-3.5 w-3.5" /></span>
+                                Filtrer
+                            </Button>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -215,8 +223,8 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                 ) : renderContent()}
             </div>
 
-            {/* ── Bottom: Zuri button for KPI cards only ──────── */}
-            {isKpi && (
+            {/* ── Bottom: Zuri button for KPI cards only (not NLQ — it IS the interface) ── */}
+            {isKpi && !isNlqWidget && (
                 <div className={cn("px-5 pb-4 flex justify-end", isCompact && "px-4 pb-3")}>
                     <button className={cn(
                         'flex items-center gap-1.5 text-[11px] font-bold transition-all',
