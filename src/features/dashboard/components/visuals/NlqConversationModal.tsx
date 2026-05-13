@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Send, Loader2, AlertTriangle, LayoutDashboard, SquarePen } from 'lucide-react';
+import { Sparkles, Send, Loader2, AlertTriangle, LayoutDashboard, SquarePen, History, ArrowLeft, ChevronRight } from 'lucide-react';
 import { nlqApi, jobsApi } from '@/api';
 import { useFilters } from '@/context/FilterContext';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
@@ -13,6 +13,15 @@ import {
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type MsgStatus = 'loading' | 'done' | 'error';
+
+interface NlqHistoryEntry {
+    queryText: string;
+    intentLabel: string;
+    intentKey: string;
+    vizType: string;
+    jobId: string;
+    ts: number;
+}
 
 interface NlqResult {
     value?: number | null;
@@ -178,7 +187,7 @@ const SUGGESTIONS = [
     'Taux de marge brute ce mois-ci ?',
 ];
 
-export function NlqConversationModal({ open, onClose, dashboardId, pageId, nlqWidgetId }: NlqConversationModalProps) {
+export function NlqConversationModal({ open, onClose, pageId, nlqWidgetId }: NlqConversationModalProps) {
     const { currency } = useFilters();
     const sym = currency === 'XOF' ? 'FCFA' : currency === 'EUR' ? '€' : '$';
     const { addWidgetToPage, removeWidgetFromPage } = usePersonalization();
@@ -188,6 +197,11 @@ export function NlqConversationModal({ open, onClose, dashboardId, pageId, nlqWi
     const [loading, setLoading] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    // History panel state
+    const [showHistory, setShowHistory] = useState(false);
+    const [historyEntries, setHistoryEntries] = useState<NlqHistoryEntry[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
     // "Add to dashboard" inline form state
     const [pendingDash, setPendingDash] = useState<{ msgId: string; name: string } | null>(null);
@@ -214,7 +228,18 @@ export function NlqConversationModal({ open, onClose, dashboardId, pageId, nlqWi
 
     useEffect(() => {
         if (open) setTimeout(() => inputRef.current?.focus(), 120);
+        if (!open) setShowHistory(false);
     }, [open]);
+
+    const openHistory = () => {
+        setShowHistory(true);
+        if (historyEntries.length > 0) return;
+        setHistoryLoading(true);
+        nlqApi.getHistory()
+            .then(({ data }) => setHistoryEntries(data))
+            .catch(() => {})
+            .finally(() => setHistoryLoading(false));
+    };
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -222,6 +247,42 @@ export function NlqConversationModal({ open, onClose, dashboardId, pageId, nlqWi
 
     const patchMsg = (id: string, patch: Partial<ChatMessage>) =>
         setMessages(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
+
+    const replayHistory = async (h: NlqHistoryEntry) => {
+        const ts = h.ts.toString();
+        const zuriId = `h-z-${ts}`;
+        setMessages([
+            { id: `h-u-${ts}`, role: 'user', text: h.queryText, status: 'done' },
+            { id: zuriId, role: 'zuri', text: '', status: 'loading' },
+        ]);
+        setShowHistory(false);
+        try {
+            const { data: job } = await jobsApi.getById(h.jobId);
+            if (job.status === 'COMPLETED') {
+                const res = job.result;
+                const rows = res?.data || res?.result;
+                setMessages(prev => prev.map(m => m.id === zuriId ? {
+                    ...m,
+                    status: 'done',
+                    result: {
+                        value: res?.current ?? res?.value ?? null,
+                        rows: Array.isArray(rows) ? rows : undefined,
+                        intentLabel: h.intentLabel,
+                        intentKey: h.intentKey,
+                        vizType: h.vizType,
+                    },
+                } : m));
+            } else {
+                setMessages(prev => prev.map(m => m.id === zuriId ? {
+                    ...m, status: 'error', error: 'Résultat non disponible. Posez à nouveau la question pour relancer l\'analyse.',
+                } : m));
+            }
+        } catch {
+            setMessages(prev => prev.map(m => m.id === zuriId ? {
+                ...m, status: 'error', error: 'Résultat non disponible. Posez à nouveau la question pour relancer l\'analyse.',
+            } : m));
+        }
+    };
 
     const submit = async () => {
         const q = query.trim();
@@ -303,20 +364,87 @@ export function NlqConversationModal({ open, onClose, dashboardId, pageId, nlqWi
                                 Assistant BI — Langage naturel
                             </div>
                         </div>
-                        {messages.length > 0 && (
+                        <div className="flex items-center gap-1 shrink-0">
                             <button
-                                onClick={() => { setMessages([]); setQuery(''); setPendingDash(null); setTimeout(() => inputRef.current?.focus(), 50); }}
-                                title="Nouvelle conversation"
-                                className="h-8 w-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                                onClick={openHistory}
+                                title="Historique"
+                                className={cn(
+                                    'h-8 w-8 rounded-xl flex items-center justify-center transition-colors',
+                                    showHistory
+                                        ? 'text-primary bg-primary/10'
+                                        : 'text-slate-400 hover:text-primary hover:bg-primary/10'
+                                )}
                             >
-                                <SquarePen className="h-4 w-4" />
+                                <History className="h-4 w-4" />
                             </button>
-                        )}
+                            {messages.length > 0 && !showHistory && (
+                                <button
+                                    onClick={() => { setMessages([]); setQuery(''); setPendingDash(null); setTimeout(() => inputRef.current?.focus(), 50); }}
+                                    title="Nouvelle conversation"
+                                    className="h-8 w-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors"
+                                >
+                                    <SquarePen className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
                     </DialogTitle>
                 </DialogHeader>
 
+                {/* ── History panel ── */}
+                {showHistory && (
+                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                        <div className="flex items-center gap-2 px-5 py-3 border-b border-border/40 flex-none">
+                            <button
+                                onClick={() => setShowHistory(false)}
+                                className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                            </button>
+                            <span className="text-[12px] font-bold text-slate-600 dark:text-slate-300">
+                                Historique des questions
+                            </span>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-1.5">
+                            {historyLoading && (
+                                <div className="flex items-center justify-center h-full gap-2 text-slate-400">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span className="text-[12px]">Chargement…</span>
+                                </div>
+                            )}
+                            {!historyLoading && historyEntries.length === 0 && (
+                                <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+                                    <History className="h-8 w-8 text-slate-200 dark:text-slate-700" />
+                                    <span className="text-[12px] text-slate-400">Aucune question posée récemment</span>
+                                </div>
+                            )}
+                            {historyEntries.map(h => (
+                                <button
+                                    key={h.ts}
+                                    onClick={() => replayHistory(h)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group w-full border border-transparent hover:border-border/50"
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[12px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                                            {h.queryText}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-[9px] font-bold uppercase tracking-wider text-primary/60">
+                                                {h.intentLabel}
+                                            </span>
+                                            <span className="text-[9px] text-slate-300 dark:text-slate-600">
+                                                {new Date(h.ts).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-primary transition-colors shrink-0" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Messages ── */}
-                <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-4 min-h-0">
+                {!showHistory && <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-4 min-h-0">
 
                     {/* Empty state */}
                     {messages.length === 0 && (
@@ -394,7 +522,7 @@ export function NlqConversationModal({ open, onClose, dashboardId, pageId, nlqWi
                                         <ResultBlock result={msg.result} sym={sym} />
 
                                         {/* Add to dashboard */}
-                                        {pageId && msg.result.intentKey && (
+                                        {pageId && msg.result.intentKey && ((msg.result.rows?.length ?? 0) > 0 || msg.result.value != null) && (
                                             pendingDash?.msgId === msg.id ? (
                                                 <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-slate-50 dark:bg-slate-800/50 p-3">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -441,10 +569,10 @@ export function NlqConversationModal({ open, onClose, dashboardId, pageId, nlqWi
                     ))}
 
                     <div ref={bottomRef} />
-                </div>
+                </div>}
 
-                {/* ── Input ── */}
-                <div className="flex-none border-t border-border/50 px-4 py-3 flex items-end gap-2.5 bg-white dark:bg-slate-900">
+                {/* ── Input (masqué quand panneau history ouvert) ── */}
+                {!showHistory && <div className="flex-none border-t border-border/50 px-4 py-3 flex items-end gap-2.5 bg-white dark:bg-slate-900">
                     <textarea
                         ref={inputRef}
                         value={query}
@@ -466,7 +594,7 @@ export function NlqConversationModal({ open, onClose, dashboardId, pageId, nlqWi
                             ? <Loader2 className="h-4 w-4 animate-spin" />
                             : <Send className="h-4 w-4" />}
                     </Button>
-                </div>
+                </div>}
 
             </DialogContent>
         </Dialog>

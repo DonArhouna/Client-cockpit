@@ -382,6 +382,16 @@ export const nlqApi = {
     name?: string;
     position?: WidgetPosition;
   }) => api.post('/nlq/add-to-dashboard', data),
+
+  getHistory: () =>
+    api.get<Array<{
+      queryText: string;
+      intentLabel: string;
+      intentKey: string;
+      vizType: string;
+      jobId: string;
+      ts: number;
+    }>>('/nlq/history'),
 };
 
 // Agents Jobs
