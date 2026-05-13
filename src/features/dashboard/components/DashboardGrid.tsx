@@ -18,17 +18,31 @@ interface DashboardGridProps {
 
 export function DashboardGrid({ pageId, widgets, isEditing, onLayoutChangeAction, onRemoveWidget }: DashboardGridProps) {
 
+    const getDefaultSize = (widget: Widget): { w: number; h: number } => {
+        const type = widget.type;
+        const viz = widget.vizType ?? '';
+        if (type === 'table' || viz === 'table') return { w: 8, h: 5 };
+        if (type === 'kpi' || viz === 'card') return { w: 3, h: 2 };
+        if (viz === 'gauge') return { w: 3, h: 3 };
+        if (viz === 'map') return { w: 6, h: 4 };
+        if (type === 'graph' || ['area', 'line', 'bar', 'pie', 'donut'].includes(viz)) return { w: 6, h: 4 };
+        return { w: 4, h: 3 };
+    };
+
     // Transform widgets array to react-grid-layout expected format
     const generateLayout = (widgets: Widget[]): LayoutItem[] => {
-        return widgets.map((widget) => ({
-            i: widget.id,
-            x: widget.position?.x ?? 0,
-            y: widget.position?.y ?? 0,
-            w: widget.position?.w ?? 4, // Largeur par défaut
-            h: widget.position?.h ?? 3, // Hauteur par défaut
-            minW: 1,
-            minH: 1,
-        }));
+        return widgets.map((widget) => {
+            const defaults = getDefaultSize(widget);
+            return {
+                i: widget.id,
+                x: widget.position?.x ?? 0,
+                y: widget.position?.y ?? 0,
+                w: widget.position?.w ?? defaults.w,
+                h: widget.position?.h ?? defaults.h,
+                minW: 2,
+                minH: 2,
+            };
+        });
     };
 
     const [currentLayout, setCurrentLayout] = useState<LayoutItem[]>(generateLayout(widgets));

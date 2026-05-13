@@ -48,6 +48,7 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
 
     const isMainKpi = widget.id?.startsWith('main-kpi-');
     const isKpi = widget.type === 'kpi';
+    const isTable = widget.type === 'table' || widget.vizType === 'table';
     const isCompact = isMainKpi ? false : !!(h && h <= 1);
     const showFullButton = !isCompact && (h ? h >= 3 : true) && (!w || w >= 3);
 
@@ -211,7 +212,8 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
 
             {/* ── Content ── */}
             <div className={cn(
-                'flex-1 overflow-hidden',
+                'flex-1',
+                isTable ? 'overflow-auto' : 'overflow-hidden',
                 isKpi ? (isEditing ? 'p-5 pt-8' : (isCompact ? 'p-4 pb-2' : 'p-5')) : 'px-5 pb-5 pt-1'
             )}>
                 {isDisabled ? (
