@@ -1,6 +1,6 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Trash2, GripHorizontal, Sparkles, Filter, PowerOff } from 'lucide-react';
+import { MoreVertical, Trash2, GripHorizontal, Sparkles, Filter, PowerOff, Settings2 } from 'lucide-react';
 import { Widget } from '@/types';
 import {
     DropdownMenu,
@@ -16,7 +16,11 @@ import { ChartVisual } from './visuals/ChartVisual';
 import { VarianceVisual } from './visuals/VarianceVisual';
 import { ReceivablesVisual } from './visuals/ReceivablesVisual';
 import { TopClientsVisual } from './visuals/TopClientsVisual';
+import { ChartConfigDialog, type ChartAxisConfig } from './visuals/ChartConfigDialog';
+import { MapVisual } from './visuals/MapVisual';
+import { GaugeVisual } from './visuals/GaugeVisual';
 import { useKpiData } from '@/hooks/use-kpi-data';
+import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 
 interface WidgetCardProps {
     pageId: string;
@@ -31,46 +35,78 @@ interface WidgetCardProps {
 
 export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, className, style }: WidgetCardProps) {
     const { t } = useTranslation();
-    const { isDisabled } = useKpiData(widget.kpiKey || null);
+    const { updateWidgetConfig } = usePersonalization();
+
+    // kpiKey peut être à la racine, dans config, ou dans exposure selon l'origine du widget
+    const kpiKey = widget.kpiKey || (widget.config?.kpiKey as string) || widget.exposure || '';
+    const normalizedWidget = { ...widget, kpiKey: kpiKey || null };
+
+    const { isDisabled, data: kpiData } = useKpiData(kpiKey || null);
 
     const isMainKpi = widget.id?.startsWith('main-kpi-');
     const isKpi = widget.type === 'kpi';
     const isCompact = isMainKpi ? false : !!(h && h <= 1);
     const showFullButton = !isCompact && (h ? h >= 3 : true) && (!w || w >= 3);
 
+    // Chart config state
+    const [configDialogOpen, setConfigDialogOpen] = useState(false);
+    const storedChartConfig = widget.config?.chartConfig as ChartAxisConfig | undefined;
+
+    // Detect if this widget routes to ChartVisual (all chart types)
+    const isChartWidget = (
+        (widget.type === 'graph' || widget.vizType === 'area' || widget.vizType === 'line'
+            || kpiKey.includes('evolution') || kpiKey.includes('prevision')
+            || widget.vizType === 'bar' || widget.vizType === 'pie' || widget.vizType === 'donut')
+        && kpiKey !== 'balance_agee_clients' && kpiKey !== 'accounts_receivable_age'
+        && !(widget.vizType === 'bar' && widget.name.includes('Créances'))
+        && kpiKey !== 'ecart_budget_realise'
+    );
+
+    // Extract column names from KPI data for the config dialog
+    const detailItems: any[] = (() => {
+        const raw = kpiData?.details?.items ?? kpiData?.details;
+        return Array.isArray(raw) ? raw : [];
+    })();
+    const availableKeys = detailItems[0] ? Object.keys(detailItems[0]).filter(k => k !== '') : [];
+
     // ── Visual renderer ──────────────────────────────────────────
     const renderContent = () => {
         if (widget.type === 'kpi' && widget.vizType === 'card') {
-            return <KpiVisual widget={widget} isCompact={isCompact} />;
+            return <KpiVisual widget={normalizedWidget} isCompact={isCompact} />;
         }
-        if (widget.kpiKey === 'ecart_budget_realise' || widget.kpiKey?.includes('budget')) {
-            return <VarianceVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
+        if (kpiKey === 'balance_agee_clients' || kpiKey === 'accounts_receivable_age'
+            || (widget.vizType === 'bar' && widget.name.includes('Créances'))) {
+            return <ReceivablesVisual kpiKey={kpiKey} isCompact={isCompact} />;
+        }
+        if (kpiKey === 'ecart_budget_realise') {
+            return <VarianceVisual kpiKey={kpiKey} isCompact={isCompact} />;
         }
         if (widget.type === 'graph' || widget.vizType === 'area' || widget.vizType === 'line'
-            || widget.kpiKey?.includes('evolution') || widget.kpiKey?.includes('prevision')
+            || kpiKey.includes('evolution') || kpiKey.includes('prevision')
             || widget.vizType === 'bar' || widget.vizType === 'pie' || widget.vizType === 'donut') {
-            
-            // Standard chart mapping
-            const chartType = (widget.vizType === 'pie' || widget.vizType === 'donut') 
-                ? widget.vizType 
+
+            const chartType = (widget.vizType === 'pie' || widget.vizType === 'donut')
+                ? widget.vizType
                 : (widget.vizType === 'area' || widget.vizType === 'line' || widget.vizType === 'bar')
                     ? widget.vizType
-                    : 'area'; // default
+                    : 'area';
 
-            return <ChartVisual kpiKey={widget.kpiKey || ''} vizType={chartType} isCompact={isCompact} />;
+            return <ChartVisual kpiKey={kpiKey} vizType={chartType} isCompact={isCompact} chartConfig={storedChartConfig} />;
         }
-        if (widget.kpiKey === 'balance_agee_clients' || widget.kpiKey === 'accounts_receivable_age'
-            || (widget.vizType === 'bar' && widget.name.includes('Créances'))) {
-            return <ReceivablesVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
+        if (widget.vizType === 'gauge') {
+            return <GaugeVisual kpiKey={kpiKey} isCompact={isCompact} />;
+        }
+        if (widget.vizType === 'map') {
+            return <MapVisual kpiKey={kpiKey} isCompact={isCompact} />;
         }
         if (widget.type === 'table' || widget.vizType === 'table') {
-            if (widget.kpiKey?.includes('top_clients') || widget.kpiKey?.includes('top10_clients')) {
-                return <TopClientsVisual kpiKey={widget.kpiKey || ''} isCompact={isCompact} />;
+            if (kpiKey.includes('top_clients') || kpiKey.includes('top10_clients')) {
+                return <TopClientsVisual kpiKey={kpiKey} isCompact={isCompact} />;
             }
-            return <TableVisual 
+            return <TableVisual
                 pageId={pageId}
-                widget={widget} 
-                isCompact={isCompact} 
+                widget={normalizedWidget}
+                isCompact={isCompact}
             />;
         }
         return (
@@ -118,9 +154,18 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                             <DropdownMenuItem className="text-[13px]">
                                 {t('dashboard.export', 'Exporter les données')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-[13px]">
-                                {t('dashboard.analyze', 'Analyse détaillée')}
-                            </DropdownMenuItem>
+                            {isChartWidget && (
+                                <DropdownMenuItem
+                                    className="text-[13px] gap-2"
+                                    onClick={() => setConfigDialogOpen(true)}
+                                >
+                                    <Settings2 className="h-3.5 w-3.5 text-primary" />
+                                    {t('dashboard.configureChart', 'Configurer le graphique')}
+                                    {storedChartConfig?.nameKey && (
+                                        <span className="ml-auto text-[10px] text-amber-500 font-bold">Manuel</span>
+                                    )}
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -139,6 +184,11 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                         <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">
                             {widget.name}
                         </h3>
+                        {storedChartConfig?.nameKey && (
+                            <span className="text-[9px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full shrink-0">
+                                Axes configurés
+                            </span>
+                        )}
                     </div>
 
                     {/* Right side: Quick Action (Filter) */}
@@ -177,6 +227,20 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                         {showFullButton && <span>Demander à Zuri</span>}
                     </button>
                 </div>
+            )}
+
+            {/* ── Chart config dialog ── */}
+            {isChartWidget && configDialogOpen && (
+                <ChartConfigDialog
+                    open={configDialogOpen}
+                    onClose={() => setConfigDialogOpen(false)}
+                    allKeys={availableKeys}
+                    currentConfig={storedChartConfig ?? {}}
+                    onSave={(cfg) => {
+                        updateWidgetConfig(pageId, widget.id, { chartConfig: cfg });
+                        setConfigDialogOpen(false);
+                    }}
+                />
             )}
         </div>
     );

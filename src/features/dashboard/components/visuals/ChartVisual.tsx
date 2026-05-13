@@ -16,13 +16,14 @@ interface ChartVisualProps {
     kpiKey: string;
     vizType?: 'bar' | 'area' | 'line' | 'pie' | 'donut';
     isCompact?: boolean;
+    chartConfig?: { nameKey?: string; valueKey?: string };
 }
 
 /**
  * Generic Chart Visualization Component
  * Consolidates Bar, Line, Area, and Pie charts.
  */
-export function ChartVisual({ kpiKey, vizType = 'bar', isCompact }: ChartVisualProps) {
+export function ChartVisual({ kpiKey, vizType = 'bar', isCompact, chartConfig }: ChartVisualProps) {
     const { currency } = useFilters();
     const { theme } = useTheme();
     const { data: kpiData, isLoading } = useKpiData(kpiKey);
@@ -35,11 +36,53 @@ export function ChartVisual({ kpiKey, vizType = 'bar', isCompact }: ChartVisualP
     const rawItems = kpiData?.details?.items ?? kpiData?.details ?? [];
     const items = Array.isArray(rawItems) ? rawItems : [];
 
+    // Détection intelligente des clés : essaie les clés connues, puis fallback dynamique
+    const NAME_KEYS = ['month', 'Month', 'periode', 'label', 'categorie', 'name', 'libelle',
+        'intitule', 'code_axe', 'classe', 'axe', 'section', 'departement', 'type', 'tiers', 'client'];
+    const VALUE_KEYS = ['revenue', 'CA', 'ca_analytique', 'amount', 'value', 'total', 'montant',
+        'valeur', 'solde', 'sum', 'ca', 'ht', 'ttc', 'credit', 'debit'];
+
+    const firstItem = items[0] ?? {};
+    const allKeys = Object.keys(firstItem);
+
+    // Valeur "purement numérique" : Number() strict (pas parseFloat qui accepte "2021-12" → 2021)
+    const isPureNumeric = (v: any) => typeof v === 'number' || (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v)));
+
+    // Candidats nom : clés string qui NE sont PAS des nombres purs (ex: "2021-12", "Produits")
+    const nameCandidates = [
+        ...NAME_KEYS.filter(k => allKeys.includes(k) && firstItem[k] != null),
+        ...allKeys.filter(k => k !== '' && !isPureNumeric(firstItem[k]) && !NAME_KEYS.includes(k)),
+    ];
+    // Parmi les candidats, préférer celui avec le plus de valeurs distinctes (meilleur label)
+    const nameKey = nameCandidates.length > 0
+        ? nameCandidates.reduce((best, k) => {
+            const uniq = new Set(items.map((i: any) => i[k])).size;
+            const bestUniq = new Set(items.map((i: any) => i[best])).size;
+            return uniq > bestUniq ? k : best;
+        })
+        : undefined;
+
+    // Candidats valeur : clés purement numériques, exclure la clé nom déjà sélectionnée
+    const valueKey = VALUE_KEYS.find(k => allKeys.includes(k) && firstItem[k] != null)
+        ?? allKeys.find(k => k !== nameKey && k !== '' && isPureNumeric(firstItem[k]))
+        ?? allKeys.find(k => k !== '' && isPureNumeric(firstItem[k]));
+
+    // Détection scalaire : 1 seule ligne et même clé pour nom+valeur (ex: { "CA_YTD": "285634993" })
+    const isScalar = items.length === 1 && (nameKey === valueKey || nameCandidates.length === 0);
+
+    // Pour les non-scalaires : si nameKey et valueKey identiques, utiliser l'index comme label
+    const effectiveNameKey = (!isScalar && nameKey === valueKey) ? undefined : nameKey;
+
+    // Config manuelle (Power BI-like) — override auto-détection si fournie
+    const resolvedNameKey = chartConfig?.nameKey ?? effectiveNameKey;
+    const resolvedValueKey = chartConfig?.valueKey ?? valueKey;
+
     const chartData = items.map((item: any, idx: number) => ({
-        name: item.month ?? item.Month ?? item.periode ?? item.label ?? item.categorie ?? item.name ?? `? ${idx + 1}`,
-        value: item.revenue ?? item.CA ?? item.amount ?? item.value ?? item.total ?? 0,
+        name: resolvedNameKey && item[resolvedNameKey] != null ? String(item[resolvedNameKey]) : `${idx + 1}`,
+        value: resolvedValueKey != null ? (parseFloat(item[resolvedValueKey]) || 0) : 0,
         sorties: item.charges ?? item.expenses ?? item.costs ?? 0,
     }));
+
 
     if (isLoading) {
         return (
@@ -53,6 +96,27 @@ export function ChartVisual({ kpiKey, vizType = 'bar', isCompact }: ChartVisualP
         return (
             <div className="flex items-center justify-center h-full text-slate-400 italic text-xs py-8">
                 Aucune donnée disponible
+            </div>
+        );
+    }
+
+    // ── SCALAIRE : 1 valeur unique → affichage KPI card ──────────
+    if (isScalar) {
+        const scalarValue = chartData[0].value;
+        const label = valueKey ? valueKey.replace(/_/g, ' ') : 'Valeur';
+        const formatted = scalarValue >= 1_000_000
+            ? `${(scalarValue / 1_000_000).toFixed(2)}M`
+            : scalarValue >= 1_000
+                ? `${(scalarValue / 1_000).toFixed(1)}k`
+                : scalarValue.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+        return (
+            <div className={cn("flex flex-col h-full items-center justify-center gap-2", isCompact ? "gap-1" : "gap-3")}>
+                <span className={cn("font-black tabular-nums text-slate-900 dark:text-slate-100 tracking-tight", isCompact ? "text-2xl" : "text-4xl")}>
+                    {formatted} <span className="text-primary text-[0.5em]">{currencySymbol}</span>
+                </span>
+                {!isCompact && (
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
+                )}
             </div>
         );
     }
