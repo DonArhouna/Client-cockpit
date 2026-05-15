@@ -516,13 +516,35 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-4 pt-2 pb-6 space-y-6 no-scrollbar">
 
-                {/* Modèles de widgets — groupés par vizType */}
-                {vizTypeGroups.length > 0 && (
+                {/* Modèles de widgets */}
+                {(vizTypeGroups.length > 0 || (searchQuery && filteredTemplates.length > 0)) && (
                 <div className="space-y-2">
                     {!searchQuery && <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-1">Modèles</p>}
                     {isLoadingTemplates ? (
                         <Skeleton className="h-10 w-full rounded-xl" />
+                    ) : searchQuery ? (
+                        // Mode recherche : afficher chaque template directement, cliquable en 1 clic
+                        filteredTemplates.map((tpl) => {
+                            const meta = VIZ_GROUP_META[tpl.vizType] ?? { label: tpl.vizType, Icon: PlusIcon };
+                            return (
+                                <div
+                                    key={tpl.id}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/5 transition-all cursor-pointer group"
+                                    onClick={() => selectTemplate(tpl)}
+                                >
+                                    <div className="p-1.5 bg-primary/10 rounded-lg group-hover:bg-primary/15 transition-colors flex-shrink-0">
+                                        <meta.Icon className="h-3.5 w-3.5 text-primary" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-primary truncate block">{tpl.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium">{meta.label}</span>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-primary opacity-0 group-hover:opacity-100 transition-all flex-shrink-0" />
+                                </div>
+                            );
+                        })
                     ) : (
+                        // Mode normal : groupé par vizType
                         vizTypeGroups.map(({ vizType, label, Icon, templates }) => (
                             <div
                                 key={vizType}
