@@ -1,5 +1,5 @@
 import { Input } from '@/components/ui/input';
-import { X as XIcon, Plus as PlusIcon, Search as SearchIcon, Brain, ArrowLeft, ChevronRight, LayoutGrid, Check, Package } from 'lucide-react';
+import { X as XIcon, Plus as PlusIcon, Search as SearchIcon, Brain, ArrowLeft, ChevronRight, LayoutGrid, Check, Package, BarChart2, LineChart, PieChart, Gauge, Table, CreditCard, Map, Type, Crosshair, ImageIcon, GitFork } from 'lucide-react';
 import { useKpiDefinitions, useWidgetTemplates, useKpiPacks } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useMemo } from 'react';
@@ -14,9 +14,13 @@ import { Button } from '@/components/ui/button';
 
 const CHART_VIZ_TYPES = new Set(['bar', 'line', 'area', 'pie', 'donut']);
 const EXCLUDED_KPIS = new Set(['balance_agee_clients', 'accounts_receivable_age', 'ecart_budget_realise']);
+const NO_AXIS_SUBTYPES = new Set(['funnel', 'ribbon']);
+const NO_AXIS_VIZ_TYPES = new Set(['scatter', 'treemap', 'gauge', 'map', 'text', 'image', 'ai_insights', 'decomp_tree']);
 
-const needsChartConfig = (vizType?: string, kpiKey?: string): boolean => {
+const needsChartConfig = (vizType?: string, kpiKey?: string, subtype?: string): boolean => {
     if (kpiKey && EXCLUDED_KPIS.has(kpiKey)) return false;
+    if (NO_AXIS_VIZ_TYPES.has(vizType ?? '')) return false;
+    if (subtype && NO_AXIS_SUBTYPES.has(subtype)) return false;
     return CHART_VIZ_TYPES.has(vizType ?? '')
         || (kpiKey?.includes('evolution') ?? false)
         || (kpiKey?.includes('prevision') ?? false)
@@ -27,6 +31,7 @@ interface PendingChartWidgetData {
     name: string;
     type: string;
     vizType?: string;
+    subtype?: string;
     kpiKey?: string;
     config?: Record<string, any>;
 }
@@ -159,7 +164,7 @@ function PackSelectionDialog({
 
 interface WidgetSidebarProps {
     onClose: () => void;
-    onAddWidget: (widgetData: { name: string, type: string, vizType?: string, kpiKey?: string, config?: any }) => void;
+    onAddWidget: (widgetData: { name: string, type: string, vizType?: string, subtype?: string, kpiKey?: string, config?: any }) => void;
     allowedDomains?: string[];
 }
 
@@ -205,15 +210,26 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
     const { data: kpiPacks, isLoading: isLoadingPacks } = useKpiPacks();
     const [searchQuery, setSearchQuery] = useState('');
     const [pendingTemplate, setPendingTemplate] = useState<WidgetTemplate | null>(null);
+    const [pendingVizGroup, setPendingVizGroup] = useState<{ label: string; templates: WidgetTemplate[] } | null>(null);
     const [kpiSearchQuery, setKpiSearchQuery] = useState('');
     const [pendingChartWidget, setPendingChartWidget] = useState<PendingChartWidgetData | null>(null);
     const [pendingPack, setPendingPack] = useState<KpiPack | null>(null);
 
+    const NO_KPI_TYPES = new Set(['image', 'ai_insights', 'decomp_tree']);
+
     const handleAddWidget = (widgetData: PendingChartWidgetData) => {
-        if (needsChartConfig(widgetData.vizType, widgetData.kpiKey)) {
+        if (needsChartConfig(widgetData.vizType, widgetData.kpiKey, widgetData.subtype)) {
             setPendingChartWidget(widgetData);
         } else {
             onAddWidget(widgetData);
+        }
+    };
+
+    const selectTemplate = (tpl: WidgetTemplate) => {
+        if (NO_KPI_TYPES.has(tpl.vizType)) {
+            onAddWidget({ name: tpl.name, type: 'template', vizType: tpl.vizType, subtype: tpl.subtype, config: {} });
+        } else {
+            setPendingTemplate(tpl);
         }
     };
 
@@ -242,13 +258,43 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
         })).filter(cat => cat.items.length > 0);
     }, [categories, searchQuery]);
 
+    const VIZ_GROUP_META: Record<string, { label: string; Icon: React.ElementType }> = {
+        card:       { label: 'Carte KPI',              Icon: CreditCard },
+        bar:        { label: 'Barres / Histogramme',   Icon: BarChart2 },
+        line:       { label: 'Courbe / Aires',         Icon: LineChart },
+        gauge:      { label: 'Jauge / Objectif',       Icon: Gauge },
+        table:      { label: 'Tableau / Matrice',      Icon: Table },
+        pie:        { label: 'Camembert / Anneau',     Icon: PieChart },
+        map:        { label: 'Carte Géographique',     Icon: Map },
+        text:       { label: 'Texte / Narratif',       Icon: Type },
+        scatter:    { label: 'Nuage de Points',        Icon: Crosshair },
+        treemap:    { label: 'Treemap',                Icon: LayoutGrid },
+        image:      { label: 'Image',                  Icon: ImageIcon },
+        ai_insights:{ label: 'Influenceurs Clé',       Icon: Brain },
+        decomp_tree:{ label: 'Arborescence',           Icon: GitFork },
+    };
+
     const filteredTemplates = useMemo(() => {
         const base = (widgetTemplates || []).filter(tpl => tpl.isActive);
         if (!searchQuery) return base;
-        return base.filter(tpl => 
+        return base.filter(tpl =>
             tpl.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [widgetTemplates, searchQuery]);
+
+    const vizTypeGroups = useMemo(() => {
+        const groups: Record<string, WidgetTemplate[]> = {};
+        filteredTemplates.forEach(tpl => {
+            if (!groups[tpl.vizType]) groups[tpl.vizType] = [];
+            groups[tpl.vizType].push(tpl);
+        });
+        return Object.entries(groups).map(([vizType, templates]) => ({
+            vizType,
+            templates,
+            ...( VIZ_GROUP_META[vizType] ?? { label: templates[0]?.name ?? vizType, Icon: PlusIcon }),
+        }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filteredTemplates]);
 
     const filteredPacks = useMemo(() => {
         const base = (kpiPacks || []).filter(pack => pack.isActive);
@@ -259,16 +305,74 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
         );
     }, [kpiPacks, searchQuery]);
 
+    // ── Étape 1b : sélection variante dans un groupe vizType ──────
+    if (pendingVizGroup && !pendingTemplate) {
+        const { label, templates } = pendingVizGroup;
+        return (
+            <div className="w-[300px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 rounded-[2rem] shadow-2xl shadow-slate-200/50 dark:shadow-none h-full flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center gap-3 px-5 pt-6 pb-4 flex-shrink-0">
+                    <button
+                        onClick={() => setPendingVizGroup(null)}
+                        className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.15em] opacity-80">Type de graphique</p>
+                        <p className="font-black text-sm text-slate-900 dark:text-white truncate">{label}</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                        <XIcon className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <p className="text-xs text-slate-400 dark:text-slate-500 px-6 pb-3 flex-shrink-0">
+                    Choisissez une variante
+                </p>
+
+                {/* Variant list */}
+                <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2 no-scrollbar">
+                    {templates.map((tpl) => (
+                        <div
+                            key={tpl.id}
+                            className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary/5 hover:text-primary transition-colors cursor-pointer group"
+                            onClick={() => selectTemplate(tpl)}
+                        >
+                            <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-sm text-slate-700 dark:text-slate-200 group-hover:text-primary truncate">
+                                    {tpl.name}
+                                </div>
+                                {tpl.description && (
+                                    <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{tpl.description}</p>
+                                )}
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-primary opacity-0 group-hover:opacity-100 transition-all flex-shrink-0" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     // ── Étape 2 : sélection KPI pour un template ──────────────────
     if (pendingTemplate) {
         const VIZ_COMPAT: Record<string, string[]> = {
-            card: ['card'],
-            pie: ['pie', 'donut'],
-            donut: ['pie', 'donut'],
-            area: ['area', 'line', 'bar'],
-            line: ['area', 'line', 'bar'],
-            bar: ['area', 'line', 'bar'],
-            table: ['table'],
+            card:        ['card', 'kpi'],
+            pie:         ['pie', 'donut'],
+            donut:       ['pie', 'donut'],
+            area:        ['area', 'line', 'bar'],
+            line:        ['area', 'line', 'bar'],
+            bar:         ['area', 'line', 'bar'],
+            table:       ['table'],
+            gauge:       ['gauge', 'card', 'kpi'],
+            map:         ['map'],
+            text:        ['text', 'card', 'kpi', 'bar', 'line', 'area', 'pie', 'gauge', 'table', 'map'],
+            scatter:     ['bar', 'line', 'area', 'table'],
+            treemap:     ['bar', 'pie', 'table'],
         };
         const compatibleVizTypes = VIZ_COMPAT[pendingTemplate.vizType] ?? [pendingTemplate.vizType];
         const compatibleKpis = (kpis ?? []).filter(kpi => kpi.isActive && compatibleVizTypes.includes(kpi.defaultVizType));
@@ -336,10 +440,12 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
                                         name: kpi.name,
                                         type: 'kpi',
                                         vizType: pendingTemplate.vizType,
+                                        subtype: pendingTemplate.subtype,
                                         kpiKey: kpi.key,
                                         config: { description: kpi.description, unit: kpi.unit },
                                     };
                                     setPendingTemplate(null);
+                                    setPendingVizGroup(null);
                                     setKpiSearchQuery('');
                                     handleAddWidget(widgetData);
                                 }}
@@ -410,26 +516,37 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-4 pt-2 pb-6 space-y-6 no-scrollbar">
 
-                {/* Modèles de widgets */}
-                {filteredTemplates.length > 0 && (
+                {/* Modèles de widgets — groupés par vizType */}
+                {vizTypeGroups.length > 0 && (
                 <div className="space-y-2">
                     {!searchQuery && <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-1">Modèles</p>}
                     {isLoadingTemplates ? (
                         <Skeleton className="h-10 w-full rounded-xl" />
                     ) : (
-                        filteredTemplates.map((tpl) => (
+                        vizTypeGroups.map(({ vizType, label, Icon, templates }) => (
                             <div
-                                key={tpl.id}
+                                key={vizType}
                                 className={cn(
                                     'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group',
                                     'hover:bg-primary/5 hover:text-primary'
                                 )}
-                                onClick={() => setPendingTemplate(tpl)}
+                                onClick={() => {
+                                    if (templates.length === 1) {
+                                        selectTemplate(templates[0]);
+                                    } else {
+                                        setPendingVizGroup({ label, templates });
+                                    }
+                                }}
                             >
                                 <div className="p-1.5 bg-primary/10 rounded-lg group-hover:bg-primary/15 transition-colors flex-shrink-0">
-                                    <PlusIcon className="h-3.5 w-3.5 text-primary" />
+                                    <Icon className="h-3.5 w-3.5 text-primary" />
                                 </div>
-                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-primary truncate flex-1">{tpl.name}</span>
+                                <div className="flex-1 min-w-0">
+                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-primary truncate block">{label}</span>
+                                    {templates.length > 1 && (
+                                        <span className="text-[10px] text-slate-400 font-medium">{templates.length} variantes</span>
+                                    )}
+                                </div>
                                 <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-primary opacity-0 group-hover:opacity-100 transition-all flex-shrink-0" />
                             </div>
                         ))

@@ -3,6 +3,7 @@ import {
     ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
     CartesianGrid, Tooltip, Legend, ReferenceLine, Label,
+    FunnelChart, Funnel, LabelList, ComposedChart,
 } from 'recharts';
 import { useFilters } from '@/context/FilterContext';
 import { useKpiData } from '@/hooks/use-kpi-data';
@@ -20,6 +21,7 @@ const SECONDARY_COLOR = '#f59e0b';
 interface ChartVisualProps {
     kpiKey: string;
     vizType?: 'bar' | 'area' | 'line' | 'pie' | 'donut';
+    subtype?: string;
     isCompact?: boolean;
     chartConfig?: { nameKey?: string; valueKey?: string };
 }
@@ -68,7 +70,7 @@ function fmtValue(v: number, unit: UnitType, sym: string): string {
     return `${v.toLocaleString('fr-FR')} ${sym}`;
 }
 
-export function ChartVisual({ kpiKey, vizType = 'bar', isCompact, chartConfig }: ChartVisualProps) {
+export function ChartVisual({ kpiKey, vizType = 'bar', subtype, isCompact, chartConfig }: ChartVisualProps) {
     const { currency } = useFilters();
     const { theme } = useTheme();
     const { data: kpiData, isLoading } = useKpiData(kpiKey);
@@ -248,7 +250,7 @@ export function ChartVisual({ kpiKey, vizType = 'bar', isCompact, chartConfig }:
 
     // ── PIE / DONUT ──────────────────────────────────────────────
     if (vizType === 'pie' || vizType === 'donut') {
-        const isDonut = vizType === 'donut';
+        const isDonut = vizType === 'donut' || subtype === 'donut';
         const innerRadius = isCompact ? 28 : (isDonut ? 52 : 0);
         const outerRadius = isCompact ? 46 : 82;
 
@@ -367,16 +369,128 @@ export function ChartVisual({ kpiKey, vizType = 'bar', isCompact, chartConfig }:
         );
     }
 
+    // ── Helpers subtype ──────────────────────────────────────────
+    const normalizeToPercent = (data: typeof chartData) => {
+        return data.map(d => {
+            const tot = (d.value || 0) + (d.secondary || 0);
+            if (tot === 0) return d;
+            return {
+                ...d,
+                value: Math.round((d.value / tot) * 100),
+                secondary: d.secondary !== undefined ? Math.round(((d.secondary || 0) / tot) * 100) : undefined,
+            };
+        });
+    };
+
     // ── BAR ──────────────────────────────────────────────────────
     const renderChart = () => {
         if (vizType === 'bar') {
+            const isStacked = subtype === 'stacked' || subtype === 'stacked_h' || subtype === 'stacked100' || subtype === 'stacked100_h';
+            const is100 = subtype === 'stacked100' || subtype === 'stacked100_h';
+            const isHorizontal = subtype === 'stacked_h' || subtype === 'grouped_h' || subtype === 'stacked100_h';
+            const isFunnel = subtype === 'funnel';
+            const isCombo = subtype === 'combo_stacked' || subtype === 'combo_stacked100';
+            const isCombo100 = subtype === 'combo_stacked100';
+
+            // ── FUNNEL ────────────────────────────────────────────
+            if (isFunnel) {
+                const funnelData = [...chartData]
+                    .sort((a, b) => b.value - a.value)
+                    .map((d, i) => ({ ...d, fill: COLORS[i % COLORS.length] }));
+                return (
+                    <FunnelChart margin={commonProps.margin}>
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: isDark ? '#0f172a' : '#fff',
+                                borderRadius: '12px',
+                                border: 'none',
+                                boxShadow: '0 8px 16px -4px rgba(0,0,0,0.12)',
+                            }}
+                        />
+                        <Funnel dataKey="value" data={funnelData} isAnimationActive>
+                            {!isCompact && <LabelList position="right" dataKey="name" style={{ fontSize: 10, fill: axisColor, fontWeight: 600 }} />}
+                        </Funnel>
+                    </FunnelChart>
+                );
+            }
+
+            // ── WATERFALL ─────────────────────────────────────────
+            if (subtype === 'waterfall') {
+                let cumulative = 0;
+                const wfData = [
+                    ...items.map((item: any) => {
+                        const rawName = resolvedNameKey && item[resolvedNameKey] != null
+                            ? String(item[resolvedNameKey]) : '';
+                        const val = resolvedValueKey != null ? (parseFloat(item[resolvedValueKey]) || 0) : 0;
+                        const isNeg = val < 0;
+                        const spacer = isNeg ? cumulative + val : cumulative;
+                        cumulative += val;
+                        return { name: formatXLabel(rawName), spacer: Math.max(0, spacer), barValue: Math.abs(val), rawValue: val, isNeg, isTotal: false };
+                    }),
+                    { name: 'Total', spacer: 0, barValue: Math.abs(cumulative), rawValue: cumulative, isNeg: cumulative < 0, isTotal: true },
+                ];
+
+                return (
+                    <ComposedChart data={wfData} margin={isCompact ? { top: 4, right: 4, left: -44, bottom: 0 } : { top: 10, right: 16, left: -20, bottom: 0 }} barCategoryGap="20%">
+                        {!isCompact && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />}
+                        <XAxis dataKey="name" hide={isCompact} axisLine={false} tickLine={false} tick={{ fill: axisColor, fontSize: 10 }} dy={8} />
+                        <YAxis hide={isCompact} axisLine={false} tickLine={false} tick={{ fill: axisColor, fontSize: 10 }} tickFormatter={(v) => fmtYTick(v, unit)} width={48} />
+                        <Tooltip
+                            content={({ active, payload }: any) => {
+                                if (!active || !payload?.length) return null;
+                                const row = payload[0]?.payload;
+                                if (!row) return null;
+                                const sign = row.rawValue > 0 ? '+' : '';
+                                return (
+                                    <div style={{ background: isDark ? '#0f172a' : '#fff', borderRadius: 12, padding: '8px 12px', boxShadow: '0 8px 16px -4px rgba(0,0,0,0.12)', fontSize: 12 }}>
+                                        <div style={{ fontWeight: 700, marginBottom: 4, color: axisColor }}>{row.name}</div>
+                                        <div style={{ fontWeight: 800, color: row.isTotal ? '#3b66ac' : row.isNeg ? '#ef4444' : '#10b981' }}>
+                                            {sign}{fmtValue(Math.abs(row.rawValue), unit, sym)}
+                                        </div>
+                                    </div>
+                                );
+                            }}
+                        />
+                        <Bar dataKey="spacer" stackId="wf" fill="transparent" legendType="none" />
+                        <Bar dataKey="barValue" stackId="wf" maxBarSize={40} radius={[4, 4, 0, 0]}>
+                            {wfData.map((entry, i) => (
+                                <Cell key={`wf-${i}`} fill={entry.isTotal ? '#3b66ac' : entry.isNeg ? '#ef4444' : '#10b981'} />
+                            ))}
+                        </Bar>
+                    </ComposedChart>
+                );
+            }
+
+            // ── COMBO (bar + line) ────────────────────────────────
+            if (isCombo) {
+                const comboData = isCombo100 ? normalizeToPercent(chartData) : chartData;
+                return (
+                    <ComposedChart {...commonProps} data={comboData} barCategoryGap="25%">
+                        {!isCompact && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />}
+                        {xAxisEl}{yAxisEl}{tooltipEl}{legendEl}
+                        <Bar dataKey="value" fill="#3b66ac" stackId="a" maxBarSize={40} />
+                        {hasMultiSeries && <Bar dataKey="secondary" fill={SECONDARY_COLOR} stackId="a" maxBarSize={40} />}
+                        <Line type="monotone" dataKey="value" stroke={SECONDARY_COLOR} strokeWidth={2} dot={false} />
+                    </ComposedChart>
+                );
+            }
+
+            // ── STACKED / GROUPED ─────────────────────────────────
+            const barData = is100 ? normalizeToPercent(chartData) : chartData;
+            const hAxes = isHorizontal ? (
+                <>
+                    <XAxis type="number" hide={isCompact} axisLine={false} tickLine={false} tick={{ fill: axisColor, fontSize: 10 }} />
+                    <YAxis dataKey="name" type="category" hide={isCompact} axisLine={false} tickLine={false} tick={{ fill: axisColor, fontSize: 10 }} width={80} />
+                </>
+            ) : <>{xAxisEl}{yAxisEl}</>;
+
             return (
-                <BarChart {...commonProps} barCategoryGap="25%">
+                <BarChart {...commonProps} data={barData} layout={isHorizontal ? 'vertical' : 'horizontal'} barCategoryGap="25%">
                     {!isCompact && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />}
-                    {xAxisEl}{yAxisEl}{tooltipEl}{refLineEl}{legendEl}
-                    <Bar dataKey="value" fill="#3b66ac" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    {hAxes}{tooltipEl}{refLineEl}{legendEl}
+                    <Bar dataKey="value" fill="#3b66ac" stackId={isStacked ? 'a' : undefined} radius={isStacked ? [0, 0, 0, 0] : [4, 4, 0, 0]} maxBarSize={40} />
                     {hasMultiSeries && (
-                        <Bar dataKey="secondary" fill={SECONDARY_COLOR} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                        <Bar dataKey="secondary" fill={SECONDARY_COLOR} stackId={isStacked ? 'a' : undefined} radius={isStacked ? [4, 4, 0, 0] : [4, 4, 0, 0]} maxBarSize={40} />
                     )}
                 </BarChart>
             );
@@ -384,27 +498,72 @@ export function ChartVisual({ kpiKey, vizType = 'bar', isCompact, chartConfig }:
 
         // ── LINE ─────────────────────────────────────────────────
         if (vizType === 'line') {
+            const isAreaSub = subtype === 'area' || subtype === 'area_stacked' || subtype === 'area_stacked100';
+            const isAreaStacked = subtype === 'area_stacked' || subtype === 'area_stacked100';
+            const isArea100 = subtype === 'area_stacked100';
+
+            if (!isAreaSub) {
+                return (
+                    <LineChart {...commonProps}>
+                        {!isCompact && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />}
+                        {xAxisEl}{yAxisEl}{tooltipEl}{refLineEl}{legendEl}
+                        <Line
+                            type="monotone" dataKey="value"
+                            stroke="#3b66ac" strokeWidth={2.5}
+                            dot={false} activeDot={{ r: 5, strokeWidth: 0 }}
+                        />
+                        {hasMultiSeries && (
+                            <Line
+                                type="monotone" dataKey="secondary"
+                                stroke={SECONDARY_COLOR} strokeWidth={2} strokeDasharray="5 3"
+                                dot={false} activeDot={{ r: 5, strokeWidth: 0 }}
+                            />
+                        )}
+                    </LineChart>
+                );
+            }
+
+            // Area (including stacked/100%)
+            const areaData = isArea100 ? normalizeToPercent(chartData) : chartData;
+            const gIdL = gradId(kpiKey, '-l');
+            const gId2L = gradId(kpiKey, '-l2');
             return (
-                <LineChart {...commonProps}>
+                <AreaChart {...commonProps} data={areaData}>
+                    <defs>
+                        <linearGradient id={gIdL} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b66ac" stopOpacity={isAreaStacked ? 0.5 : 0.2} />
+                            <stop offset="95%" stopColor="#3b66ac" stopOpacity={0} />
+                        </linearGradient>
+                        {hasMultiSeries && (
+                            <linearGradient id={gId2L} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={SECONDARY_COLOR} stopOpacity={isAreaStacked ? 0.5 : 0.15} />
+                                <stop offset="95%" stopColor={SECONDARY_COLOR} stopOpacity={0} />
+                            </linearGradient>
+                        )}
+                    </defs>
                     {!isCompact && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />}
                     {xAxisEl}{yAxisEl}{tooltipEl}{refLineEl}{legendEl}
-                    <Line
+                    <Area
                         type="monotone" dataKey="value"
                         stroke="#3b66ac" strokeWidth={2.5}
                         dot={false} activeDot={{ r: 5, strokeWidth: 0 }}
+                        fillOpacity={1} fill={`url(#${gIdL})`}
+                        stackId={isAreaStacked ? '1' : undefined}
                     />
                     {hasMultiSeries && (
-                        <Line
+                        <Area
                             type="monotone" dataKey="secondary"
-                            stroke={SECONDARY_COLOR} strokeWidth={2} strokeDasharray="5 3"
+                            stroke={SECONDARY_COLOR} strokeWidth={2}
                             dot={false} activeDot={{ r: 5, strokeWidth: 0 }}
+                            fillOpacity={1} fill={`url(#${gId2L})`}
+                            stackId={isAreaStacked ? '1' : undefined}
                         />
                     )}
-                </LineChart>
+                </AreaChart>
             );
         }
 
-        // ── AREA (default) ────────────────────────────────────────
+        // ── AREA (default / vizType='area') ───────────────────────
         const gId = gradId(kpiKey);
         const gId2 = gradId(kpiKey, '-2');
         return (

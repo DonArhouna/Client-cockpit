@@ -193,6 +193,7 @@ export interface WidgetTemplate {
   id: string;
   name: string;
   vizType: string;
+  subtype?: string;
   description?: string;
   defaultConfig: Record<string, unknown>;
   isActive: boolean;
@@ -277,6 +278,7 @@ export interface Widget {
   type: string;
   kpiKey?: string | null;
   vizType?: string | null;
+  subtype?: string | null;
   config: Record<string, unknown>;
   exposure?: string | null;
   position: WidgetPosition;

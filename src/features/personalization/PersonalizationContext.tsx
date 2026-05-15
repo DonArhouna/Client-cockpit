@@ -23,6 +23,7 @@ const PersonalizationContext = createContext<PersonalizationContextType | undefi
 const dbToLocal = (w: any): Widget => ({
     ...w,
     kpiKey: w.exposure ?? (w.config?.kpiKey as string | undefined),
+    subtype: w.subtype ?? (w.config?.vizSubtype as string | undefined) ?? null,
     position: w.position ?? { x: 0, y: 0, w: 4, h: 3 },
 });
 
@@ -139,7 +140,7 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                                     type: w.type,
                                     exposure: w.kpiKey ?? undefined,
                                     vizType: w.vizType ?? undefined,
-                                    config: { ...(w.config || {}), kpiKey: w.kpiKey },
+                                    config: { ...(w.config || {}), kpiKey: w.kpiKey, vizSubtype: w.subtype || undefined },
                                     position: w.position || { x: 0, y: 0, w: 4, h: 3 },
                                 });
                                 synced.push({ ...w, id: r.data.id, dashboardId });
@@ -308,7 +309,7 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                         type: newWidget.type || 'kpi',
                         exposure: newWidget.kpiKey || undefined,
                         vizType: newWidget.vizType || undefined,
-                        config: { ...(newWidget.config || {}), kpiKey: newWidget.kpiKey },
+                        config: { ...(newWidget.config || {}), kpiKey: newWidget.kpiKey, vizSubtype: newWidget.subtype || undefined },
                         position: newWidget.position,
                     });
                     setLayouts(prev => ({
@@ -340,7 +341,7 @@ export const PersonalizationProvider: React.FC<{ children: React.ReactNode }> = 
                             type: w.type || 'kpi',
                             exposure: w.kpiKey || undefined,
                             vizType: w.vizType || undefined,
-                            config: { ...(w.config || {}), kpiKey: w.kpiKey },
+                            config: { ...(w.config || {}), kpiKey: w.kpiKey, vizSubtype: w.subtype || undefined },
                             position: w.position,
                         });
                         synced.push({ ...w, id: resp.data.id, dashboardId });

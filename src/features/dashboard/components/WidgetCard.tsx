@@ -20,6 +20,9 @@ import { ChartConfigDialog, type ChartAxisConfig } from './visuals/ChartConfigDi
 import { MapVisual } from './visuals/MapVisual';
 import { GaugeVisual } from './visuals/GaugeVisual';
 import { NlqVisual } from './visuals/NlqVisual';
+import { ScatterVisual } from './visuals/ScatterVisual';
+import { TreemapVisual } from './visuals/TreemapVisual';
+import { PlaceholderVisual } from './visuals/PlaceholderVisual';
 import { useKpiData } from '@/hooks/use-kpi-data';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 
@@ -95,7 +98,7 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                     ? widget.vizType
                     : 'area';
 
-            return <ChartVisual kpiKey={kpiKey} vizType={chartType} isCompact={isCompact} chartConfig={storedChartConfig} />;
+            return <ChartVisual kpiKey={kpiKey} vizType={chartType} subtype={widget.subtype ?? undefined} isCompact={isCompact} chartConfig={storedChartConfig} />;
         }
         if (widget.vizType === 'text') {
             return <NlqVisual isCompact={isCompact} dashboardId={widget.dashboardId} pageId={pageId} widgetId={widget.id} />;
@@ -115,6 +118,23 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
                 widget={normalizedWidget}
                 isCompact={isCompact}
             />;
+        }
+        if (widget.vizType === 'scatter') {
+            return <ScatterVisual kpiKey={kpiKey} isCompact={isCompact} />;
+        }
+        if (widget.vizType === 'treemap') {
+            return <TreemapVisual kpiKey={kpiKey} isCompact={isCompact} />;
+        }
+        if (widget.vizType === 'image') {
+            const url = widget.config?.url as string | undefined;
+            if (!url) return <PlaceholderVisual icon="image" label="Image" sublabel="Aucune URL configurée" />;
+            return <img src={url} alt={widget.name} className="w-full h-full object-contain p-2" />;
+        }
+        if (widget.vizType === 'ai_insights') {
+            return <PlaceholderVisual icon="brain" label="Influenceurs Clé" sublabel="Analyse IA — Bientôt disponible" />;
+        }
+        if (widget.vizType === 'decomp_tree') {
+            return <PlaceholderVisual icon="tree" label="Arborescence de Décomposition" sublabel="Décomposition — Bientôt disponible" />;
         }
         return (
             <div className="flex items-center justify-center h-full text-muted-foreground bg-slate-50 dark:bg-slate-800/30 border border-dashed rounded-md m-2 text-[10px] p-2 text-center">
