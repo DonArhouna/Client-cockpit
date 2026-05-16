@@ -392,6 +392,15 @@ export const nlqApi = {
       jobId: string;
       ts: number;
     }>>('/nlq/history'),
+
+  getFavorites: () =>
+    api.get<string[]>('/nlq/favorites'),
+
+  addFavorite: (jobId: string) =>
+    api.post<{ favorites: string[] }>(`/nlq/favorites/${jobId}`),
+
+  removeFavorite: (jobId: string) =>
+    api.delete<{ favorites: string[] }>(`/nlq/favorites/${jobId}`),
 };
 
 // Agents Jobs
