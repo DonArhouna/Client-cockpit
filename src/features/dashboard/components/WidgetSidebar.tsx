@@ -227,7 +227,7 @@ export function WidgetSidebar({ onClose, onAddWidget, allowedDomains }: WidgetSi
 
     const selectTemplate = (tpl: WidgetTemplate) => {
         if (NO_KPI_TYPES.has(tpl.vizType)) {
-            onAddWidget({ name: tpl.name, type: 'template', vizType: tpl.vizType, subtype: tpl.subtype, config: {} });
+            onAddWidget({ name: tpl.name, type: 'chart', vizType: tpl.vizType, subtype: tpl.subtype, config: {} });
         } else {
             setPendingTemplate(tpl);
         }
