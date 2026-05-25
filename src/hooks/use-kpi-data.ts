@@ -109,10 +109,10 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
                         : NaN;
 
                     const normalized: KpiDataResult = {
-                        current: result?.current || result?.value || (!isNaN(agentScalar) ? agentScalar : 0),
-                        previous: result?.previous || 0,
-                        target: result?.target || null,
-                        trend: result?.trend || 0,
+                        current: result?.current ?? agentRow?.current ?? result?.value ?? (!isNaN(agentScalar) ? agentScalar : 0),
+                        previous: result?.previous ?? agentRow?.previous ?? 0,
+                        target: result?.target ?? agentRow?.target ?? null,
+                        trend: result?.trend ?? agentRow?.trend ?? 0,
                         period: period,
                         details: result?.details || agentRows || agentRow || undefined
                     };
