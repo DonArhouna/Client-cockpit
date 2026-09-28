@@ -80,6 +80,7 @@ export function clearAllCache(): void {
       localStorage.removeItem(key);
     }
   });
+  localStorage.removeItem(LAST_UPDATE_KEY);
 }
 
 /**

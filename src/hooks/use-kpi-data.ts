@@ -1,164 +1,126 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { nlqApi, jobsApi } from '@/api';
 import { getCache, setCache } from '@/lib/cache';
-import { useToast } from '@/hooks/use-toast';
 import { useFilters } from '@/context/FilterContext';
+import { useAuth } from '@/features/auth/AuthContext';
 
 export interface KpiDataOptions {
     refreshInterval?: number;
     enabled?: boolean;
 }
 
-interface KpiDataResult {
+export interface KpiDataResult {
     current: number;
     previous: number;
     target: number | null;
     trend: number;
     period: string;
     details?: Record<string, any>;
-    __disabled?: boolean;
 }
 
-// Fonction de données de secours - Modifiée pour retourner un état vide/chargement au lieu de valeurs hardcodées
-const getFallbackData = (_kpiKey: string | null, period: string): KpiDataResult => {
-    return {
-        current: 0,
-        previous: 0,
-        target: null,
-        trend: 0,
+export type KpiState = 'idle' | 'loading' | 'success' | 'empty' | 'error' | 'unavailable' | 'disabled';
+
+export function normalizeResult(result: any, period: string): KpiDataResult | null {
+    const rows = result?.data ?? result?.result ?? result?.raw;
+    if (Array.isArray(rows) && rows.length === 0) return null;
+    const row = Array.isArray(rows) ? rows[0] : null;
+    const numeric = row && Object.values(row).find(v => v !== null && v !== '' && Number.isFinite(Number(v)));
+    const current = result?.current ?? row?.current ?? result?.value ?? numeric;
+    if (current === undefined || current === null || current === '' || !Number.isFinite(Number(current))) return null;
+    const previous = Number(result?.previous ?? row?.previous ?? 0);
+    const trend = Number(result?.trend ?? row?.trend ?? 0);
+    const data: KpiDataResult = {
+        current: Number(current),
+        previous,
+        target: result?.target ?? row?.target ?? null,
+        trend,
         period,
-        details: undefined
+        details: result?.details ?? rows ?? row ?? undefined,
     };
-};
+    if (data.trend === 0 && previous > 0) data.trend = ((data.current - previous) / previous) * 100;
+    return data;
+}
 
 export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) {
     const { refreshInterval = 0, enabled = true } = options;
-    const [data, setData] = useState<KpiDataResult | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isDisabled, setIsDisabled] = useState(false);
-    const { toast } = useToast();
+    const { user } = useAuth();
     const { period, currency } = useFilters();
+    const identity = user?.organizationId && user?.id ? `${user.organizationId}:${user.id}` : null;
+    const generation = useRef(0);
+    const [data, setData] = useState<KpiDataResult | null>(null);
+    const [state, setState] = useState<KpiState>('idle');
+    const [error, setError] = useState<string | null>(null);
 
-    const fetchData = useCallback(async (force: boolean = false) => {
-        if (!kpiKey || !enabled) return;
-
-        // 0. Vérifier le cache
-        const cacheKey = `kpi_${kpiKey}_${period}_${currency}`;
+    const fetchData = useCallback(async (force = false) => {
+        const request = ++generation.current;
+        const active = () => request === generation.current;
+        if (!enabled || !kpiKey) {
+            setData(null); setState('idle'); setError(null);
+            return;
+        }
+        if (!identity) {
+            setData(null); setState('unavailable'); setError('Organisation ou utilisateur indisponible');
+            return;
+        }
+        const cacheKey = `${identity}:kpi_${kpiKey}_${period}_${currency}`;
         if (!force) {
             const cached = getCache<KpiDataResult>(cacheKey);
             if (cached) {
-                setData(cached);
-                setIsDisabled(cached.__disabled === true);
+                setData(cached); setState('success'); setError(null);
                 return;
             }
         }
-
-        setIsLoading(true);
-        setError(null);
-        setIsDisabled(false);
-
+        setData(null); setState('loading'); setError(null);
         try {
-            const query = `${kpiKey} pour ${period} en ${currency}`;
-
-            // 1. Soumettre la requête NLQ
-            const queryResp = await nlqApi.query(query);
-            const { jobId, status } = queryResp.data;
-
+            const response = await nlqApi.query(`${kpiKey} pour ${period} en ${currency}`);
+            if (!active()) return;
+            const { jobId, status } = response.data;
             if (status === 'TEMPLATE_DISABLED') {
-                const disabledResult: KpiDataResult = { current: 0, previous: 0, target: null, trend: 0, period, __disabled: true };
-                setIsDisabled(true);
-                setData(disabledResult);
-                setCache(cacheKey, disabledResult);
-                setIsLoading(false);
-                return;
+                setState('disabled'); return;
             }
-
             if (!jobId || status === 'no_intent') {
-                // Si le NLQ ne renvoie pas de job, fournir des données de secours riches
-                const fallback = getFallbackData(kpiKey, period);
-                setData(fallback);
-                // Ne pas mettre en cache les secours vides s'il s'agit d'une erreur/absence d'intention
-                setIsLoading(false);
+                setState('unavailable'); setError('Indicateur indisponible');
                 return;
             }
-
-            // 2. Poller pour le résultat du job
-            let jobCompleted = false;
-            let attempts = 0;
-            const maxAttempts = 15; // 15 * 2s = 30s timeout
-
-            while (!jobCompleted && attempts < maxAttempts) {
-                attempts++;
+            for (let attempt = 0; attempt < 15; attempt++) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
-
-                const jobResp = await jobsApi.getById(jobId);
-                const job = jobResp.data;
-
+                if (!active()) return;
+                const job = (await jobsApi.getById(jobId)).data;
+                if (!active()) return;
                 if (job.status === 'COMPLETED') {
-                    const result = job.result;
-
-                    // Backend transformResult() stores multi-row as { data: [...], count: N }
-                    // and scalar as { value: N, raw: [...] } — read 'data', not 'result'
-                    const agentRows = result?.data || result?.result;
-                    const agentRow = Array.isArray(agentRows)
-                        ? agentRows[0]
-                        : (result?.raw?.[0] ?? null);
-                    const agentScalar = agentRow
-                        ? parseFloat(Object.values(agentRow).find((v) => v !== null && !isNaN(parseFloat(v as string))) as string)
-                        : NaN;
-
-                    const normalized: KpiDataResult = {
-                        current: result?.current ?? agentRow?.current ?? result?.value ?? (!isNaN(agentScalar) ? agentScalar : 0),
-                        previous: result?.previous ?? agentRow?.previous ?? 0,
-                        target: result?.target ?? agentRow?.target ?? null,
-                        trend: result?.trend ?? agentRow?.trend ?? 0,
-                        period: period,
-                        details: result?.details || agentRows || agentRow || undefined
-                    };
-
-                    // Calculer le trend si non fourni
-                    if (normalized.trend === 0 && normalized.previous > 0) {
-                        normalized.trend = ((normalized.current - normalized.previous) / normalized.previous) * 100;
-                    }
-
+                    const normalized = normalizeResult(job.result, period);
+                    if (!normalized) { setState('empty'); return; }
                     setData(normalized);
-                    // 3. Stocker dans le cache
                     setCache(cacheKey, normalized);
-                    jobCompleted = true;
-                } else if (job.status === 'FAILED') {
-                    console.warn("Le job a échoué, utilisation des données de secours");
-                    setData(getFallbackData(kpiKey, period));
-                    jobCompleted = true; // Arrêter le polling
+                    setState('success');
+                    return;
+                }
+                if (job.status === 'FAILED') {
+                    setState('error'); setError(job.errorMessage || 'Exécution de l’indicateur échouée');
+                    return;
                 }
             }
-
-            if (!jobCompleted) {
-                console.warn("Délai d'attente du job dépassé, utilisation des données de secours");
-                setData(getFallbackData(kpiKey, period));
-            }
+            if (active()) { setState('unavailable'); setError('Délai d’attente dépassé'); }
         } catch (err: any) {
-            console.warn(`Erreur lors de la récupération du KPI ${kpiKey}, utilisation des données de secours :`, err.message);
-            setData(getFallbackData(kpiKey, period));
-        } finally {
-            setIsLoading(false);
+            if (active()) { setState('error'); setError(err?.message || 'Erreur de chargement'); }
         }
-    }, [kpiKey, enabled, period, currency, toast]);
+    }, [kpiKey, enabled, identity, period, currency]);
 
     useEffect(() => {
         fetchData();
-
-        if (refreshInterval > 0 && enabled) {
-            const interval = setInterval(fetchData, refreshInterval);
-            return () => clearInterval(interval);
-        }
+        const interval = refreshInterval > 0 && enabled ? setInterval(() => fetchData(), refreshInterval) : null;
+        return () => {
+            generation.current++;
+            if (interval) clearInterval(interval);
+        };
     }, [fetchData, refreshInterval, enabled]);
 
     return {
         data,
-        isLoading,
-        isDisabled,
+        state,
+        isLoading: state === 'loading',
+        isDisabled: state === 'disabled',
         error,
-        refetch: fetchData
+        refetch: fetchData,
     };
 }

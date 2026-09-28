@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import { clearAllCache } from '@/lib/cache';
 import { authApi, onboardingApi } from '@/api';
 import type { AuthState, LoginCredentials, OnboardingStatus, User } from '@/types';
 
@@ -23,6 +24,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null);
+  const previousIdentity = useRef<string | null>(null);
+  useEffect(() => {
+    const identity = state.user ? `${state.user.organizationId}:${state.user.id}` : null;
+    if (previousIdentity.current && previousIdentity.current !== identity) clearAllCache();
+    previousIdentity.current = identity;
+  }, [state.user?.organizationId, state.user?.id]);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
 
   const fetchOnboardingStatus = useCallback(async () => {
@@ -60,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Both auth + onboarding are now settled — release the guard
         setState(prev => ({ ...prev, isAuthenticated: true, isLoading: false }));
       } catch {
+        clearAllCache();
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setState({
@@ -75,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchOnboardingStatus]);
 
   const login = async (credentials: LoginCredentials) => {
+    clearAllCache();
     const response = await authApi.login(credentials);
     const { accessToken, refreshToken } = response.data;
 
@@ -94,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Used after registration — tokens already in hand, no second API call needed
   const loginWithTokens = async (accessToken: string, refreshToken: string, user: User) => {
+    clearAllCache();
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
 
@@ -109,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ignore logout errors
     }
 
+    clearAllCache();
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
 

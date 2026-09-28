@@ -47,7 +47,7 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
 
     // text/NLQ widgets are interactive interfaces — do not trigger the KPI data pipeline
     const isNlqWidget = widget.vizType === 'text';
-    const { isDisabled, data: kpiData } = useKpiData(isNlqWidget ? null : (kpiKey || null));
+    const { isDisabled, data: kpiData, state: kpiState, error: kpiError } = useKpiData(isNlqWidget ? null : (kpiKey || null));
 
     const isMainKpi = widget.id?.startsWith('main-kpi-');
     const isKpi = widget.type === 'kpi';
@@ -78,6 +78,10 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
 
     // ── Visual renderer ──────────────────────────────────────────
     const renderContent = () => {
+        if (!isNlqWidget && kpiKey && kpiState !== 'success' && kpiState !== 'loading' && kpiState !== 'disabled') {
+            const message = kpiState === 'idle' ? 'Chargement…' : kpiState === 'empty' ? 'Aucune donnée' : kpiState === 'error' ? 'Erreur de chargement' : 'Indicateur indisponible';
+            return <div role="status" className="flex h-full items-center justify-center text-sm text-muted-foreground" title={kpiError ?? undefined}>{message}</div>;
+        }
         if (widget.type === 'kpi' && widget.vizType === 'card') {
             return <KpiVisual widget={normalizedWidget} isCompact={isCompact} />;
         }
