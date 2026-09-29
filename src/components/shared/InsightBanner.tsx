@@ -54,6 +54,8 @@ function useInsights(): Insight[] {
             return;
         }
 
+        if (trend === null) return;
+
         // Forte hausse
         if (trend > 20 && !key.includes('dso') && !key.includes('dmp')) {
             insights.push({

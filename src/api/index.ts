@@ -1,4 +1,5 @@
 import api from './client';
+import type { MetricQueryRequest, MetricQueryResponse, MetricJobResponse } from '@/types/data-engine';
 import type {
   User,
   Organization,
@@ -412,6 +413,13 @@ export const jobsApi = {
       result: any;
       errorMessage: string | null;
     }>(`/agents/jobs/${jobId}`),
+};
+
+export const dataEngineApi = {
+  query: (request: MetricQueryRequest, signal?: AbortSignal) =>
+    api.post<MetricQueryResponse>('/data/query', request, { signal }),
+  getJob: (jobId: string, signal?: AbortSignal) =>
+    api.get<MetricJobResponse>(`/data/jobs/${encodeURIComponent(jobId)}`, { signal }),
 };
 
 // Targets (Objectifs)

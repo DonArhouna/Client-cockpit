@@ -182,11 +182,9 @@ export interface KpiDefinition {
   sectors?: string[];
   defaultVizType: string;
   direction?: string;
-  sqlSage100View?: string;
-  sqlSage100Tables?: string[];
-  mlUsage?: string;
   isActive: boolean;
   createdAt: string;
+  dataBinding?: null | { kind: 'data_engine_v2'; metric: string; defaults?: { comparison?: 'previous_period' | 'previous_year' } } | { kind: 'unavailable' };
 }
 
 export interface WidgetTemplate {

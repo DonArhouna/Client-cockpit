@@ -80,6 +80,7 @@ export function KpiVisual({ widget, isCompact }: KpiVisualProps) {
     const currentValue = kpiData?.current ?? 0;
     const previousValue = kpiData?.previous ?? 0;
     const trend = kpiData?.trend ?? 0;
+    const hasTrend = kpiData?.trend != null;
     const backendTarget = kpiData?.target ?? null;
     const targetValue = backendTarget
         ?? allTargets?.find((t: any) => t.kpiKey === widget.kpiKey)?.value
@@ -119,17 +120,17 @@ export function KpiVisual({ widget, isCompact }: KpiVisualProps) {
                             {widget.name}
                         </span>
                     </div>
-                    <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-black ${isPositiveTrend ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                    {hasTrend && <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-black ${isPositiveTrend ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                         {isPositiveTrend ? <ArrowUpRight size={10} strokeWidth={3} /> : <ArrowDownRight size={10} strokeWidth={3} />}
                         {Math.abs(trend).toFixed(0)}%
-                    </div>
+                    </div>}
                 </div>
                 
                 <div className="flex flex-col">
                     <span className="text-xl font-black text-slate-900 dark:text-slate-100 tabular-nums leading-tight tracking-tight">
                         {formatValue(currentValue)}
                     </span>
-                    {previousValue > 0 && (
+                    {hasTrend && previousValue > 0 && (
                         <span className="text-[9px] text-slate-400 font-medium truncate">vs {formatValue(previousValue)}</span>
                     )}
                 </div>
@@ -167,12 +168,12 @@ export function KpiVisual({ widget, isCompact }: KpiVisualProps) {
                         <span className="text-3xl font-black text-slate-900 dark:text-slate-100 tabular-nums leading-none tracking-tight">
                             {formatValue(currentValue)}
                         </span>
-                        {previousValue > 0 && (
+                        {hasTrend && previousValue > 0 && (
                             <span className="text-[10px] font-semibold text-slate-400 mt-1.5 flex items-center gap-1.5">
                                 <span className={isPositiveTrend ? 'text-emerald-500' : 'text-rose-500'}>
                                     {isPositiveTrend ? '+' : '-'}{Math.abs(trend).toFixed(1)}%
                                 </span>
-                                vs N-1 ({formatValue(previousValue)})
+                                vs période comparée ({formatValue(previousValue)})
                             </span>
                         )}
                     </div>

@@ -24,6 +24,7 @@ import { ScatterVisual } from './visuals/ScatterVisual';
 import { TreemapVisual } from './visuals/TreemapVisual';
 import { PlaceholderVisual } from './visuals/PlaceholderVisual';
 import { useKpiData } from '@/hooks/use-kpi-data';
+import { widgetKpiKey } from './widget-kpi-key';
 import { usePersonalization } from '@/features/personalization/PersonalizationContext';
 
 interface WidgetCardProps {
@@ -42,7 +43,7 @@ export function WidgetCard({ pageId, widget, isEditing, onRemove, w, h, classNam
     const { updateWidgetConfig } = usePersonalization();
 
     // kpiKey peut être à la racine, dans config, ou dans exposure selon l'origine du widget
-    const kpiKey = widget.kpiKey || (widget.config?.kpiKey as string) || widget.exposure || '';
+    const kpiKey = widgetKpiKey(widget);
     const normalizedWidget = { ...widget, kpiKey: kpiKey || null };
 
     // text/NLQ widgets are interactive interfaces — do not trigger the KPI data pipeline

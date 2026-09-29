@@ -106,7 +106,7 @@ export function DashboardPage() {
   const { data: caData } = useKpiData(caKpiKey);
 
   const dashboardInsight = useMemo(() => {
-    if (!caData || !caData.current) return null;
+    if (!caData || caData.trend === null) return null;
     const formatter = new Intl.NumberFormat('fr-FR', { 
       style: 'currency', 
       currency: currency, 
@@ -115,10 +115,11 @@ export function DashboardPage() {
     const val = formatter.format(caData.current);
     const trendVal = caData.trend || 0;
     const trendStr = trendVal > 0 ? `+${trendVal.toFixed(1)}%` : `${trendVal.toFixed(1)}%`;
-    const targetPct = caData.target ? ((caData.current / caData.target) * 100).toFixed(0) : '0';
+    const targetSentence = caData.target && caData.target > 0
+      ? ` L'objectif atteint ${(caData.current / caData.target * 100).toFixed(0)}%.` : '';
     
     return {
-      text: `Le chiffre d'affaires du mois atteint ${val}, en ${trendVal >= 0 ? 'hausse' : 'baisse'} de ${trendStr} vs le mois précédent. L'objectif mensuel est atteint à ${targetPct}%. La dynamique globale est ${trendVal >= 0 ? 'positive' : 'incertaine'}.`,
+      text: `Le chiffre d'affaires atteint ${val}, en ${trendVal >= 0 ? 'hausse' : 'baisse'} de ${trendStr} vs la période précédente.${targetSentence} La dynamique globale est ${trendVal >= 0 ? 'positive' : 'incertaine'}.`,
       variant: (trendVal > 0 ? 'success' : trendVal < 0 ? 'danger' : 'info') as any
     };
   }, [caData, currency]);

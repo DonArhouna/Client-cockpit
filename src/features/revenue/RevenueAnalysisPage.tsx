@@ -20,7 +20,7 @@ export function RevenueAnalysisPage() {
     const { data: revData } = useKpiData('ca');
 
     const revenueInsight = useMemo(() => {
-        if (!revData) return null;
+        if (!revData || revData.trend === null) return null;
         const growth = revData.trend || 0;
         const growthStr = growth >= 0 ? `+${growth.toFixed(1)}%` : `${growth.toFixed(1)}%`;
         
