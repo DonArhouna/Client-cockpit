@@ -25,7 +25,7 @@ describe('historical widget key resolution', () => {
       dataBinding: { kind: 'data_engine_v2', metric: 'revenue_ht' } }], isLoading: false, error: null } as any);
     const { result } = renderHook(() => useKpiData('historical-key'));
     expect(result.current.state).toBe('loading');
-    expect(useMetricData).toHaveBeenCalledWith('revenue_ht', 'current_month', 'XOF', undefined);
+    expect(useMetricData).toHaveBeenCalledWith('revenue_ht', 'current_month', 'XOF', undefined, undefined);
     expect(nlqApi.query).not.toHaveBeenCalled();
     expect(getCache).not.toHaveBeenCalled();
   });
@@ -56,7 +56,7 @@ describe('historical widget key resolution', () => {
       isLoading: false, error: null } as any);
     const { result } = renderHook(() => useKpiData('old-widget'));
     expect(result.current.state).toBe('disabled');
-    expect(useMetricData).toHaveBeenCalledWith(null, 'current_month', 'XOF', undefined);
+    expect(useMetricData).toHaveBeenCalledWith(null, 'current_month', 'XOF', undefined, undefined);
     expect(nlqApi.query).not.toHaveBeenCalled();
   });
 });

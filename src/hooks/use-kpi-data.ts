@@ -47,7 +47,7 @@ export function normalizeResult(result: any, period: string): KpiDataResult | nu
 export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) {
     const { refreshInterval = 0, enabled = true } = options;
     const { user } = useAuth();
-    const { period, currency } = useFilters();
+    const { period, customFrom, customTo, currency } = useFilters();
     const { data: definitions, isLoading: catalogLoading, error: catalogError } = useKpiDefinitions();
     const definition = definitions?.find(item => item.key === kpiKey);
     const binding = definition?.dataBinding;
@@ -55,7 +55,8 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
     const invalidBinding = binding?.kind === 'unavailable';
     const inactiveDefinition = definition?.isActive === false;
     const metric = useMetricData(isV2 && enabled && !inactiveDefinition ? binding.metric : null, period, currency,
-        isV2 ? binding.defaults?.comparison : undefined);
+        isV2 ? binding.defaults?.comparison : undefined,
+        period === 'custom' ? { from: customFrom, to: customTo } : undefined);
     const identity = user?.organizationId && user?.id ? `${user.organizationId}:${user.id}` : null;
     const generation = useRef(0);
     const [data, setData] = useState<KpiDataResult | null>(null);
@@ -135,6 +136,9 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
     if (catalogError) return { data: null, state: 'error' as KpiState,
         isLoading: false, isDisabled: false, error: 'Catalogue indisponible', refetch: fetchData };
     if (isV2) {
+        if (period === 'custom' && (!customFrom || !customTo))
+            return { data: null, state: 'unavailable' as KpiState, isLoading: false,
+                isDisabled: false, error: 'Selectionnez les deux dates', refetch: metric.refetch };
         let presented = null;
         try { if (metric.data) presented = presentMetric(metric.data, period, currency); }
         catch { return { data: null, state: 'error' as KpiState, isLoading: false,

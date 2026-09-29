@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { dataEngineApi } from '@/api';
-import { assertMetricPeriod, runMetricQuery } from '../use-metric-data';
+import { assertMetricPeriod, resolveMetricPeriod, runMetricQuery } from '../use-metric-data';
 
 vi.mock('@/api', () => ({ dataEngineApi: { query: vi.fn(), getJob: vi.fn() } }));
 vi.mock('@/features/auth/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
@@ -16,6 +16,25 @@ describe('Data Engine V2 client', () => {
       'current_year', 'previous_month', 'previous_quarter', 'previous_year'])
       expect(assertMetricPeriod(period)).toBe(period);
     expect(() => assertMetricPeriod('custom')).toThrow();
+  });
+  it('converts inclusive UI dates to an exclusive absolute upper bound', async () => {
+    expect(resolveMetricPeriod('custom', { from: '2022-01-01', to: '2022-01-31' })).toEqual({
+      type: 'absolute', from: '2022-01-01T00:00:00.000Z', to: '2022-02-01T00:00:00.000Z',
+    });
+    vi.mocked(dataEngineApi.query).mockResolvedValueOnce({ data: { status: 'completed', result: completed } } as any);
+    await runMetricQuery('revenue_ht', 'custom', 'XOF', 'previous_period', undefined,
+      { from: '2022-01-01', to: '2022-01-31' });
+    expect(dataEngineApi.query).toHaveBeenCalledWith(expect.objectContaining({
+      period: { type: 'absolute', from: '2022-01-01T00:00:00.000Z', to: '2022-02-01T00:00:00.000Z' },
+    }), undefined);
+  });
+  it('rejects incomplete, impossible, and reversed custom dates before the API call', async () => {
+    for (const range of [
+      { from: '', to: '2022-01-31' },
+      { from: '2022-02-30', to: '2022-03-01' },
+      { from: '2022-02-01', to: '2022-01-31' },
+    ]) await expect(runMetricQuery('revenue_ht', 'custom', 'XOF', undefined, undefined, range)).rejects.toThrow();
+    expect(dataEngineApi.query).not.toHaveBeenCalled();
   });
   it('uses an immediate completed result without polling', async () => {
     vi.mocked(dataEngineApi.query).mockResolvedValueOnce({ data: { status: 'completed', result: completed } } as any);

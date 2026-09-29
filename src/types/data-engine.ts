@@ -1,7 +1,7 @@
 export interface MetricQueryRequest {
   version: '2';
   metric: string;
-  period: { type: 'relative'; value: string };
+  period: { type: 'relative'; value: string } | { type: 'absolute'; from: string; to: string };
   comparison?: { type: 'previous_period' | 'previous_year' };
   currency: string;
   context?: { source: 'dashboard'; widgetId?: string; dashboardId?: string };

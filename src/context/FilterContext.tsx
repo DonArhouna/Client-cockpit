@@ -6,6 +6,10 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from '
 interface FilterContextType {
     period: string;
     setPeriod: (period: string) => void;
+    customFrom: string;
+    setCustomFrom: (date: string) => void;
+    customTo: string;
+    setCustomTo: (date: string) => void;
     currency: string;
     setCurrency: (currency: string) => void;
     scope: string;
@@ -20,12 +24,14 @@ const FilterContext = createContext<FilterContextType | undefined>(undefined);
  */
 export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [period, setPeriod] = useState('current_quarter');
+    const [customFrom, setCustomFrom] = useState('');
+    const [customTo, setCustomTo] = useState('');
     const [currency, setCurrency] = useState('XOF');
     const [scope, setScope] = useState('all');
 
     const value = useMemo(
-        () => ({ period, setPeriod, currency, setCurrency, scope, setScope }),
-        [period, currency, scope]
+        () => ({ period, setPeriod, customFrom, setCustomFrom, customTo, setCustomTo, currency, setCurrency, scope, setScope }),
+        [period, customFrom, customTo, currency, scope]
     );
 
     return (

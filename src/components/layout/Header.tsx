@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -77,10 +76,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { period, setPeriod, currency, setCurrency } = useFilters();
+  const { period, setPeriod, customFrom, setCustomFrom, customTo, setCustomTo, currency, setCurrency } = useFilters();
   const queryClient = useQueryClient();
-
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   const getDetailLabel = (parentKey: string, itemId: string): string => {
     if (parentKey === '/targets') {
@@ -131,15 +128,15 @@ export function Header({ onMenuToggle }: HeaderProps) {
             <div className="flex items-center gap-2 mr-2 animate-in fade-in slide-in-from-right-2">
               <input 
                 type="date" 
-                value={dateRange.start}
-                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
                 className="bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-primary outline-none"
               />
               <span className="text-[10px] text-slate-400 font-bold">→</span>
               <input 
                 type="date" 
-                value={dateRange.end}
-                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
                 className="bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-primary outline-none"
               />
             </div>

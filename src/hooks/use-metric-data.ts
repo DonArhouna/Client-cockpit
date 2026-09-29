@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { dataEngineApi } from '@/api';
 import { useAuth } from '@/features/auth/AuthContext';
-import type { MetricQueryResult } from '@/types/data-engine';
+import type { MetricQueryRequest, MetricQueryResult } from '@/types/data-engine';
 
 const PERIODS = new Set([
   'today', 'current_week', 'current_month', 'current_quarter', 'current_year',
@@ -14,10 +14,30 @@ export function assertMetricPeriod(period: string): string {
   return period;
 }
 
+export interface CustomDateRange { from: string; to: string }
+
+export function resolveMetricPeriod(period: string, range?: CustomDateRange): MetricQueryRequest['period'] {
+  if (period !== 'custom') return { type: 'relative', value: assertMetricPeriod(period) };
+  const parseDay = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('Plage personnalisee invalide');
+    const date = new Date(`${value}T00:00:00.000Z`);
+    if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value)
+      throw new Error('Plage personnalisee invalide');
+    return date;
+  };
+  const from = parseDay(range?.from ?? '');
+  const lastDay = parseDay(range?.to ?? '');
+  if (from > lastDay) throw new Error('La date de fin precede la date de debut');
+  // The date input's end day is inclusive; the API's upper bound is exclusive.
+  const to = new Date(lastDay.getTime() + 86_400_000);
+  return { type: 'absolute', from: from.toISOString(), to: to.toISOString() };
+}
+
 export async function runMetricQuery(metric: string, period: string, currency: string,
-  comparison: 'previous_period' | 'previous_year' | undefined, signal?: AbortSignal): Promise<MetricQueryResult> {
+  comparison: 'previous_period' | 'previous_year' | undefined, signal?: AbortSignal,
+  range?: CustomDateRange): Promise<MetricQueryResult> {
   const response = await dataEngineApi.query({ version: '2', metric,
-    period: { type: 'relative', value: assertMetricPeriod(period) }, currency,
+    period: resolveMetricPeriod(period, range), currency,
     ...(comparison ? { comparison: { type: comparison } } : {}),
     context: { source: 'dashboard' },
   }, signal);
@@ -40,12 +60,13 @@ export async function runMetricQuery(metric: string, period: string, currency: s
 }
 
 export function useMetricData(metric: string | null, period: string, currency: string,
-  comparison?: 'previous_period' | 'previous_year') {
+  comparison?: 'previous_period' | 'previous_year', range?: CustomDateRange) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['data-engine-v2', user?.organizationId, user?.id, metric, period, currency, comparison],
-    queryFn: ({ signal }) => runMetricQuery(metric!, period, currency, comparison, signal),
-    enabled: !!metric && !!user?.organizationId && !!user?.id,
+    queryKey: ['data-engine-v2', user?.organizationId, user?.id, metric, period, range?.from, range?.to, currency, comparison],
+    queryFn: ({ signal }) => runMetricQuery(metric!, period, currency, comparison, signal, range),
+    enabled: !!metric && !!user?.organizationId && !!user?.id &&
+      (period !== 'custom' || !!(range?.from && range?.to)),
     staleTime: 60_000,
     retry: false,
   });
