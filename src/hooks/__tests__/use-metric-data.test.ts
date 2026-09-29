@@ -44,6 +44,14 @@ describe('Data Engine V2 client', () => {
       period: { type: 'relative', value: 'current_month' }, comparison: { type: 'previous_period' },
     }), undefined);
   });
+  it('sends declared dimensions without deriving them from a historical KPI key', async () => {
+    vi.mocked(dataEngineApi.query).mockResolvedValueOnce({ data: { status: 'completed', result: completed } } as any);
+    await runMetricQuery('revenue_ht', 'current_month', 'XOF', 'previous_year',
+      undefined, undefined, ['month']);
+    expect(dataEngineApi.query).toHaveBeenCalledWith(expect.objectContaining({
+      metric: 'revenue_ht', dimensions: ['month'], comparison: { type: 'previous_year' },
+    }), undefined);
+  });
   it('stops on Agent offline without invoking a V1 client', async () => {
     vi.mocked(dataEngineApi.query).mockRejectedValueOnce(new Error('AGENT_OFFLINE'));
     await expect(runMetricQuery('revenue_ht', 'current_month', 'XOF', undefined)).rejects.toThrow('AGENT_OFFLINE');

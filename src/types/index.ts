@@ -184,7 +184,10 @@ export interface KpiDefinition {
   direction?: string;
   isActive: boolean;
   createdAt: string;
-  dataBinding?: null | { kind: 'data_engine_v2'; metric: string; defaults?: { comparison?: 'previous_period' | 'previous_year' } } | { kind: 'unavailable' };
+  dataBinding?: null | { kind: 'data_engine_v2'; metric: string;
+    defaults?: { comparison?: 'previous_period' | 'previous_year' };
+    query?: { dimensions?: string[]; comparison?: 'previous_period' | 'previous_year' };
+    presentation?: { shape: 'scalar' | 'time_series' } } | { kind: 'unavailable' };
 }
 
 export interface WidgetTemplate {

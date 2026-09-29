@@ -1,6 +1,7 @@
 export interface MetricQueryRequest {
   version: '2';
   metric: string;
+  dimensions?: string[];
   period: { type: 'relative'; value: string } | { type: 'absolute'; from: string; to: string };
   comparison?: { type: 'previous_period' | 'previous_year' };
   currency: string;
@@ -11,7 +12,7 @@ export interface MetricQueryResult {
   queryId: string;
   status: 'success' | 'empty';
   rows: Record<string, unknown>[];
-  schema: { key: string; type: string; role: string; nullable: boolean }[];
+  schema: { key: string; type: string; role: string; nullable: boolean; unit?: string }[];
   meta: { cache: 'none' | 'backend' | 'browser'; rowCount: number; generatedAt: string };
 }
 

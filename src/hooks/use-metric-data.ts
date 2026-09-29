@@ -35,9 +35,10 @@ export function resolveMetricPeriod(period: string, range?: CustomDateRange): Me
 
 export async function runMetricQuery(metric: string, period: string, currency: string,
   comparison: 'previous_period' | 'previous_year' | undefined, signal?: AbortSignal,
-  range?: CustomDateRange): Promise<MetricQueryResult> {
+  range?: CustomDateRange, dimensions?: string[]): Promise<MetricQueryResult> {
   const response = await dataEngineApi.query({ version: '2', metric,
     period: resolveMetricPeriod(period, range), currency,
+    ...(dimensions?.length ? { dimensions } : {}),
     ...(comparison ? { comparison: { type: comparison } } : {}),
     context: { source: 'dashboard' },
   }, signal);
@@ -60,11 +61,11 @@ export async function runMetricQuery(metric: string, period: string, currency: s
 }
 
 export function useMetricData(metric: string | null, period: string, currency: string,
-  comparison?: 'previous_period' | 'previous_year', range?: CustomDateRange) {
+  comparison?: 'previous_period' | 'previous_year', range?: CustomDateRange, dimensions?: string[]) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['data-engine-v2', user?.organizationId, user?.id, metric, period, range?.from, range?.to, currency, comparison],
-    queryFn: ({ signal }) => runMetricQuery(metric!, period, currency, comparison, signal, range),
+    queryKey: ['data-engine-v2', user?.organizationId, user?.id, metric, period, range?.from, range?.to, currency, comparison, dimensions],
+    queryFn: ({ signal }) => runMetricQuery(metric!, period, currency, comparison, signal, range, dimensions),
     enabled: !!metric && !!user?.organizationId && !!user?.id &&
       (period !== 'custom' || !!(range?.from && range?.to)),
     staleTime: 60_000,

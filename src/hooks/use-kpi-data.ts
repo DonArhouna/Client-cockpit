@@ -55,8 +55,9 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
     const invalidBinding = binding?.kind === 'unavailable';
     const inactiveDefinition = definition?.isActive === false;
     const metric = useMetricData(isV2 && enabled && !inactiveDefinition ? binding.metric : null, period, currency,
-        isV2 ? binding.defaults?.comparison : undefined,
-        period === 'custom' ? { from: customFrom, to: customTo } : undefined);
+        isV2 ? binding.query?.comparison ?? binding.defaults?.comparison : undefined,
+        period === 'custom' ? { from: customFrom, to: customTo } : undefined,
+        isV2 ? binding.query?.dimensions : undefined);
     const identity = user?.organizationId && user?.id ? `${user.organizationId}:${user.id}` : null;
     const generation = useRef(0);
     const [data, setData] = useState<KpiDataResult | null>(null);
@@ -140,7 +141,8 @@ export function useKpiData(kpiKey: string | null, options: KpiDataOptions = {}) 
             return { data: null, state: 'unavailable' as KpiState, isLoading: false,
                 isDisabled: false, error: 'Selectionnez les deux dates', refetch: metric.refetch };
         let presented = null;
-        try { if (metric.data) presented = presentMetric(metric.data, period, currency); }
+        try { if (metric.data) presented = presentMetric(metric.data, period, currency,
+            isV2 ? binding.presentation?.shape : undefined); }
         catch { return { data: null, state: 'error' as KpiState, isLoading: false,
             isDisabled: false, error: 'Resultat V2 invalide', refetch: metric.refetch }; }
         const metricState: KpiState = metric.isError ? 'error' : metric.isPending ? 'loading' :
